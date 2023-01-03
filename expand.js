@@ -16,8 +16,7 @@ function queryElements(selector, callback) {
 }
 
 // Observe some selectors and run a callback for each selected element.
-// Automatically uninstall the MutationObserver after `maxMutations` mutations.
-function observe(maxMutations, selectors, callback) {
+function observe(selectors, callback) {
   // For elements present before MutationObserver
   for (let selector of selectors) {
     queryElements(selector, callback);
@@ -28,11 +27,6 @@ function observe(maxMutations, selectors, callback) {
     console.log(`mutations: ${mutations}`);
     for (let selector of selectors) {
       queryElements(selector, callback);
-    }
-    mutations++;
-    if (mutations >= maxMutations) {
-      console.log(`disconnecting MutationObserver after ${mutations} mutations`);
-      observer.disconnect();
     }
   });
 
@@ -46,7 +40,7 @@ function observe(maxMutations, selectors, callback) {
 
 
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
-  observe(100, ['a[data-text-id][onclick^="swapContent("]'], el => {
+  observe(['a[data-text-id][onclick^="swapContent("]'], el => {
   if (el.innerText == "...more") {
     el.click();
   }
