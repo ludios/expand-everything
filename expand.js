@@ -4,6 +4,7 @@
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.imdb.com/title/*/reviews*
 // @match       https://www.youtube.com/*
+// @match       https://www.linkedin.com/*
 // @grant       none
 // @version     0.1
 // @author      ludios
@@ -119,6 +120,16 @@ if (loc.startsWith("https://www.youtube.com/")) {
     '.button.ytd-text-inline-expander#expand',
     // Video comments "show more" and replies
     '.more-button',
+  ], el => {
+    el.click();
+  });
+}
+
+// Test page: https://www.linkedin.com/in/daraweiss
+// Expected: "show more" is clicked in the profile sections, revealing all text
+if (loc.startsWith("https://www.linkedin.com/")) {
+  observe(100, [
+    '.inline-show-more-text__button',
   ], el => {
     el.click();
   });
