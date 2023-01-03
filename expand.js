@@ -23,11 +23,6 @@ let pageCounter = 0;
 
 // Observe some selectors and run a callback for each selected element.
 function observe(maxMutations, selectors, callback) {
-  // For elements present before MutationObserver
-  for (let selector of selectors) {
-    queryElements(selector, callback);
-  }
-
   let mutations = 0;
   const observer = new MutationObserver(() => {
     mutations++;
@@ -41,6 +36,11 @@ function observe(maxMutations, selectors, callback) {
   });
 
   function reobserve() {
+    // For elements present before MutationObserver
+    for (let selector of selectors) {
+      queryElements(selector, callback);
+    }
+
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
