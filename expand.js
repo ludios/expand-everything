@@ -3,7 +3,7 @@
 // @namespace   ludios
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.imdb.com/title/*/reviews*
-// @match       https://www.youtube.com/watch*
+// @match       https://www.youtube.com/*
 // @grant       none
 // @version     0.1
 // @author      ludios
