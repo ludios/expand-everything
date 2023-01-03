@@ -6,6 +6,7 @@
 // @match       https://www.youtube.com/*
 // @match       https://www.linkedin.com/*
 // @match       https://*.substack.com/*
+// @match       https://tvtropes.org/*
 // @grant       none
 // @version     0.1
 // @author      ludios
@@ -145,5 +146,16 @@ if (window.location.host.endsWith(".substack.com")) {
     'button.maybe-later',
   ], el => {
     el.click();
+  });
+}
+
+// Test page: https://tvtropes.org/pmwiki/pmwiki.php/OvershadowedByControversy/WebOriginal
+// Expected: all folders are opened
+if (loc.startsWith("https://tvtropes.org/")) {
+  observe(10, [
+    // "open/close all folders"
+    '.toggle-all-folders-button:not(.is-open)',
+  ], el => {
+    clickIfUnclicked(el);
   });
 }
