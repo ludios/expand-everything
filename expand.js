@@ -87,6 +87,12 @@ if (loc.startsWith("https://www.imdb.com/title/")) {
   });
 }
 
+// Test page: https://www.youtube.com/watch?v=ben9qDbrLYU
+// Test page: https://www.youtube.com/ followed by click on a video
+// Expected: video description is expanded
+// Expected: "show more" in the comments is clicked, for the loaded comments
+// Expected: replies for the top-most comments are clicked
+// Expected: the MutationObserver is disconnected soon after page load to avoid slowing things down
 if (loc.startsWith("https://www.youtube.com/")) {
   observe(100, [
     // Video description "show more"
