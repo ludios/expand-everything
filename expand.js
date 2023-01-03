@@ -41,8 +41,8 @@ function observe(selectors, callback) {
 
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
   observe(['a[data-text-id][onclick^="swapContent("]'], el => {
-  if (el.innerText == "...more") {
-    el.click();
-  }
+    if (el.innerText == "...more") {
+      el.click();
+    }
   });
 }
