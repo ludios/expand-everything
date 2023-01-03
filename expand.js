@@ -17,6 +17,8 @@ function queryElements(selector, callback) {
   elements.forEach(element => callback(element));
 }
 
+let pageCounter = 0;
+
 // Observe some selectors and run a callback for each selected element.
 function observe(maxMutations, selectors, callback) {
   // For elements present before MutationObserver
@@ -48,6 +50,7 @@ function observe(maxMutations, selectors, callback) {
   navigation.addEventListener('navigate', ev => {
     console.log('navigated, resetting MutationObserver');
     mutations = 0;
+    pageCounter = 0;
     reobserve();
   });
 }
@@ -76,14 +79,31 @@ if (loc.startsWith("https://www.goodreads.com/book/show/")) {
 // Expected: all the user film reviews are expanded and not cut off
 // Expected: all the "Warning: Spoilers" reviews are showing
 //
-// Note: we do not press the "Load more" button on e.g.
-// https://www.imdb.com/title/tt6710474/reviews?ref_=tt_urv
-// because there might be far too many reviews.
+// Test page: https://www.imdb.com/title/tt6710474/reviews?ref_=tt_urv
+// Expected: all the user film reviews are expanded and not cut off
+// Expected: all the "Warning: Spoilers" reviews are showing
+// Expected: "Load more" is clicked 5 times but not more
+//
+// (We don't want to click "Load more" so many times that we slow down
+// the page and also risk getting banned.)
 if (loc.startsWith("https://www.imdb.com/title/")) {
-  observe(100, ['.ipl-expander:not(.ipl-expander--expanded) > div > div'], el => {
-    // Avoid MutationObserver loop: imdb adds .ipl-expander--expanded
-    // to the element some time _after_ you click.
-    clickIfUnclicked(el);
+  observe(100, [
+    // Longer film reviews by users and reviews with spoilers
+    '.ipl-expander:not(.ipl-expander--expanded) > div > div',
+    // "Load more" button at the end of a set of reviews
+    'button.ipl-load-more__button',
+  ], el => {
+    if (el.tagName == "BUTTON") {
+      if (pageCounter < 5) {
+        pageCounter++;
+        console.log(`page counter: ${pageCounter}`);
+        el.click();
+      }
+    } else {
+      // Avoid MutationObserver loop: imdb adds .ipl-expander--expanded
+      // to the element some time _after_ you click.
+      clickIfUnclicked(el);
+    }
   });
 }
 
