@@ -60,9 +60,14 @@ if (loc.startsWith("https://www.goodreads.com/book/show/")) {
 // Test page: https://www.imdb.com/title/tt0809535/reviews?ref_=tt_urv
 // Expected: all the user film reviews are expanded and not cut off
 // Expected: all the "Warning: Spoilers" reviews are showing
+//
+// Note: we do not press the "Load more" button on e.g.
+// https://www.imdb.com/title/tt6710474/reviews?ref_=tt_urv
+// because there might be far too many reviews.
 if (loc.startsWith("https://www.imdb.com/title/")) {
   observe(['.ipl-expander:not(.ipl-expander--expanded) > div > div'], el => {
-    // Avoid MutationObserver loop: imdb adds .ipl-expander--expanded to the element some time after you click.
+    // Avoid MutationObserver loop: imdb adds .ipl-expander--expanded
+    // to the element some time _after_ you click.
     clickIfUnclicked(el);
   });
 }
