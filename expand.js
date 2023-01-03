@@ -140,10 +140,16 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 // Test page: https://shimmeringvoid.substack.com/
 // Test page: https://jenniferdaniel.substack.com/
 // Expected: the subscribe modal with "No thanks" is bypassed
+//
+// Test page: https://philo.substack.com/p/scarcity-truthers/comments#comment-6543771
+// Test page: https://philo.substack.com/p/scarcity-truthers/comment/6543771
+// Expected: "Expand full comment" is clicked; the full text of the comment is shown
 if (window.location.host.endsWith(".substack.com")) {
   observe(100, [
     // "No thanks" button; clicking removes the overlay
     'button.maybe-later',
+    // "Expand full comment"
+    'div.comment-body:not(.expanded) > div.show-all-toggle > div.show-all-toggle-label',
   ], el => {
     el.click();
   });
