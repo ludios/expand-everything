@@ -22,9 +22,7 @@ function observe(selectors, callback) {
     queryElements(selector, callback);
   }
 
-  let mutations = 0;
   const observer = new MutationObserver(() => {
-    console.log(`mutations: ${mutations}`);
     for (let selector of selectors) {
       queryElements(selector, callback);
     }
