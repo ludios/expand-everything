@@ -5,6 +5,7 @@
 // @match       https://www.imdb.com/title/*/reviews*
 // @match       https://www.youtube.com/*
 // @match       https://www.linkedin.com/*
+// @match       https://*.substack.com/*
 // @grant       none
 // @version     0.1
 // @author      ludios
@@ -130,6 +131,18 @@ if (loc.startsWith("https://www.youtube.com/")) {
 if (loc.startsWith("https://www.linkedin.com/")) {
   observe(100, [
     '.inline-show-more-text__button',
+  ], el => {
+    el.click();
+  });
+}
+
+// Test page: https://shimmeringvoid.substack.com/
+// Test page: https://jenniferdaniel.substack.com/
+// Expected: the subscribe modal with "No thanks" is bypassed
+if (window.location.host.endsWith(".substack.com")) {
+  observe(100, [
+    // "No thanks" button; clicking removes the overlay
+    'button.maybe-later',
   ], el => {
     el.click();
   });
