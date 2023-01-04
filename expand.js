@@ -119,7 +119,7 @@ if (loc.startsWith("https://www.imdb.com/title/")) {
 if (loc.startsWith("https://www.youtube.com/")) {
   observe(100, [
     // Video description "show more"
-    '.button.ytd-text-inline-expander#expand',
+    'div#description > div#description-inner > #description-inline-expander > .button.ytd-text-inline-expander#expand',
     // Video comments "show more" and replies
     '.more-button',
   ], el => {
