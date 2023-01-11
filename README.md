@@ -6,10 +6,12 @@ SingleFile the entire page.
 
 ## Install
 
-Install Violentmonkey in any Chromium-based browser; create a new userscript; paste expand.js contents into it; save.
+Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based browser; create a new userscript; paste expand.js contents into it; save.
 
 ## Supported sites
 
+- https://news.ycombinator.com/ (expand collapsed comments)
+- https://github.com/ ("Load more" all the issue comments, expand minimized comments, expand outdated review comments)
 - https://www.goodreads.com/ (expand book review text)
 - https://www.imdb.com/ (expand film review text, load more reviews)
 - https://www.youtube.com/ (expand video descriptions and comments, load more comments)
