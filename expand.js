@@ -10,6 +10,7 @@
 // @match       https://tvtropes.org/*
 // @match       https://news.ycombinator.com/*
 // @match       https://github.com/*
+// @match       https://www.quora.com/*
 //
 // Copied from https://stackexchange.com/sites?view=list#traffic
 // @match       https://3dprinting.stackexchange.com/*
@@ -404,5 +405,16 @@ if (window.StackExchange) {
     'a.js-show-link:not(.dno)',
   ], el => {
     el.click();
+  });
+}
+
+// Test page: https://www.quora.com/Which-of-the-big-four-Google-Microsoft-Amazon-Facebook-tech-companies-have-the-most-selective-hiring-process-for-software-engineers?share=1
+// Expected: answers are fully visible; "Continue Reading" is not visible
+if (loc.startsWith("https://www.quora.com/")) {
+  observe(100, [
+    // "Continue Reading"
+    '.puppeteer_test_read_more_button',
+  ], el => {
+    clickIfUnclicked(el);
   });
 }
