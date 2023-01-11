@@ -12,6 +12,7 @@
 // @match       https://github.com/*
 // @match       https://www.quora.com/*
 // @match       https://old.reddit.com/*
+// @match       https://www.lesswrong.com/*
 //
 // Copied from https://stackexchange.com/sites?view=list#traffic
 // @match       https://3dprinting.stackexchange.com/*
@@ -436,5 +437,16 @@ if (loc.startsWith("https://old.reddit.com/")) {
     if (el.innerText == "[+]") {
       clickIfUnclicked(el);
     }
+  });
+}
+
+// Test page: https://www.lesswrong.com/posts/uKp6tBFStnsvrot5t/what-dall-e-2-can-and-cannot-do
+// Expected: all comments expanded; no one-line previews
+if (loc.startsWith("https://www.lesswrong.com/")) {
+  observe(100, [
+    // Collapsed comments
+    '.SingleLineComment-truncatedHighlight',
+  ], el => {
+    clickIfUnclicked(el);
   });
 }

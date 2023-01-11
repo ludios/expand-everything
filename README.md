@@ -20,6 +20,7 @@ Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based 
 - https://www.quora.com/ (expand answer text)
 - https://www.imdb.com/ (expand film review text, load more reviews)
 - https://www.linkedin.com/ (expand text in profile sections)
+- https://www.lesswrong.com/ (expand collapsed comments)
 - https://tvtropes.org/ (open all folders)
 
 For test pages, see the expand.js "Test page:" comments.
