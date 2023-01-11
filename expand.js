@@ -8,6 +8,7 @@
 // @match       https://*.substack.com/*
 // @match       https://tvtropes.org/*
 // @match       https://news.ycombinator.com/*
+// @match       https://github.com/*
 // @grant       none
 // @version     0.1
 // @author      ludios
@@ -175,5 +176,24 @@ if (loc.startsWith("https://news.ycombinator.com/item")) {
     if (el.innerText.endsWith(" more]")) {
       el.click();
     }
+  });
+}
+
+// Test page: https://github.com/rust-lang/rust/pull/95035
+// Expected: all comments are loaded; "N hidden items" button is not visible
+//
+// Test page: https://github.com/rust-lang/rust/issues/57640
+// Expected: all comments are loaded; "N hidden items" button is not visible
+//
+// Test page: https://github.com/JustAnotherArchivist/snscrape/issues/634
+// Expected: spam/outdated/duplicate/off-topic comments are expanded
+if (loc.startsWith("https://github.com/")) {
+  observe(1000, [
+    // "N hidden items; Load more..."
+    'button.ajax-pagination-btn',
+    // "Show comment"
+    'div.Details-content--closed',
+  ], el => {
+    clickIfUnclicked(el);
   });
 }
