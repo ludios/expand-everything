@@ -7,6 +7,7 @@
 // @match       https://www.linkedin.com/*
 // @match       https://*.substack.com/*
 // @match       https://tvtropes.org/*
+// @match       https://news.ycombinator.com/*
 // @grant       none
 // @version     0.1
 // @author      ludios
@@ -163,5 +164,16 @@ if (loc.startsWith("https://tvtropes.org/")) {
     '.toggle-all-folders-button:not(.is-open)',
   ], el => {
     clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://news.ycombinator.com/item?id=34282033 as a logged-in user with showdead enabled
+// Expected: all comments are shown; no '[N more]' links visible
+if (loc.startsWith("https://news.ycombinator.com/item")) {
+  // No need for MutationObserver
+  queryElements('a.togg.clicky', el => {
+    if (el.innerText.endsWith(" more]")) {
+      el.click();
+    }
   });
 }
