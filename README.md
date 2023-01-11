@@ -7,9 +7,9 @@ print, copy, or archive (e.g. SingleFile) the entire page.
 ## Install
 
 1. Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based browser (this userscript uses the [navigate](https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate_event) event).
-2. Create a new userscript.
-3. Copy the entire [expand.user.js source](https://raw.githubusercontent.com/ludios/expand-everything/master/expand.user.js) and paste it in.
-4. Save.
+2. Visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-everything/master/expand.user.js) and _Confirm installation_.
+
+   (Alternatively, create a new script and paste in the entire <code>expand.user.js</code> source.)
 
 ## Supported sites
 
