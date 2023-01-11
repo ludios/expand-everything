@@ -1,15 +1,15 @@
-# expand-everything
+# Expand Everything
 
-This is a userscript to click all the "show more" links on a page so that
-you don't have to click everything before you can read, print, copy, or
-SingleFile the entire page.
+Expand Everything is a userscript that clicks on all the "show more" links
+on a page, so that you don't have to click everything before you can read,
+print, copy, or archive (e.g. SingleFile) the entire page.
 
 ## Install
 
-Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based browser (this userscript uses the [navigate](https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate_event) event);
-create a new userscript;
-copy the entire [expand.js source](https://raw.githubusercontent.com/ludios/expand-everything/master/expand.js) and paste it in;
-save.
+1. Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based browser (this userscript uses the [navigate](https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate_event) event).
+2. Create a new userscript.
+3. Copy the entire [expand.js source](https://raw.githubusercontent.com/ludios/expand-everything/master/expand.js) and paste it in.
+4. Save.
 
 ## Supported sites
 
