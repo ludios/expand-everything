@@ -6,7 +6,10 @@ SingleFile the entire page.
 
 ## Install
 
-Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based browser; create a new userscript; paste expand.js contents into it; save.
+Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based browser (this userscript uses the [navigate](https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate_event) event);
+create a new userscript;
+copy the entire [expand.js source](https://raw.githubusercontent.com/ludios/expand-everything/master/expand.js) and paste it in;
+save.
 
 ## Supported sites
 
@@ -23,4 +26,4 @@ Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based 
 - https://www.lesswrong.com/ (expand collapsed comments)
 - https://tvtropes.org/ (open all folders)
 
-For test pages, see the expand.js "Test page:" comments.
+For test pages, see the "Test page:" comments in expand.js.
