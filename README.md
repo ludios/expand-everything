@@ -8,7 +8,7 @@ print, copy, or archive (e.g. SingleFile) the entire page.
 
 1. Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based browser (this userscript uses the [navigate](https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate_event) event).
 2. Create a new userscript.
-3. Copy the entire [expand.js source](https://raw.githubusercontent.com/ludios/expand-everything/master/expand.js) and paste it in.
+3. Copy the entire [expand.user.js source](https://raw.githubusercontent.com/ludios/expand-everything/master/expand.user.js) and paste it in.
 4. Save.
 
 ## Supported sites
@@ -27,4 +27,4 @@ print, copy, or archive (e.g. SingleFile) the entire page.
 - https://www.lesswrong.com/ (expand collapsed comments)
 - https://tvtropes.org/ (open all folders)
 
-For test pages, see the "Test page:" comments in expand.js.
+For test pages, see the "Test page:" comments in expand.user.js.
