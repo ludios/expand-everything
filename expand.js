@@ -1,6 +1,7 @@
 // ==UserScript==
-// @name        expand-everything
+// @name        Expand Everything
 // @namespace   ludios
+//
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.imdb.com/title/*/reviews*
 // @match       https://www.youtube.com/*
