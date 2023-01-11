@@ -1,6 +1,11 @@
 // ==UserScript==
 // @name        Expand Everything
+// @description Click the "show more" links to expand all the text on a page
 // @namespace   ludios
+// @author      ludios
+// @license     AGPL-3.0; https://www.gnu.org/licenses/agpl-3.0.en.html
+// @grant       none
+// @version     1.0
 //
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.imdb.com/title/*/reviews*
@@ -198,10 +203,6 @@
 // @match       https://worldbuilding.stackexchange.com/*
 // @match       https://writing.stackexchange.com/*
 //
-// @grant       none
-// @version     0.1
-// @author      ludios
-// @description Click the "show more" links to expand all the text on a page
 // ==/UserScript==
 
 const loc = window.location.href;
