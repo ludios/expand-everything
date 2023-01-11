@@ -12,6 +12,7 @@ Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based 
 
 - https://news.ycombinator.com/ (expand collapsed comments)
 - https://github.com/ ("Load more" all the issue comments, expand minimized comments, expand outdated review comments)
+- https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)
 - https://www.goodreads.com/ (expand book review text)
 - https://www.imdb.com/ (expand film review text, load more reviews)
 - https://www.youtube.com/ (expand video descriptions and comments, load more comments)

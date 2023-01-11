@@ -10,6 +10,191 @@
 // @match       https://tvtropes.org/*
 // @match       https://news.ycombinator.com/*
 // @match       https://github.com/*
+//
+// Copied from https://stackexchange.com/sites?view=list#traffic
+// @match       https://3dprinting.stackexchange.com/*
+// @match       https://academia.stackexchange.com/*
+// @match       https://ai.stackexchange.com/*
+// @match       https://alcohol.stackexchange.com/*
+// @match       https://android.stackexchange.com/*
+// @match       https://anime.stackexchange.com/*
+// @match       https://apple.stackexchange.com/*
+// @match       https://arduino.stackexchange.com/*
+// @match       https://area51.stackexchange.com/*
+// @match       https://askubuntu.com/*
+// @match       https://astronomy.stackexchange.com/*
+// @match       https://aviation.stackexchange.com/*
+// @match       https://bicycles.stackexchange.com/*
+// @match       https://bioacoustics.stackexchange.com/*
+// @match       https://bioinformatics.stackexchange.com/*
+// @match       https://biology.stackexchange.com/*
+// @match       https://bitcoin.stackexchange.com/*
+// @match       https://blender.stackexchange.com/*
+// @match       https://boardgames.stackexchange.com/*
+// @match       https://bricks.stackexchange.com/*
+// @match       https://buddhism.stackexchange.com/*
+// @match       https://cardano.stackexchange.com/*
+// @match       https://chemistry.stackexchange.com/*
+// @match       https://chess.stackexchange.com/*
+// @match       https://chinese.stackexchange.com/*
+// @match       https://christianity.stackexchange.com/*
+// @match       https://civicrm.stackexchange.com/*
+// @match       https://codegolf.stackexchange.com/*
+// @match       https://codereview.stackexchange.com/*
+// @match       https://coffee.stackexchange.com/*
+// @match       https://communitybuilding.stackexchange.com/*
+// @match       https://computergraphics.stackexchange.com/*
+// @match       https://conlang.stackexchange.com/*
+// @match       https://cooking.stackexchange.com/*
+// @match       https://craftcms.stackexchange.com/*
+// @match       https://crafts.stackexchange.com/*
+// @match       https://crypto.stackexchange.com/*
+// @match       https://cs.stackexchange.com/*
+// @match       https://cseducators.stackexchange.com/*
+// @match       https://cstheory.stackexchange.com/*
+// @match       https://datascience.stackexchange.com/*
+// @match       https://dba.stackexchange.com/*
+// @match       https://devops.stackexchange.com/*
+// @match       https://diy.stackexchange.com/*
+// @match       https://drones.stackexchange.com/*
+// @match       https://drupal.stackexchange.com/*
+// @match       https://dsp.stackexchange.com/*
+// @match       https://earthscience.stackexchange.com/*
+// @match       https://ebooks.stackexchange.com/*
+// @match       https://economics.stackexchange.com/*
+// @match       https://electronics.stackexchange.com/*
+// @match       https://elementaryos.stackexchange.com/*
+// @match       https://ell.stackexchange.com/*
+// @match       https://emacs.stackexchange.com/*
+// @match       https://engineering.stackexchange.com/*
+// @match       https://english.stackexchange.com/*
+// @match       https://eosio.stackexchange.com/*
+// @match       https://es.stackoverflow.com/*
+// @match       https://esperanto.stackexchange.com/*
+// @match       https://ethereum.stackexchange.com/*
+// @match       https://expatriates.stackexchange.com/*
+// @match       https://expressionengine.stackexchange.com/*
+// @match       https://fitness.stackexchange.com/*
+// @match       https://freelancing.stackexchange.com/*
+// @match       https://french.stackexchange.com/*
+// @match       https://gamedev.stackexchange.com/*
+// @match       https://gaming.stackexchange.com/*
+// @match       https://gardening.stackexchange.com/*
+// @match       https://genealogy.stackexchange.com/*
+// @match       https://german.stackexchange.com/*
+// @match       https://gis.stackexchange.com/*
+// @match       https://graphicdesign.stackexchange.com/*
+// @match       https://ham.stackexchange.com/*
+// @match       https://hardwarerecs.stackexchange.com/*
+// @match       https://hermeneutics.stackexchange.com/*
+// @match       https://hinduism.stackexchange.com/*
+// @match       https://history.stackexchange.com/*
+// @match       https://homebrew.stackexchange.com/*
+// @match       https://hsm.stackexchange.com/*
+// @match       https://interpersonal.stackexchange.com/*
+// @match       https://iot.stackexchange.com/*
+// @match       https://iota.stackexchange.com/*
+// @match       https://islam.stackexchange.com/*
+// @match       https://italian.stackexchange.com/*
+// @match       https://ja.stackoverflow.com/*
+// @match       https://japanese.stackexchange.com/*
+// @match       https://joomla.stackexchange.com/*
+// @match       https://judaism.stackexchange.com/*
+// @match       https://korean.stackexchange.com/*
+// @match       https://languagelearning.stackexchange.com/*
+// @match       https://latin.stackexchange.com/*
+// @match       https://law.stackexchange.com/*
+// @match       https://lifehacks.stackexchange.com/*
+// @match       https://linguistics.stackexchange.com/*
+// @match       https://literature.stackexchange.com/*
+// @match       https://magento.stackexchange.com/*
+// @match       https://martialarts.stackexchange.com/*
+// @match       https://math.stackexchange.com/*
+// @match       https://matheducators.stackexchange.com/*
+// @match       https://mathematica.stackexchange.com/*
+// @match       https://mathoverflow.net/*
+// @match       https://mattermodeling.stackexchange.com/*
+// @match       https://mechanics.stackexchange.com/*
+// @match       https://medicalsciences.stackexchange.com/*
+// @match       https://meta.stackexchange.com/*
+// @match       https://monero.stackexchange.com/*
+// @match       https://money.stackexchange.com/*
+// @match       https://movies.stackexchange.com/*
+// @match       https://music.stackexchange.com/*
+// @match       https://musicfans.stackexchange.com/*
+// @match       https://mythology.stackexchange.com/*
+// @match       https://networkengineering.stackexchange.com/*
+// @match       https://opendata.stackexchange.com/*
+// @match       https://opensource.stackexchange.com/*
+// @match       https://or.stackexchange.com/*
+// @match       https://outdoors.stackexchange.com/*
+// @match       https://parenting.stackexchange.com/*
+// @match       https://patents.stackexchange.com/*
+// @match       https://pets.stackexchange.com/*
+// @match       https://philosophy.stackexchange.com/*
+// @match       https://photo.stackexchange.com/*
+// @match       https://physics.stackexchange.com/*
+// @match       https://pm.stackexchange.com/*
+// @match       https://poker.stackexchange.com/*
+// @match       https://politics.stackexchange.com/*
+// @match       https://portuguese.stackexchange.com/*
+// @match       https://proofassistants.stackexchange.com/*
+// @match       https://psychology.stackexchange.com/*
+// @match       https://pt.stackoverflow.com/*
+// @match       https://puzzling.stackexchange.com/*
+// @match       https://quant.stackexchange.com/*
+// @match       https://quantumcomputing.stackexchange.com/*
+// @match       https://raspberrypi.stackexchange.com/*
+// @match       https://retrocomputing.stackexchange.com/*
+// @match       https://reverseengineering.stackexchange.com/*
+// @match       https://robotics.stackexchange.com/*
+// @match       https://rpg.stackexchange.com/*
+// @match       https://ru.stackoverflow.com/*
+// @match       https://rus.stackexchange.com/*
+// @match       https://russian.stackexchange.com/*
+// @match       https://salesforce.stackexchange.com/*
+// @match       https://scicomp.stackexchange.com/*
+// @match       https://scifi.stackexchange.com/*
+// @match       https://security.stackexchange.com/*
+// @match       https://serverfault.com/*
+// @match       https://sharepoint.stackexchange.com/*
+// @match       https://sitecore.stackexchange.com/*
+// @match       https://skeptics.stackexchange.com/*
+// @match       https://softwareengineering.stackexchange.com/*
+// @match       https://softwarerecs.stackexchange.com/*
+// @match       https://solana.stackexchange.com/*
+// @match       https://sound.stackexchange.com/*
+// @match       https://space.stackexchange.com/*
+// @match       https://spanish.stackexchange.com/*
+// @match       https://sports.stackexchange.com/*
+// @match       https://sqa.stackexchange.com/*
+// @match       https://stackapps.com/*
+// @match       https://stackexchange.com/*
+// @match       https://stackoverflow.com/*
+// @match       https://stats.stackexchange.com/*
+// @match       https://stellar.stackexchange.com/*
+// @match       https://substrate.stackexchange.com/*
+// @match       https://superuser.com/*
+// @match       https://sustainability.stackexchange.com/*
+// @match       https://tex.stackexchange.com/*
+// @match       https://tezos.stackexchange.com/*
+// @match       https://tor.stackexchange.com/*
+// @match       https://travel.stackexchange.com/*
+// @match       https://tridion.stackexchange.com/*
+// @match       https://ukrainian.stackexchange.com/*
+// @match       https://unix.stackexchange.com/*
+// @match       https://ux.stackexchange.com/*
+// @match       https://vegetarianism.stackexchange.com/*
+// @match       https://vi.stackexchange.com/*
+// @match       https://video.stackexchange.com/*
+// @match       https://webapps.stackexchange.com/*
+// @match       https://webmasters.stackexchange.com/*
+// @match       https://woodworking.stackexchange.com/*
+// @match       https://wordpress.stackexchange.com/*
+// @match       https://workplace.stackexchange.com/*
+// @match       https://worldbuilding.stackexchange.com/*
+// @match       https://writing.stackexchange.com/*
+//
 // @grant       none
 // @version     0.1
 // @author      ludios
@@ -199,5 +384,25 @@ if (loc.startsWith("https://github.com/")) {
     '.Details-content--closed',
   ], el => {
     clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://stackoverflow.com/questions/59156473/what-is-the-difference-between-async-move-and-async-move
+// Expected: all comments are loaded; "Show N more comments" is not visible
+//
+// Test page: https://meta.stackexchange.com/questions/333965/firing-mods-and-forced-relicensing-is-stack-exchange-still-interested-in-cooper?rq=1
+// Expected: all comments are loaded; "Show N more comments" is not visible
+//
+// Test page: https://meta.stackexchange.com/questions/277369/a-terms-of-service-update-restricting-companies-that-scrape-your-profile-informa?rq=1#
+// Expected: all comments are loaded; "Show N more comments" is not visible
+//
+// Test page: https://astronomy.stackexchange.com/questions/51544/is-the-solar-core-hard#
+// Expected: all comments are loaded; "Show N more comments" is not visible
+if (window.StackExchange) {
+  observe(100, [
+    // "Show N more comments"
+    'a.js-show-link:not(.dno)',
+  ], el => {
+    el.click();
   });
 }
