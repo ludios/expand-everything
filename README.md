@@ -18,7 +18,8 @@ print, copy, or archive (e.g. SingleFile) the entire page.
 - https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)
 - https://\*.substack.com/ (dismiss subscribe overlay, expand comment text)
 - https://www.goodreads.com/ (expand book review text)
-- https://old.reddit.com/ (expand comments below threshold, expand deleted comments; for "load more comments", you'll need [Reddit Enhancement Suite](https://github.com/honestbleeps/Reddit-Enhancement-Suite)'s "Never Ending Comments", "Load Child Comments")
+- https://old.reddit.com/ (expand comments below threshold, expand deleted comments)
+  - For "load more comments", you'll need [Reddit Enhancement Suite](https://github.com/honestbleeps/Reddit-Enhancement-Suite) and its "Never Ending Comments", "Load Child Comments" options.
 - https://news.ycombinator.com/ (expand collapsed comments)
 - https://www.quora.com/ (expand answer text)
 - https://www.imdb.com/ (expand film review text, load more reviews)
