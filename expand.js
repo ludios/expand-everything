@@ -187,12 +187,15 @@ if (loc.startsWith("https://news.ycombinator.com/item")) {
 //
 // Test page: https://github.com/JustAnotherArchivist/snscrape/issues/634
 // Expected: spam/outdated/duplicate/off-topic comments are expanded
+//
+// Test page: https://github.com/NixOS/nixpkgs/pull/194310
+// Expected: outdated review comments are expanded
 if (loc.startsWith("https://github.com/")) {
   observe(1000, [
     // "N hidden items; Load more..."
     'button.ajax-pagination-btn',
-    // "Show comment"
-    'div.Details-content--closed',
+    // "Show comment" (div) and "Show resolved" (span)
+    '.Details-content--closed',
   ], el => {
     clickIfUnclicked(el);
   });
