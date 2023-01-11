@@ -15,6 +15,7 @@ Install [Violentmonkey](https://violentmonkey.github.io/) in any Chromium-based 
 - https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)
 - https://\*.substack.com/ (dismiss subscribe overlay, expand comment text)
 - https://www.goodreads.com/ (expand book review text)
+- https://old.reddit.com/ (expand comments below threshold, expand deleted comments; for "load more comments", you'll need [Reddit Enhancement Suite](https://github.com/honestbleeps/Reddit-Enhancement-Suite)'s "Never Ending Comments", "Load Child Comments")
 - https://news.ycombinator.com/ (expand collapsed comments)
 - https://www.quora.com/ (expand answer text)
 - https://www.imdb.com/ (expand film review text, load more reviews)

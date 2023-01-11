@@ -11,6 +11,7 @@
 // @match       https://news.ycombinator.com/*
 // @match       https://github.com/*
 // @match       https://www.quora.com/*
+// @match       https://old.reddit.com/*
 //
 // Copied from https://stackexchange.com/sites?view=list#traffic
 // @match       https://3dprinting.stackexchange.com/*
@@ -416,5 +417,24 @@ if (loc.startsWith("https://www.quora.com/")) {
     '.puppeteer_test_read_more_button',
   ], el => {
     clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://old.reddit.com/r/Windows10/comments/umf10d/should_windows_10_support_be_extended_beyond_2025/
+// Expected: all comments expanded; "[+]" is not visible; "comment score below threshold" is not visible
+//
+// Test page: https://old.reddit.com/r/nextfuckinglevel/comments/108nsqn/student_creates_a_diy_projection_map_light_show/
+// Expected: all comments expanded; "[+]" is not visible; "comment score below threshold" is not visible
+if (loc.startsWith("https://old.reddit.com/")) {
+  observe(200, [
+    // Collapsed comments
+    'a.expand[href="javascript:void(0)"][onclick="return togglecomment(this)"]',
+    // For "load more comments", use https://github.com/honestbleeps/Reddit-Enhancement-Suite
+    // and enable "Never Ending Comments", "Load Child Comments" in the extension options;
+    // click "save options".
+  ], el => {
+    if (el.innerText == "[+]") {
+      clickIfUnclicked(el);
+    }
   });
 }
