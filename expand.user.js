@@ -370,7 +370,7 @@ if (loc.startsWith("https://news.ycombinator.com/item")) {
 }
 
 // Test page: https://github.com/rust-lang/rust/pull/95035
-// Expected: all comments are loaded; "N hidden items" button is not visible
+// Expected: all comments are loaded; "N hidden items" button is not visible; "1 similar comment" is not visible
 //
 // Test page: https://github.com/rust-lang/rust/issues/57640
 // Expected: all comments are loaded; "N hidden items" button is not visible
@@ -384,6 +384,8 @@ if (loc.startsWith("https://github.com/")) {
   observe(1000, [
     // "N hidden items; Load more..."
     'button.ajax-pagination-btn',
+    // "N similar comments"
+    'summary.pagination-loader-container > .Details-content--closed',
     // "Show comment"
     'div.minimized-comment > details > summary > div > .Details-content--closed',
     // "Show resolved"

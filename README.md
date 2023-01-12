@@ -13,7 +13,7 @@ print, copy, or archive (e.g. SingleFile) the entire page.
 
 ## Supported sites
 
-- https://github.com/ ("Load more" all the issue comments, expand minimized comments, expand outdated review comments)
+- https://github.com/ ("Load more" all the issue comments, expand minimized and similar comments, expand outdated review comments)
 - https://www.youtube.com/ (expand video descriptions and comments, load more comments)
 - https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)
 - https://\*.substack.com/ (dismiss subscribe overlay, expand comment text)
