@@ -384,8 +384,10 @@ if (loc.startsWith("https://github.com/")) {
   observe(1000, [
     // "N hidden items; Load more..."
     'button.ajax-pagination-btn',
-    // "Show comment" (div) and "Show resolved" (span)
-    '.Details-content--closed',
+    // "Show comment"
+    'div.minimized-comment > details > summary > div > .Details-content--closed',
+    // "Show resolved"
+    'summary[role="button"] > div > span.Details-content--closed',
   ], el => {
     clickIfUnclicked(el);
   });
