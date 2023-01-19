@@ -380,10 +380,16 @@ if (loc.startsWith("https://news.ycombinator.com/item")) {
 //
 // Test page: https://github.com/NixOS/nixpkgs/pull/194310
 // Expected: outdated review comments are expanded
+//
+// Test page: https://github.com/A
+// Expected: activity is not expanded; URL does not start changing
 if (loc.startsWith("https://github.com/")) {
   observe(1000, [
     // "N hidden items; Load more..."
-    'button.ajax-pagination-btn',
+    //
+    // We don't want all button.ajax-pagination-btn because clicking button.ajax-pagination-btn
+    // on a profile page e.g. https://github.com/A causes the URL to start changing.
+    '#js-progressive-timeline-item-container button.ajax-pagination-btn',
     // "N similar comments"
     'summary.pagination-loader-container > .Details-content--closed',
     // "Show comment"
