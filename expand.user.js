@@ -336,12 +336,17 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 // Test page: https://philo.substack.com/p/scarcity-truthers/comments#comment-6543771
 // Test page: https://philo.substack.com/p/scarcity-truthers/comment/6543771
 // Expected: "Expand full comment" is clicked; the full text of the comment is shown
+//
+// Test page: https://gurwinder.substack.com/p/tiktok-may-be-a-chinese-bio-weapon/comments
+// Expected: "Load more" button at the bottom is clicked; all comments are shown
 if (window.location.host.endsWith(".substack.com")) {
   observe(100, [
     // "No thanks" button; clicking removes the overlay
     'button.maybe-later',
     // "Expand full comment"
     'div.comment-body:not(.expanded) > div.show-all-toggle > div.show-all-toggle-label',
+    // "Load more" on a comments page
+    'button.collapsed-reply',
   ], el => {
     el.click();
   });
