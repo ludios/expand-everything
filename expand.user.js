@@ -5,12 +5,12 @@
 // @author      ludios
 // @license     AGPL-3.0; https://www.gnu.org/licenses/agpl-3.0.en.html
 // @grant       none
-// @version     1.3
+// @version     1.4
 //
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.imdb.com/title/*/reviews*
 // @match       https://www.youtube.com/*
-// @match       https://www.linkedin.com/*
+// @match       https://*.linkedin.com/*
 // @match       https://*.substack.com/*
 // @match       https://tvtropes.org/*
 // @match       https://news.ycombinator.com/*
