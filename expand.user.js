@@ -5,7 +5,7 @@
 // @author      ludios
 // @license     AGPL-3.0; https://www.gnu.org/licenses/agpl-3.0.en.html
 // @grant       none
-// @version     1.4
+// @version     1.4.1
 //
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.imdb.com/title/*/reviews*
@@ -338,6 +338,7 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 // Expected: "Expand full comment" is clicked; the full text of the comment is shown
 //
 // Test page: https://gurwinder.substack.com/p/tiktok-may-be-a-chinese-bio-weapon/comments
+// Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
 // Expected: "Load more" button at the bottom is clicked; all comments are shown
 if (window.location.host.endsWith(".substack.com")) {
   observe(100, [
@@ -345,8 +346,8 @@ if (window.location.host.endsWith(".substack.com")) {
     'button.maybe-later',
     // "Expand full comment"
     'div.comment-body:not(.expanded) > div.show-all-toggle > div.show-all-toggle-label',
-    // "Load more" on a comments page
-    'button.collapsed-reply',
+    // "Load more" at the end of a comments page
+    'button.button.collapsed-reply',
   ], el => {
     el.click();
   });
