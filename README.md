@@ -23,8 +23,9 @@ print, copy, or archive (e.g. SingleFile) the entire page.
 - https://news.ycombinator.com/ (expand collapsed comments)
 - https://www.quora.com/ (expand answer text)
 - https://www.imdb.com/ (expand film review text, load more reviews)
-- https://www.linkedin.com/ (expand text in profile sections)
+- https://\*.linkedin.com/ (expand text in profile sections)
 - https://www.lesswrong.com/ (expand collapsed comments)
 - https://tvtropes.org/ (open all folders)
+- https://cohost.org/ (expand posts on actual post pages)
 
 For test pages, see the "Test page:" comments in expand.user.js.
