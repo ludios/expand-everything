@@ -18,6 +18,7 @@
 // @match       https://www.quora.com/*
 // @match       https://old.reddit.com/*
 // @match       https://www.lesswrong.com/*
+// @match       https://cohost.org/*
 //
 // Copied from https://stackexchange.com/sites?view=list#traffic
 // @match       https://3dprinting.stackexchange.com/*
@@ -465,5 +466,15 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
     '.SingleLineComment-truncatedHighlight',
   ], el => {
     clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://cohost.org/mcc/post/718898-andi-s-game-of-the-y
+// Expected: the full post is shown; "read more" is not visible
+if (loc.startsWith("https://cohost.org/")) {
+  observe(100, ['div.overflow-hidden[data-testid="post-body"] > div > a.cursor-pointer.font-bold.text-cherry'], el => {
+    if (el.innerText == "read more") {
+      clickIfUnclicked(el);
+    }
   });
 }
