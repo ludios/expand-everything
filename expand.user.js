@@ -19,6 +19,7 @@
 // @match       https://old.reddit.com/*
 // @match       https://www.lesswrong.com/*
 // @match       https://cohost.org/*
+// @match       https://nextdoor.com/*
 //
 // Copied from https://stackexchange.com/sites?view=list#traffic
 // @match       https://3dprinting.stackexchange.com/*
@@ -476,5 +477,23 @@ if (loc.startsWith("https://cohost.org/")) {
     if (el.innerText == "read more") {
       clickIfUnclicked(el);
     }
+  });
+}
+
+// Test page: https://nextdoor.com/p/bSFkfd2Smd5c?view=detail
+// Expected: all comments are shown
+//
+// Test page: https://nextdoor.com/
+// Expected: on timeline posts, all posts are expanded
+if (loc.startsWith("https://nextdoor.com/")) {
+  observe(200, [
+    // "See N more comments"
+    'button.see-previous-comments-button-paged',
+    // "See more" at the end of a post on the timeline
+    'button.truncate-view-more-link',
+    // "See more" at the end of a comment
+    'a.truncate-view-more-link',
+  ], el => {
+    clickIfUnclicked(el);
   });
 }

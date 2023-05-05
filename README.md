@@ -27,5 +27,6 @@ print, copy, or archive (e.g. SingleFile) the entire page.
 - https://www.lesswrong.com/ (expand collapsed comments)
 - https://tvtropes.org/ (open all folders)
 - https://cohost.org/ (expand posts on actual post pages)
+- https://nextdoor.com/ (expand posts and comments)
 
 For test pages, see the "Test page:" comments in expand.user.js.
