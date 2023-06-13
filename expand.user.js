@@ -264,11 +264,12 @@ function clickIfUnclicked(el) {
 
 // Test page: https://www.goodreads.com/book/show/931984.The_Presentation_of_Self_in_Everyday_Life
 // Expected: all the lengthy user book reviews are expanded
+//
+// Test page: https://www.goodreads.com/book/show/39736150-the-little-typer
+// Expected: all the lengthy user book reviews are expanded
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
-  observe(100000, ['a[data-text-id][onclick^="swapContent("]'], el => {
-    if (el.innerText == "...more") {
-      el.click();
-    }
+  observe(1000, ['button[aria-label="Tap to show more review"]'], el => {
+    clickIfUnclicked(el);
   });
 }
 
