@@ -28,5 +28,6 @@ print, copy, or archive (e.g. SingleFile) the entire page.
 - https://tvtropes.org/ (open all folders)
 - https://cohost.org/ (expand posts on actual post pages)
 - https://nextdoor.com/ (expand posts and comments)
+- https://store.steampowered.com/ (expand review text)
 
 For test pages, see the "Test page:" comments in expand.user.js.

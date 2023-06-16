@@ -20,6 +20,7 @@
 // @match       https://www.lesswrong.com/*
 // @match       https://cohost.org/*
 // @match       https://nextdoor.com/*
+// @match       https://store.steampowered.com/*
 //
 // Copied from https://stackexchange.com/sites?view=list#traffic
 // @match       https://3dprinting.stackexchange.com/*
@@ -496,5 +497,13 @@ if (loc.startsWith("https://nextdoor.com/")) {
     'a.truncate-view-more-link',
   ], el => {
     clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://store.steampowered.com/app/1147890/Bonfire_Peaks/
+// Expected: review text is expanded on all reviews
+if (loc.startsWith("https://store.steampowered.com/")) {
+  observe(100, ['div.view_more > a[href="#"][onclick]'], el => {
+    el.click();
   });
 }
