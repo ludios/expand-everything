@@ -226,14 +226,14 @@ function observe(maxMutations, selectors, callback) {
       console.log(`disconnecting MutationObserver after ${mutations} mutations to avoid slowing down the page`);
       observer.disconnect();
     }
-    for (let selector of selectors) {
+    for (const selector of selectors) {
       queryElements(selector, callback);
     }
   });
 
   function reobserve() {
     // For elements present before MutationObserver
-    for (let selector of selectors) {
+    for (const selector of selectors) {
       queryElements(selector, callback);
     }
 
