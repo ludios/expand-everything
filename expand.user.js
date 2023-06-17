@@ -246,15 +246,22 @@ function observe(maxMutations, selectors, callback) {
   reobserve();
 
   navigation.addEventListener('navigate', ev => {
-    console.log('navigated, resetting MutationObserver');
+    console.log('navigated, resetting alreadyClicked and MutationObserver');
+    observer.disconnect();
+    resetAlreadyClicked();
     mutations = 0;
     pageCounter = 0;
     reobserve();
   });
 }
 
+let alreadyClicked;
+function resetAlreadyClicked() {
+  alreadyClicked = new WeakMap();
+}
+resetAlreadyClicked();
+
 // Click on something if it hasn't already been clicked.
-const alreadyClicked = new WeakMap();
 function clickIfUnclicked(el) {
   if (alreadyClicked.get(el)) {
     return;
