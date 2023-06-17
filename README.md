@@ -20,9 +20,9 @@ we need to automatically click, but crucially:
   2) The MutationObserver is reinstalled after an SPA navigation (because
      there might be new elements to click on).
 
-     We use [Navigation API](https://caniuse.com/mdn-api_navigation) when
-     available to watch for location changes; otherwise, we fall back to
-     `setInterval(..., 1000)`, but stop polling when the page is not visible.
+     When available, we use [Navigation API](https://caniuse.com/mdn-api_navigation)
+     to watch for location changes; otherwise, we use `setInterval(..., 1000)`,
+     but stop polling when the page is not visible.
 
 ## Install
 
