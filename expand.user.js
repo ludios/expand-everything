@@ -319,14 +319,25 @@ if (loc.startsWith("https://www.imdb.com/title/")) {
 // Expected: "show more" in the comments is clicked, for the loaded comments
 // Expected: replies for the top-most comments are clicked
 // Expected: the MutationObserver is disconnected soon after page load to avoid slowing things down
+//
+// Test page (logged in): https://www.youtube.com/
+// Expected: after clicking the profile icon in the top-right, the modal/menu works normally (it is not immediately closed)
 if (loc.startsWith("https://www.youtube.com/")) {
-  observe(100, [
+  observe(200, [
     // Video description "show more"
     'div#description > div#description-inner > #description-inline-expander > .button.ytd-text-inline-expander#expand',
     // Video comments "show more" and replies
-    '.more-button',
+    'div.ytd-comment-replies-renderer#expander .more-button#more-replies',
   ], el => {
-    el.click();
+    // We can't just el.click() unconditionally because that causes menus/modals to lose focus
+    // and disappear.
+    //
+    // We can't use clickIfUnclicked due to YouTube oddities after navigating the SPA (the video
+    // description doesn't expand after clicking too early), but conveniently YouTube sets "hidden"
+    // on things that don't need to be clicked any more.
+    if (!el.hidden) {
+      el.click();
+    }
   });
 }
 
