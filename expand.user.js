@@ -215,15 +215,22 @@ function queryElements(selector, callback) {
   elements.forEach(element => callback(element));
 }
 
+const logPrefix = "Expand Everything: ";
 let pageCounter = 0;
+let mutations = 0;
+let observer = null;
+let lastHref = location.href;
 
 // Observe some selectors and run a callback for each selected element.
 function observe(maxMutations, selectors, callback) {
-  let mutations = 0;
-  const observer = new MutationObserver(() => {
+  if (observer !== null) {
+    throw new Error(`observe(...) called more than once`);
+  }
+
+  observer = new MutationObserver(() => {
     mutations++;
     if (mutations >= maxMutations) {
-      console.log(`disconnecting MutationObserver after ${mutations} mutations to avoid slowing down the page`);
+      console.log(`${logPrefix}disconnecting MutationObserver after ${mutations} mutations to avoid slowing down the page`);
       observer.disconnect();
     }
     for (const selector of selectors) {
@@ -232,11 +239,12 @@ function observe(maxMutations, selectors, callback) {
   });
 
   function reobserve() {
-    // For elements present before MutationObserver
+    // Process elements that were present before MutationObserver
     for (const selector of selectors) {
       queryElements(selector, callback);
     }
 
+    // Start observing
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
@@ -245,14 +253,35 @@ function observe(maxMutations, selectors, callback) {
 
   reobserve();
 
-  navigation.addEventListener('navigate', ev => {
-    console.log('navigated, resetting alreadyClicked and MutationObserver');
+  function navigated() {
+    console.log(`${logPrefix}navigated, resetting alreadyClicked and MutationObserver`);
     observer.disconnect();
     resetAlreadyClicked();
     mutations = 0;
     pageCounter = 0;
     reobserve();
-  });
+  }
+
+  // Firefox and Safari lack Navigation API: https://caniuse.com/mdn-api_navigation
+  if (globalThis.navigation && navigation.addEventListener) {
+    console.log(`${logPrefix}using Navigation API to detect location changes`);
+    navigation.addEventListener('navigate', (_ev) => {
+      navigated();
+    }); 
+  } else {
+    console.log(`${logPrefix}using setInterval(..., 1000) to detect location changes`);
+    // https://stackoverflow.com/questions/34999976/detect-changes-on-the-url
+    // suggests that this is the best way to do it when we lack Navigation API.
+    setInterval(
+      () => {
+        if (location.href !== lastHref) {
+          lastHref = location.href;
+          navigated();
+        }
+      },
+      1000
+    );
+  }
 }
 
 let alreadyClicked;
@@ -302,7 +331,7 @@ if (loc.startsWith("https://www.imdb.com/title/")) {
     if (el.tagName == "BUTTON") {
       if (pageCounter < 5) {
         pageCounter++;
-        console.log(`page counter: ${pageCounter}`);
+        console.log(`${logPrefix}page counter: ${pageCounter}`);
         el.click();
       }
     } else {
