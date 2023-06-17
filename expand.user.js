@@ -331,7 +331,10 @@ function clickIfUnclicked(el) {
 // Test page: https://www.goodreads.com/book/show/39736150-the-little-typer
 // Expected: all the lengthy user book reviews are expanded
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
-  observe(1000, ['button[aria-label="Tap to show more review"]'], el => {
+  observe(1000, [
+    'button[aria-label="Tap to show more review"]',
+    'button[aria-label="Tap to show more about the author"]',
+  ], el => {
     clickIfUnclicked(el);
   });
 }
