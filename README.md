@@ -1,6 +1,6 @@
 # Expand Everything
 
-**Load more**, **show more**, **read more** - these are the cursed links that
+*Load more!*, *show more!*, *read more!* - these are the cursed links that
 website owners make you click before you can see all the information that you
 came to read. Expand Everything fixes this by clicking them for you.
 
