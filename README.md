@@ -7,14 +7,14 @@ came to read. Expand Everything fixes this by clicking them for you.
 Efforts are made to avoid slowing things down after the initial load. We use
 `MutationObserver` and `querySelectorAll` to watch for the elements that
 we need to automatically click, but crucially:
-  1) the MutationObserver is disconnected after e.g. 200 mutations to avoid
+  1) The MutationObserver is disconnected after e.g. 200 mutations to avoid
      slowing things down.
-  2) the MutationObserver is reinstalled after an SPA navigation (because
+  2) The MutationObserver is reinstalled after an SPA navigation (because
      there might be new elements to click on).
 
-     In Chrome, we use [Navigation API](https://caniuse.com/mdn-api_navigation)
-     to watch for location changes; elsewhere, we use `setInterval(..., 1000)`,
-     but disable it when the page is not visible.
+     We use [Navigation API](https://caniuse.com/mdn-api_navigation) when
+     available to watch for location changes; otherwise, we fall back to
+     `setInterval(..., 1000)`, but stop polling when the page is not visible.
 
 ## Install
 
