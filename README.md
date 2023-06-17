@@ -4,6 +4,8 @@
 website owners make you click before you can see all the information that you
 came to read. Expand Everything fixes this by clicking them for you.
 
+<b><a href="#demo">Demo</a></b>.
+
 Efforts are made to avoid slowing things down after the initial load. We use
 `MutationObserver` and `querySelectorAll` to watch for the elements that
 we need to automatically click, but crucially:
@@ -46,3 +48,9 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://store.steampowered.com/ (expand review text)
 
 For test pages, see the "Test page:" comments in expand.user.js.
+
+## Demo
+
+The video description and comment replies are expanded automatically.
+
+<img src="https://user-images.githubusercontent.com/4458/246577842-20f194f1-05d2-421e-afbf-cb392c9c4a31.gif">
