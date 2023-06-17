@@ -4,6 +4,10 @@
 website owners make you click before you can see all the information that you
 came to read. Expand Everything fixes this by clicking them for you.
 
+This is ideally suited for use cases where you plan to read, print, copy, or
+archive (e.g. [SingleFile](https://github.com/gildas-lormeau/SingleFile)) the
+entire page.
+
 <b><a href="#demo">Demo</a></b>.
 
 Efforts are made to avoid slowing things down after the initial load. We use
