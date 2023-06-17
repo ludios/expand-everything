@@ -220,6 +220,7 @@ let pageCounter = 0;
 let mutations = 0;
 let observer = null;
 let lastHref = location.href;
+let locationInterval = null;
 
 // Observe some selectors and run a callback for each selected element.
 function observe(maxMutations, selectors, callback) {
@@ -262,17 +263,11 @@ function observe(maxMutations, selectors, callback) {
     reobserve();
   }
 
-  // Firefox and Safari lack Navigation API: https://caniuse.com/mdn-api_navigation
-  if (globalThis.navigation && navigation.addEventListener) {
-    console.log(`${logPrefix}using Navigation API to detect location changes`);
-    navigation.addEventListener('navigate', (_ev) => {
-      navigated();
-    }); 
-  } else {
-    console.log(`${logPrefix}using setInterval(..., 1000) to detect location changes`);
-    // https://stackoverflow.com/questions/34999976/detect-changes-on-the-url
-    // suggests that this is the best way to do it when we lack Navigation API.
-    setInterval(
+  function startPollingLocation() {
+    if (locationInterval !== null) {
+      throw new Error(`locationInterval already exists: ${locationInterval}`);
+    }
+    locationInterval = setInterval(
       () => {
         if (location.href !== lastHref) {
           lastHref = location.href;
@@ -281,6 +276,37 @@ function observe(maxMutations, selectors, callback) {
       },
       1000
     );
+  }
+
+  function stopPollingLocation() {
+    if (locationInterval === null) {
+      throw new Error(`locationInterval === null`);
+    }
+    clearInterval(locationInterval);
+    locationInterval = null;
+  }
+
+  // So far, only Chromium-based browsers have Navigation API: https://caniuse.com/mdn-api_navigation
+  if (window.navigation && navigation.addEventListener) {
+    console.log(`${logPrefix}using Navigation API to detect location changes`);
+    navigation.addEventListener('navigate', (_ev) => {
+      navigated();
+    });
+  } else {
+    // https://stackoverflow.com/questions/34999976/detect-changes-on-the-url
+    // suggests that setInterval is the best way to do it when we lack Navigation API.
+    console.log(`${logPrefix}using setInterval(..., 1000) to detect location changes`);
+    startPollingLocation();
+    // Not necessary for correctness, but to save power, kill our setInterval when the page isn't visible.
+    document.addEventListener("visibilitychange", function() {
+      if (document.hidden) {
+        console.log(`${logPrefix}page has become hidden, stopping setInterval`);
+        stopPollingLocation();
+      } else {
+        console.log(`${logPrefix}page has become visible, starting setInterval`);
+        startPollingLocation();
+      }
+    });
   }
 }
 
