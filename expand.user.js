@@ -15,6 +15,7 @@
 // @match       https://tvtropes.org/*
 // @match       https://news.ycombinator.com/*
 // @match       https://github.com/*
+// @match       https://gist.github.com/*
 // @match       https://www.quora.com/*
 // @match       https://old.reddit.com/*
 // @match       https://www.lesswrong.com/*
@@ -485,6 +486,17 @@ if (loc.startsWith("https://github.com/")) {
   ], el => {
     clickIfUnclicked(el);
   });
+}
+
+// Test page: https://gist.github.com/ivan/5095670735ba941a6090a69fce4183df
+// Expected: all comments are loaded; "Load earlier comments..." is not visible
+if (loc.startsWith("https://gist.github.com/")) {
+  observe(200, [
+    // "Load earlier comments..."
+    'form.ajax-pagination-form.js-ajax-pagination[action$="/load_comments"] > button.ajax-pagination-btn'
+  ], el => {
+    clickIfUnclicked(el);
+  })
 }
 
 // Test page: https://stackoverflow.com/questions/59156473/what-is-the-difference-between-async-move-and-async-move

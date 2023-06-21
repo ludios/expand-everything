@@ -2,7 +2,8 @@
 
 *Load more!*, *show more!*, *read more!* - these are the cursed buttons that
 website owners make you click before you can see all the information that you
-came to read. Expand Everything fixes this by clicking them for you.
+came to read. Reviews and comments deemed "too long"; YouTube video descriptions
+that are hidden. Expand Everything fixes this by clicking them for you.
 
 This is ideally suited for use cases where you plan to read, print, copy, or
 archive (e.g. [SingleFile](https://github.com/gildas-lormeau/SingleFile)) the
@@ -37,6 +38,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 ## Supported sites
 
 - https://github.com/ ("Load more" all the issue comments, expand minimized and similar comments, expand outdated review comments)
+- https://gist.github.com/ (load all comments)
 - https://www.youtube.com/ (expand video descriptions and comments, load more comments)
 - https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)
 - https://\*.substack.com/ (dismiss subscribe overlay, expand comment text)
