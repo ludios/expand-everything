@@ -5,7 +5,7 @@
 // @author      ludios
 // @license     AGPL-3.0; https://www.gnu.org/licenses/agpl-3.0.en.html
 // @grant       none
-// @version     2.0.1
+// @version     2.1.0
 //
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.imdb.com/title/*/reviews*
