@@ -5,7 +5,7 @@
 // @author      ludios
 // @license     AGPL-3.0; https://www.gnu.org/licenses/agpl-3.0.en.html
 // @grant       none
-// @version     2.1.0
+// @version     2.2.0
 //
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.imdb.com/title/*/reviews*
@@ -490,13 +490,17 @@ if (loc.startsWith("https://github.com/")) {
 
 // Test page: https://gist.github.com/ivan/5095670735ba941a6090a69fce4183df
 // Expected: all comments are loaded; "Load earlier comments..." is not visible
+// Expected: when restarting Chrome, tab is not redirected to a /load_comments page
 if (loc.startsWith("https://gist.github.com/")) {
-  observe(200, [
-    // "Load earlier comments..."
-    'form.ajax-pagination-form.js-ajax-pagination[action$="/load_comments"] > button.ajax-pagination-btn'
-  ], el => {
-    clickIfUnclicked(el);
-  })
+  // Wait for the JavaScript to load, because we don't want a button click to navigate us to /load_comments
+  window.onload = () => {
+    observe(200, [
+      // "Load earlier comments..."
+      'form.ajax-pagination-form.js-ajax-pagination[action$="/load_comments"] > button.ajax-pagination-btn'
+    ], el => {
+      clickIfUnclicked(el);
+    });
+  }
 }
 
 // Test page: https://stackoverflow.com/questions/59156473/what-is-the-difference-between-async-move-and-async-move
