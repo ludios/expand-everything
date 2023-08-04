@@ -11,7 +11,6 @@
 // @match       https://www.imdb.com/title/*/reviews*
 // @match       https://www.youtube.com/*
 // @match       https://*.linkedin.com/*
-// @match       https://*.substack.com/*
 // @match       https://tvtropes.org/*
 // @match       https://news.ycombinator.com/*
 // @match       https://github.com/*
@@ -22,6 +21,11 @@
 // @match       https://cohost.org/*
 // @match       https://nextdoor.com/*
 // @match       https://store.steampowered.com/*
+//
+// Substack sites
+// @match       https://*.substack.com/*
+// @match       https://www.platformer.news/*
+// @match       https://www.henrikkarlsson.xyz/*
 //
 // Copied from https://stackexchange.com/sites?view=list#traffic
 // @match       https://3dprinting.stackexchange.com/*
@@ -421,7 +425,11 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 // Test page: https://gurwinder.substack.com/p/tiktok-may-be-a-chinese-bio-weapon/comments
 // Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
 // Expected: "Load more" button at the bottom is clicked; all comments are shown
-if (window.location.host.endsWith(".substack.com")) {
+if (
+  window.location.host.endsWith(".substack.com") ||
+  window.location.host === "www.platformer.news" ||
+  window.location.host === "www.henrikkarlsson.xyz"
+) {
   observe(100, [
     // "No thanks" button; clicking removes the overlay
     'button.maybe-later',
