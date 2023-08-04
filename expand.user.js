@@ -555,10 +555,16 @@ if (loc.startsWith("https://old.reddit.com/")) {
 
 // Test page: https://www.lesswrong.com/posts/uKp6tBFStnsvrot5t/what-dall-e-2-can-and-cannot-do
 // Expected: all comments expanded; no one-line previews
+//
+// Test page: https://www.lesswrong.com/users/blueiris
+// Test page: https://www.lesswrong.com/users/blueiris2
+// Expected: all downvoted comments are expanded; no [+]
 if (loc.startsWith("https://www.lesswrong.com/")) {
   observe(100, [
     // Collapsed comments
     '.SingleLineComment-truncatedHighlight',
+    // Downvoted comments
+    'a.CommentsItemMeta-collapse',
   ], el => {
     clickIfUnclicked(el);
   });
