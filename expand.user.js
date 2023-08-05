@@ -565,14 +565,18 @@ if (loc.startsWith("https://old.reddit.com/")) {
 // Expected: all comments expanded; no one-line previews
 //
 // Test page: https://www.lesswrong.com/users/blueiris
-// Test page: https://www.lesswrong.com/users/blueiris2
 // Expected: all downvoted comments are expanded; no [+]
+//
+// Test page: https://www.lesswrong.com/users/blueiris2
+// Expected: all downvoted comments are expanded; no [+]; "Load more" at the end is not visible
 if (loc.startsWith("https://www.lesswrong.com/")) {
   observe(100, [
-    // Collapsed comments
+    // Comments truncated to a single line
     '.SingleLineComment-truncatedHighlight',
-    // Downvoted comments
+    // Fully collapsed comments
     'a.CommentsItemMeta-collapse',
+    // "Load more" at the end of a /users/ page
+    'a.LoadMore-root',
   ], el => {
     if (el.classList.contains("CommentsItemMeta-collapse")) {
       // Click only if [+], not [-]
@@ -580,7 +584,7 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
         clickIfUnclicked(el);
       }
     } else {
-      // .SingleLineComment-truncatedHighlight
+      // .SingleLineComment-truncatedHighlight or a.LoadMore-root
       clickIfUnclicked(el);
     }
   });
