@@ -574,7 +574,15 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
     // Downvoted comments
     'a.CommentsItemMeta-collapse',
   ], el => {
-    clickIfUnclicked(el);
+    if (el.classList.contains("CommentsItemMeta-collapse")) {
+      // Click only if [+], not [-]
+      if (el.innerText == "[+]") {
+        clickIfUnclicked(el);
+      }
+    } else {
+      // .SingleLineComment-truncatedHighlight
+      clickIfUnclicked(el);
+    }
   });
 }
 
