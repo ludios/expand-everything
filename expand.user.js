@@ -27,6 +27,10 @@
 // @match       https://www.platformer.news/*
 // @match       https://www.henrikkarlsson.xyz/*
 //
+// XenForo sites
+// @match       https://www.hwinfo.com/forum/*
+//
+// StackExchange sites
 // Copied from https://stackexchange.com/sites?view=list#traffic
 // @match       https://3dprinting.stackexchange.com/*
 // @match       https://academia.stackexchange.com/*
@@ -622,6 +626,17 @@ if (loc.startsWith("https://nextdoor.com/")) {
 // Expected: review text is expanded on all reviews
 if (loc.startsWith("https://store.steampowered.com/")) {
   observe(100, ['div.view_more > a[href="#"][onclick]'], el => {
+    el.click();
+  });
+}
+
+// Test page: https://www.hwinfo.com/forum/threads/prometheus-adapter-for-hwinfo-grafana-dashboard.6281/page-5
+// Expected: "Rohirm said:" quote at the bottom is expanded; "Click to expand..." is not visible
+if (loc.startsWith("https://www.hwinfo.com/forum/")) {
+  observe(10, [
+    // "Click to expand..."
+    'div.js-expandLink > a[role="button"]'
+  ], el => {
     el.click();
   });
 }
