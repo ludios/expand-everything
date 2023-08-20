@@ -54,6 +54,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://cohost.org/ (expand posts on actual post pages)
 - https://nextdoor.com/ (expand posts and comments)
 - https://store.steampowered.com/ (expand review text)
+- https://www.patreon.com/ (expand post bodies)
 - https://www.hwinfo.com/forum/ (expand quote blocks)
 
 For test pages, see the "Test page:" comments in expand.user.js.

@@ -21,6 +21,7 @@
 // @match       https://cohost.org/*
 // @match       https://nextdoor.com/*
 // @match       https://store.steampowered.com/*
+// @match       https://www.patreon.com/*
 //
 // Substack sites
 // @match       https://*.substack.com/*
@@ -636,6 +637,17 @@ if (loc.startsWith("https://www.hwinfo.com/forum/")) {
   observe(10, [
     // "Click to expand..."
     'div.js-expandLink > a[role="button"]'
+  ], el => {
+    el.click();
+  });
+}
+
+// Test page: https://www.patreon.com/comprehensiblejapanese/posts
+// Expected: all posts expanded; "Continue reading" is not visible
+if (loc.startsWith("https://www.patreon.com/")) {
+  observe(10, [
+    // "Continue reading"
+    'div[class][data-tag="post-content-collapse"] > div[class] > button[class]'
   ], el => {
     el.click();
   });
