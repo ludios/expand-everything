@@ -27,6 +27,7 @@
 // @match       https://*.substack.com/*
 // @match       https://www.platformer.news/*
 // @match       https://www.henrikkarlsson.xyz/*
+// @match       https://www.experimental-history.com/*
 //
 // XenForo sites
 // @match       https://www.hwinfo.com/forum/*
@@ -433,7 +434,8 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 if (
   window.location.host.endsWith(".substack.com") ||
   window.location.host === "www.platformer.news" ||
-  window.location.host === "www.henrikkarlsson.xyz"
+  window.location.host === "www.henrikkarlsson.xyz" ||
+  window.location.host === "www.experimental-history.com"
 ) {
   observe(100, [
     // "No thanks" button; clicking removes the overlay
