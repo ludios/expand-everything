@@ -56,6 +56,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://store.steampowered.com/ (expand review text)
 - https://www.patreon.com/ (expand post bodies)
 - https://www.hwinfo.com/forum/ (expand quote blocks)
+- https://mastodon.social/ and https://social.pixie.town/ (expand toots hidden behind a spoiler)
 
 For test pages, see the "Test page:" comments in expand.user.js.
 

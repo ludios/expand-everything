@@ -29,6 +29,10 @@
 // @match       https://www.henrikkarlsson.xyz/*
 // @match       https://www.experimental-history.com/*
 //
+// Mastodon sites
+// @match       https://mastodon.social/*
+// @match       https://social.pixie.town/*
+//
 // XenForo sites
 // @match       https://www.hwinfo.com/forum/*
 //
@@ -652,5 +656,19 @@ if (loc.startsWith("https://www.patreon.com/")) {
     'div[class][data-tag="post-content-collapse"] > div[class] > button[class]'
   ], el => {
     el.click();
+  });
+}
+
+// Test page: https://social.pixie.town/@joepie91/110978280642849045
+// Expected: all toots expanded; "SHOW MORE" is not visible
+if (
+  window.location.host === "mastodon.social" ||
+  window.location.host === "social.pixie.town"
+) {
+  observe(20, [
+    // "SHOW MORE"
+    'div[data-spoiler="folded"] button.status__content__spoiler-link'
+  ], el => {
+    clickIfUnclicked(el);
   });
 }
