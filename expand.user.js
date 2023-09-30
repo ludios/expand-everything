@@ -513,7 +513,7 @@ if (loc.startsWith("https://github.com/")) {
 if (loc.startsWith("https://gist.github.com/")) {
   // Wait for the JavaScript to load, because we don't want a button click to navigate us to /load_comments
   window.onload = () => {
-    observe(200, [
+    observe(5000, [
       // "Load earlier comments..."
       'form.ajax-pagination-form.js-ajax-pagination[action$="/load_comments"] > button.ajax-pagination-btn'
     ], el => {
