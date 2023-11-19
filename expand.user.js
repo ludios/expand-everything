@@ -502,6 +502,11 @@ if (loc.startsWith("https://github.com/")) {
     'div.minimized-comment > details > summary > div > .Details-content--closed',
     // "Show resolved"
     'summary[role="button"] > div > span.Details-content--closed',
+    // "Load diff" button on PRs, where some diffs are collapsed because
+    // "Large diffs are not rendered by default" and "This file was deleted".
+    // This is disabled by default because some pages are just too large, e.g.
+    // https://github.com/sveltejs/svelte/commit/fe8a9ce31d5fb662b3953b318621ea364992e014
+    //'button[data-view-component="true"].load-diff-button',
   ], el => {
     clickIfUnclicked(el);
   });
