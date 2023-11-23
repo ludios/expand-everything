@@ -484,6 +484,9 @@ if (loc.startsWith("https://news.ycombinator.com/item")) {
 // Test page: https://github.com/JustAnotherArchivist/snscrape/issues/634
 // Expected: spam/outdated/duplicate/off-topic comments are expanded
 //
+// Test page: https://github.com/vitejs/vite/issues/8237
+// Expected: minimized comments are expanded
+//
 // Test page: https://github.com/NixOS/nixpkgs/pull/194310
 // Expected: outdated review comments are expanded
 //
@@ -499,7 +502,7 @@ if (loc.startsWith("https://github.com/")) {
     // "N similar comments"
     'summary.pagination-loader-container > .Details-content--closed',
     // "Show comment"
-    'div.minimized-comment > details > summary > div > .Details-content--closed',
+    'div.minimized-comment > details:not([open]) > summary > div > .Details-content--closed',
     // "Show resolved"
     'summary[role="button"] > div > span.Details-content--closed',
     // "Load diff" button on PRs, where some diffs are collapsed because
