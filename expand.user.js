@@ -466,7 +466,10 @@ if (loc.startsWith("https://tvtropes.org/")) {
 
 // Test page: https://news.ycombinator.com/item?id=34282033 as a logged-in user with showdead enabled
 // Expected: all comments are shown; no '[N more]' links visible
-if (loc.startsWith("https://news.ycombinator.com/item")) {
+//
+// Test page: https://news.ycombinator.com/threads?id=huppeldepup (or 'next' to the page with the collapsed 'I used to not worry about climate change. Now I do...')
+// Expected: all comments are shown; no '[N more]' links visible
+if (loc.startsWith("https://news.ycombinator.com/")) {
   // No need for MutationObserver
   queryElements('a.togg.clicky', el => {
     if (el.innerText.endsWith(" more]")) {
