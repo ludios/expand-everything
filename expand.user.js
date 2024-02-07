@@ -495,6 +495,9 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 //
 // Test page: https://github.com/A
 // Expected: activity is not expanded; URL does not start changing
+//
+// Test page: https://github.com/PolyMC/PolyMC/commit/ccf282593dcdbe189c99b81b8bc90cb203aed3ee
+// Expected: all comments are loaded; "Load more comments..." button is not visible
 if (loc.startsWith("https://github.com/")) {
   observe(1000, [
     // "N hidden items; Load more..."
@@ -502,6 +505,8 @@ if (loc.startsWith("https://github.com/")) {
     // We don't want all button.ajax-pagination-btn because clicking button.ajax-pagination-btn
     // on a profile page e.g. https://github.com/A causes the URL to start changing.
     '#js-progressive-timeline-item-container button.ajax-pagination-btn',
+    // "Load more comments..." on a commit page
+    '#all_commit_comments button.ajax-pagination-btn',
     // "N similar comments"
     'summary.pagination-loader-container > .Details-content--closed',
     // "Show comment"
