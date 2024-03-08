@@ -40,6 +40,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://github.com/ ("Load more" all the issue comments, expand minimized and similar comments, expand outdated review comments)
 - https://gist.github.com/ (load all comments)
 - https://www.youtube.com/ (expand video descriptions and comments, load more comments)
+- https://twitter.com/ (in threads, show replies to replies)
 - https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)
 - https://\*.substack.com/ (dismiss subscribe overlay, expand comment text)
 - https://www.goodreads.com/ (expand book review text)

@@ -22,6 +22,7 @@
 // @match       https://nextdoor.com/*
 // @match       https://store.steampowered.com/*
 // @match       https://www.patreon.com/*
+// @match       https://twitter.com/*
 //
 // Substack sites
 // @match       https://*.substack.com/*
@@ -686,5 +687,18 @@ if (
     'div[data-spoiler="folded"] button.status__content__spoiler-link'
   ], el => {
     clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://twitter.com/AChillGhost/status/1761774191920005343
+// Expected: all replies expanded; "Show replies" is not visible
+if (loc.startsWith("https://twitter.com/")) {
+  observe(1000, [
+    // "Show replies"
+    'div[role="button"] > div > div > div[style] > span[class^="css-"][style="text-overflow: unset;"]'
+  ], el => {
+    if (el.innerText === "Show replies") {
+      el.click();
+    }
   });
 }
