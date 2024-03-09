@@ -417,9 +417,15 @@ if (loc.startsWith("https://www.youtube.com/")) {
 
 // Test page: https://www.linkedin.com/in/daraweiss
 // Expected: "show more" is clicked in the profile sections, revealing all text
+//
+// Test page: https://www.linkedin.com/pulse/how-scaleways-object-storage-failed-me-files-lost-lack-di-battista-uvyme/
+// Expected: comments at the bottom are expanded; "…see more" is not visible
 if (loc.startsWith("https://www.linkedin.com/")) {
   observe(100, [
+    // "show more" in profile sections
     '.inline-show-more-text__button',
+    // "…see more" in the comments at the bottom of posts
+    'button.feed-shared-inline-show-more-text__see-more-less-toggle.see-more',
   ], el => {
     el.click();
   });
