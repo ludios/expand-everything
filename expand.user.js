@@ -23,6 +23,7 @@
 // @match       https://store.steampowered.com/*
 // @match       https://www.patreon.com/*
 // @match       https://twitter.com/*
+// @match       https://www.google.com/search?*
 //
 // Substack sites
 // @match       https://*.substack.com/*
@@ -706,5 +707,15 @@ if (loc.startsWith("https://twitter.com/")) {
     if (el.innerText === "Show replies") {
       el.click();
     }
+  });
+}
+
+// Test page: https://www.google.com/search?q=Pacific+West+Home+Improvements
+// Expected: after clicking '54 Google reviews', all the reviews are expanded and the "More" links are not visible
+if (loc.startsWith("https://www.google.com/search")) {
+  observe(100, [
+    'a.review-more-link[role="button"][aria-expanded="false"]'
+  ], el => {
+    el.click();
   });
 }
