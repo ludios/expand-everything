@@ -39,7 +39,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 
 - https://github.com/ ("Load more" all the issue comments, expand minimized and similar comments, expand outdated review comments)
 - https://gist.github.com/ (load all comments)
-- https://www.youtube.com/ (expand video descriptions and comments, load more comments)
+- ~~https://www.youtube.com/ (expand video descriptions and comments, load more comments)~~ disabled due to brokenness with new and horrible layout
 - https://www.google.com/ (in reviews for a business, expand text)
 - https://twitter.com/ (in threads, show replies to replies)
 - https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)

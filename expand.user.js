@@ -9,7 +9,7 @@
 //
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.imdb.com/title/*/reviews*
-// @match       https://www.youtube.com/*
+// DISABLED-match       https://www.youtube.com/*
 // @match       https://*.linkedin.com/*
 // @match       https://tvtropes.org/*
 // @match       https://news.ycombinator.com/*
