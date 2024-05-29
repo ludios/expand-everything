@@ -30,6 +30,7 @@
 // @match       https://www.platformer.news/*
 // @match       https://www.henrikkarlsson.xyz/*
 // @match       https://www.experimental-history.com/*
+// @match       https://www.astralcodexten.com/*
 //
 // Mastodon sites
 // @match       https://mastodon.social/*
