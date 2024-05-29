@@ -451,7 +451,8 @@ if (
   window.location.host.endsWith(".substack.com") ||
   window.location.host === "www.platformer.news" ||
   window.location.host === "www.henrikkarlsson.xyz" ||
-  window.location.host === "www.experimental-history.com"
+  window.location.host === "www.experimental-history.com" ||
+  window.location.host === "www.astralcodexten.com"
 ) {
   observe(100, [
     // "No thanks" button; clicking removes the overlay
