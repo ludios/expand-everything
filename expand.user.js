@@ -417,15 +417,18 @@ if (loc.startsWith("https://www.youtube.com/")) {
   });
 }
 
-// Test page: https://www.linkedin.com/in/daraweiss
+// Test page: https://www.linkedin.com/in/daraweiss (logged out)
 // Expected: "show more" is clicked in the profile sections, revealing all text
+//
+// Test page: https://www.linkedin.com/in/daraweiss (logged in)
+// Expected: "show more" is clicked in the profile sections, revealing all text, browser is _not_ redirected to another page like https://www.linkedin.com/feed/update/urn:li:activity:7150642313440985089/
 //
 // Test page: https://www.linkedin.com/pulse/how-scaleways-object-storage-failed-me-files-lost-lack-di-battista-uvyme/
 // Expected: comments at the bottom are expanded; "…see more" is not visible
 if (loc.startsWith("https://www.linkedin.com/")) {
   observe(100, [
     // "show more" in profile sections
-    '.inline-show-more-text__button',
+    //'.inline-show-more-text__link-container-collapsed > .inline-show-more-text__button',
     // "…see more" in the comments at the bottom of posts
     'button.feed-shared-inline-show-more-text__see-more-less-toggle.see-more',
   ], el => {
