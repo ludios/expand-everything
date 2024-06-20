@@ -44,6 +44,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://twitter.com/ (in threads, show replies to replies)
 - https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)
 - https://\*.substack.com/ (dismiss subscribe overlay, expand comment text)
+- https://substack.com/ (expand comment text on notes)
 - https://www.goodreads.com/ (expand book review text)
 - https://old.reddit.com/ (expand comments below threshold, expand deleted comments)
   - For "load more comments", you'll need [Reddit Enhancement Suite](https://github.com/honestbleeps/Reddit-Enhancement-Suite) and its "Never Ending Comments", "Load Child Comments" options.

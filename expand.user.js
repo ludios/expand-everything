@@ -26,6 +26,7 @@
 // @match       https://www.google.com/search?*
 //
 // Substack sites
+// @match       https://substack.com/*
 // @match       https://*.substack.com/*
 // @match       https://www.platformer.news/*
 // @match       https://www.henrikkarlsson.xyz/*
@@ -463,6 +464,19 @@ if (
     'button.button.collapsed-reply',
   ], el => {
     el.click();
+  });
+}
+
+// Test page: https://substack.com/@meaningness/note/c-59538921
+// Expected: all comments are expanded; "See more..." is not visible
+if (loc.startsWith("https://substack.com/")) {
+  observe(100, [
+    // "See more..."
+    'div.pencraft[class*=_seeMoreText_] > span.pencraft > a.pencraft',
+  ], el => {
+    if (el.innerText === "See more...") {
+      el.click();
+    }
   });
 }
 
