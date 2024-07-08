@@ -50,6 +50,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
   - For "load more comments", you'll need [Reddit Enhancement Suite](https://github.com/honestbleeps/Reddit-Enhancement-Suite) and its "Never Ending Comments", "Load Child Comments" options.
 - https://news.ycombinator.com/ (expand collapsed comments)
 - https://www.quora.com/ (expand answer text)
+- https://www.nytimes.com/ (expand mini articles on live coverage pages)
 - https://www.imdb.com/ (expand film review text, load more reviews)
 - https://\*.linkedin.com/ (expand text in profiles, comments on posts)
 - https://www.lesswrong.com/ (expand collapsed comments)

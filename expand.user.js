@@ -24,6 +24,7 @@
 // @match       https://www.patreon.com/*
 // @match       https://twitter.com/*
 // @match       https://www.google.com/search?*
+// @match       https://www.nytimes.com/*
 //
 // Substack sites
 // @match       https://substack.com/*
@@ -738,5 +739,16 @@ if (loc.startsWith("https://www.google.com/search")) {
     'a.review-more-link[role="button"][aria-expanded="false"]'
   ], el => {
     el.click();
+  });
+}
+
+// Test page: https://www.nytimes.com/live/2024/07/07/world/france-election-2024
+// Expected: All mini articles expanded; "Show more" buttons are not visible
+if (loc.startsWith("https://www.nytimes.com/")) {
+  observe(20, [
+    // "Show more"
+    'button[class][data-testid="Show-More"][type="button"][aria-hidden="true"]'
+  ], el => {
+    clickIfUnclicked(el);
   });
 }
