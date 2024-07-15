@@ -23,6 +23,7 @@
 // @match       https://store.steampowered.com/*
 // @match       https://www.patreon.com/*
 // @match       https://twitter.com/*
+// @match       https://x.com/*
 // @match       https://www.google.com/search?*
 // @match       https://www.nytimes.com/*
 //
@@ -721,14 +722,22 @@ if (
   });
 }
 
-// Test page: https://twitter.com/AChillGhost/status/1761774191920005343
+// Test page: https://x.com/AChillGhost/status/1761774191920005343
 // Expected: all replies expanded; "Show replies" is not visible
-if (loc.startsWith("https://twitter.com/")) {
+//
+// Test page: https://x.com/phokarlsson/status/1808145965380935794
+// Expected: after scrolling down, "Show probable spam" button is not visible
+//
+// Test page: https://x.com/Aella_Girl/status/1811478649964843329
+// Expected: after scrolling down, "Show probable spam" button is not visible; "Probable spam" tweets are visible
+if (loc.startsWith("https://twitter.com/") || loc.startsWith("https://x.com/")) {
   observe(1000, [
     // "Show replies"
-    'div[role="button"] > div > div > div[style] > span[class^="css-"][style="text-overflow: unset;"]'
+    'div[role="button"] > div > div > div[style] > span[class^="css-"][style="text-overflow: unset;"]',
+    // "Show probable spam"
+    'div[dir="ltr"][style="text-overflow: unset; color: rgb(29, 155, 240);"] > span[class][style="text-overflow: unset;"]',
   ], el => {
-    if (el.innerText === "Show replies") {
+    if (el.innerText === "Show replies" || el.innerText === "Show probable spam") {
       el.click();
     }
   });
