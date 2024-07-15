@@ -730,14 +730,19 @@ if (
 //
 // Test page: https://x.com/Aella_Girl/status/1811478649964843329
 // Expected: after scrolling down, "Show probable spam" button is not visible; "Probable spam" tweets are visible
+//
+// Test page: https://x.com/liz_love_lace/status/1812457271126835489
+// Expected: after scrolling down, "Show additional replies, including those that may contain offensive content" is not visible
 if (loc.startsWith("https://twitter.com/") || loc.startsWith("https://x.com/")) {
   observe(1000, [
     // "Show replies"
     'div[role="button"] > div > div > div[style] > span[class^="css-"][style="text-overflow: unset;"]',
     // "Show probable spam"
     'div[dir="ltr"][style="text-overflow: unset; color: rgb(29, 155, 240);"] > span[class][style="text-overflow: unset;"]',
+    // "Show additional replies, including those that may contain offensive content"
+    'button > div[style^="text-overflow: unset;"] > span[class][style="text-overflow: unset;"] > span[class][style="text-overflow: unset;"]',
   ], el => {
-    if (el.innerText === "Show replies" || el.innerText === "Show probable spam") {
+    if (el.innerText === "Show replies" || el.innerText === "Show probable spam" || el.innerText === "Show") {
       el.click();
     }
   });
