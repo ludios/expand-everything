@@ -26,6 +26,7 @@
 // @match       https://x.com/*
 // @match       https://www.google.com/search?*
 // @match       https://www.nytimes.com/*
+// @match       https://www.bloomberg.com/*
 //
 // Substack sites
 // @match       https://substack.com/*
@@ -778,5 +779,16 @@ if (loc.startsWith("https://www.nytimes.com/")) {
     'button[class][data-testid="Show-More"][type="button"][aria-hidden="true"]'
   ], el => {
     clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine
+// Expected: All articles are listed; "Load More Stories" button is not visible
+if (loc.startsWith("https://www.bloomberg.com/")) {
+  observe(1000, [
+    // "Load More Stories"
+    'button[type="button"][data-component="outlined-button"][aria-label="more stories"]'
+  ], el => {
+    el.click();
   });
 }
