@@ -684,9 +684,17 @@ if (loc.startsWith("https://nextdoor.com/")) {
 
 // Test page: https://store.steampowered.com/app/1147890/Bonfire_Peaks/
 // Expected: review text is expanded on all reviews
+//
+// Test page: https://store.steampowered.com/app/1592280/Selaco/
+// Expected: review text is expanded on all reviews; Early Access information is expanded and "READ MORE" is not visible
 if (loc.startsWith("https://store.steampowered.com/")) {
-  observe(100, ['div.view_more > a[href="#"][onclick]'], el => {
-    el.click();
+  observe(200, [
+    // "READ MORE" on Early Access information
+    'a.morebutton[href="#"][onclick]',
+    // "READ MORE" on reviews of the game
+    'div.view_more > a[href="#"][onclick]',
+  ], el => {
+    clickIfUnclicked(el);
   });
 }
 
