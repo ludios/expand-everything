@@ -628,13 +628,18 @@ if (loc.startsWith("https://old.reddit.com/")) {
 // Expected: all downvoted comments are expanded; no [+]
 //
 // Test page: https://www.lesswrong.com/users/blueiris2
-// Expected: all downvoted comments are expanded; no [+]; "Load more" at the end is not visible
+// Expected: all downvoted comments are expanded; no [+]; "Load More" at the end is not visible
+//
+// Test page: https://www.lesswrong.com/users/valentine
+// Expected: all downvoted comments are expanded; no [+]; "Load More" at the end is not visible
 if (loc.startsWith("https://www.lesswrong.com/")) {
-  observe(100, [
+  observe(2000, [
     // Comments truncated to a single line
     '.SingleLineComment-truncatedHighlight',
     // Fully collapsed comments
     'a.CommentsItemMeta-collapse',
+    // Downvoted comments
+    'span.CommentsItemMeta-collapseCharacter',
     // "Load more" at the end of a /users/ page
     'a.LoadMore-root',
   ], el => {
@@ -644,7 +649,6 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
         clickIfUnclicked(el);
       }
     } else {
-      // .SingleLineComment-truncatedHighlight or a.LoadMore-root
       clickIfUnclicked(el);
     }
   });
