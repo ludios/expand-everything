@@ -37,6 +37,7 @@
 // @match       https://www.astralcodexten.com/*
 // @match       https://www.computerenhance.com/*
 // @match       https://www.tracingwoodgrains.com/*
+// @match       https://www.theintrinsicperspective.com/*
 //
 // Mastodon sites
 // @match       https://mastodon.social/*
@@ -460,7 +461,8 @@ if (
   window.location.host === "www.experimental-history.com" ||
   window.location.host === "www.astralcodexten.com" ||
   window.location.host === "www.computerenhance.com" ||
-  window.location.host === "www.tracingwoodgrains.com"
+  window.location.host === "www.tracingwoodgrains.com" ||
+  window.location.host === "www.theintrinsicperspective.com"
 ) {
   observe(100, [
     // "No thanks" button; clicking removes the overlay
