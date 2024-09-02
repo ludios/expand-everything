@@ -27,6 +27,7 @@
 // @match       https://www.google.com/search?*
 // @match       https://www.nytimes.com/*
 // @match       https://www.bloomberg.com/*
+// @match       https://www.criticker.com/*
 //
 // Substack sites
 // @match       https://substack.com/*
@@ -792,5 +793,21 @@ if (loc.startsWith("https://www.bloomberg.com/")) {
     'button[type="button"][data-component="outlined-button"][aria-label="more stories"]'
   ], el => {
     el.click();
+  });
+}
+
+// Test page: https://www.criticker.com/film/Cow-2021/
+// Expected: All minireviews are expanded; "More" is not visible
+//
+// Test page: https://www.criticker.com/film/Eyes-Wide-Shut/
+// Expected: All minireviews are expanded; "More" is not visible
+if (loc.startsWith("https://www.criticker.com/")) {
+  observe(20, [
+    // "More"
+    'div.ratingcard_compact_more.tiny > a.textlink[href="#"]'
+  ], el => {
+    if (el.innerText === "More") {
+      clickIfUnclicked(el);
+    }
   });
 }
