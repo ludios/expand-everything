@@ -4,6 +4,7 @@
 // @namespace   ludios
 // @author      ludios
 // @license     AGPL-3.0; https://www.gnu.org/licenses/agpl-3.0.en.html
+// @downloadURL https://raw.githubusercontent.com/ludios/expand-everything/refs/heads/master/expand.user.js
 // @grant       none
 // @version     2.9.6
 //
