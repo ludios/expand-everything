@@ -8,6 +8,7 @@
 // @version     2.9.6
 //
 // @match       https://www.goodreads.com/book/show/*
+// @match       https://www.goodreads.com/review/list/*
 // @match       https://www.imdb.com/title/*/reviews*
 // @match       https://www.youtube.com/*
 // @match       https://*.linkedin.com/*
@@ -360,6 +361,16 @@ if (loc.startsWith("https://www.goodreads.com/book/show/")) {
   observe(1000, [
     'button[aria-label="Tap to show more review"]',
     'button[aria-label="Tap to show more about the author"]',
+  ], el => {
+    clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://www.goodreads.com/review/list/35831082?utf8=%E2%9C%93&order=d&sort=review&view=reviews&per_page=infinite
+// Expected: all the lengthy user book reviews are expanded
+if (loc.startsWith("https://www.goodreads.com/review/list/")) {
+  observe(100, [
+    'a[data-text-id^="review"][href="#"][onclick="swapContent($(this));; return false;"]',
   ], el => {
     clickIfUnclicked(el);
   });
