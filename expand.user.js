@@ -763,7 +763,7 @@ if (
 if (loc.startsWith("https://twitter.com/") || loc.startsWith("https://x.com/")) {
   observe(1000, [
     // "Show replies"
-    'div[role="button"] > div > div > div[style] > span[class^="css-"][style="text-overflow: unset;"]',
+    'button[role="button"] > div > div > div[style][dir] > span[class^="css-"]',
     // "Show probable spam"
     'div[dir="ltr"][style="text-overflow: unset; color: rgb(29, 155, 240);"] > span[class][style="text-overflow: unset;"]',
     // "Show additional replies, including those that may contain offensive content"
