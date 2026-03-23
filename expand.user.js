@@ -235,6 +235,9 @@
 // @match       https://worldbuilding.stackexchange.com/*
 // @match       https://writing.stackexchange.com/*
 //
+// Blogger sites
+// @match       https://daviddeley.com/*
+//
 // ==/UserScript==
 
 const loc = window.location.href;
@@ -873,6 +876,17 @@ if (loc.startsWith("https://claude.ai/chat/")) {
     'button[class="text-xs text-text-500/80 hover:text-text-100 transition opacity-0 group-hover/timeline-text:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"]',
     // "Show more" on user's prompt
     'button[class="pb-3 pt-1 text-xs text-text-500/80 hover:text-text-100 transition w-3/4 text-left rounded-lg"]',
+  ], el => {
+    clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://daviddeley.com/autohotkey/parameters/parameters.htm
+// Expected: plus image button blocks are expanded
+if (loc.startsWith("https://daviddeley.com/")) {
+  observe(1000, [
+    // "[+]..."
+    '[class^="expand"]',
   ], el => {
     clickIfUnclicked(el);
   });
