@@ -238,6 +238,10 @@
 // Blogger sites
 // @match       https://daviddeley.com/*
 //
+// Habr sites
+// @match       https://habr.com/*
+// @match       https://*.habr.com/*
+//
 // ==/UserScript==
 
 const loc = window.location.href;
@@ -887,6 +891,25 @@ if (loc.startsWith("https://daviddeley.com/")) {
   observe(1000, [
     // "[+]..."
     '[class^="expand"]',
+  ], el => {
+    clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://habr.com/ru/articles/1023352/
+// Expected: spoiler blocks and comments are expanded
+if (window.location.host === "habr.com" || window.location.host.endsWith(".habr.com")) {
+  observe(1000, [
+    // ">..."
+    'details[class^="spoiler"]',
+  ], el => {
+    el.classList.replace('spoiler', 'spoiler_open'); // to avoid selection
+    el.open = true
+  });
+
+  observe(1000, [
+    // "Show all comments"
+    '[class^="tm-height-limiter__expand-button"]',
   ], el => {
     clickIfUnclicked(el);
   });
