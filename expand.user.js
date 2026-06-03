@@ -800,8 +800,11 @@ if (loc.startsWith("https://twitter.com/") || loc.startsWith("https://x.com/")) 
     'button > div[style^="text-overflow: unset;"] > span[class][style="text-overflow: unset;"] > span[class][style="text-overflow: unset;"]',
     // "Show more" on long tweets
     'button[data-testid="tweet-text-show-more-link"][type="button"] > span[class]',
+    // "Show" button on Content Warning: Graphic Content
+    // "View" button on "The following media includes potentially sensitive content."
+    'button > div > div > span > span[class="css-1jxf684 r-bcqeeo r-1ttztb7 r-qvutc0 r-poiln3"]',
   ], el => {
-    if (el.innerText === "Show replies" || el.innerText === "Show probable spam" || el.innerText === "Show" || el.innerText === "Show more") {
+    if (el.innerText === "Show replies" || el.innerText === "Show probable spam" || el.innerText === "Show" || el.innerText === "Show more" || el.innerText === "View") {
       el.click();
     }
   });
