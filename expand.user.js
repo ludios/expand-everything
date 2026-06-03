@@ -29,6 +29,7 @@
 // @match       https://www.nytimes.com/*
 // @match       https://www.bloomberg.com/*
 // @match       https://www.criticker.com/*
+// @match       https://claude.ai/chat/*
 //
 // Substack sites
 // @match       https://substack.com/*
@@ -848,10 +849,28 @@ if (loc.startsWith("https://www.bloomberg.com/")) {
 if (loc.startsWith("https://www.criticker.com/")) {
   observe(20, [
     // "More"
-    'div.ratingcard_compact_more.tiny > a.textlink[href="#"]'
+    'div.ratingcard_compact_more.tiny > a.textlink[href="#"]',
   ], el => {
     if (el.innerText === "More") {
       clickIfUnclicked(el);
     }
+  });
+}
+
+// Test page: https://claude.ai/chat/e82fbf77-29d5-4cde-ac52-affb4587f919
+// Expected: All reasoning expanded; all 'Show more' on reasoning expanded
+//
+// Test page: https://claude.ai/chat/55bd8c0d-6f9a-4240-9cfa-d6a5f3b9be3a
+// Expected: User's prompt is expanded, no "Show more"
+if (loc.startsWith("https://claude.ai/chat/")) {
+  observe(20, [
+    // Reasoning trace with one-line summary
+    'button[aria-expanded="false"][class="group/status flex items-center gap-2 py-1 text-sm transition-colors cursor-pointer text-left text-text-500 hover:text-text-300 flex-1 min-w-0"]',
+    // "Show more" on reasoning trace
+    'button[class="text-xs text-text-500/80 hover:text-text-100 transition opacity-0 group-hover/timeline-text:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"]',
+    // "Show more" on user's prompt
+    'button[class="pb-3 pt-1 text-xs text-text-500/80 hover:text-text-100 transition w-3/4 text-left rounded-lg"]',
+  ], el => {
+    clickIfUnclicked(el);
   });
 }
