@@ -745,7 +745,7 @@ if (loc.startsWith("https://store.steampowered.com/")) {
 if (loc.startsWith("https://www.hwinfo.com/forum/")) {
   observe(10, [
     // "Click to expand..."
-    'div.js-expandLink > a[role="button"]'
+    'div.js-expandLink > a[role="button"]',
   ], el => {
     el.click();
   });
@@ -756,7 +756,7 @@ if (loc.startsWith("https://www.hwinfo.com/forum/")) {
 if (loc.startsWith("https://www.patreon.com/")) {
   observe(10, [
     // "Continue reading"
-    'div[class][data-tag="post-content-collapse"] > div[class] > button[class]'
+    'div[class][data-tag="post-content-collapse"] > div[class] > button[class]',
   ], el => {
     el.click();
   });
@@ -770,7 +770,7 @@ if (
 ) {
   observe(20, [
     // "SHOW MORE"
-    'div[data-spoiler="folded"] button.status__content__spoiler-link'
+    'div[data-spoiler="folded"] button.status__content__spoiler-link',
   ], el => {
     clickIfUnclicked(el);
   });
@@ -814,7 +814,7 @@ if (loc.startsWith("https://twitter.com/") || loc.startsWith("https://x.com/")) 
 // Expected: after clicking '54 Google reviews', all the reviews are expanded and the "More" links are not visible
 if (loc.startsWith("https://www.google.com/search")) {
   observe(200, [
-    'div[class][jscontroller] > a[class][role="button"][tabindex="0"][aria-label^="Read more of "][jsaction][data-ved]'
+    'div[class][jscontroller] > a[class][role="button"][tabindex="0"][aria-label^="Read more of "][jsaction][data-ved]',
   ], el => {
     if (el.innerText === " More") {
       el.click();
@@ -827,7 +827,7 @@ if (loc.startsWith("https://www.google.com/search")) {
 if (loc.startsWith("https://www.nytimes.com/")) {
   observe(20, [
     // "Show more"
-    'button[class][data-testid="Show-More"][type="button"][aria-hidden="true"]'
+    'button[class][data-testid="Show-More"][type="button"][aria-hidden="true"]',
   ], el => {
     clickIfUnclicked(el);
   });
@@ -838,7 +838,7 @@ if (loc.startsWith("https://www.nytimes.com/")) {
 if (loc.startsWith("https://www.bloomberg.com/")) {
   observe(1000, [
     // "Load More Stories"
-    'button[type="button"][data-component="outlined-button"][aria-label="more stories"]'
+    'button[type="button"][data-component="outlined-button"][aria-label="more stories"]',
   ], el => {
     el.click();
   });
