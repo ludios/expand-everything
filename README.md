@@ -42,6 +42,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://www.youtube.com/ (expand video descriptions and comments, load more comments)
 - https://www.google.com/ (in reviews for a business, expand text)
 - https://x.com/ & https://twitter.com/ ("show more" on long tweets; in threads, show replies to replies, show "probable spam")
+- https://claude.ai/chat/ (expand reasoning and user prompt)
 - https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)
 - https://\*.substack.com/ (dismiss subscribe overlay, expand comment text)
 - https://substack.com/ (expand comment text on notes)
