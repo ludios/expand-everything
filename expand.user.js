@@ -235,6 +235,13 @@
 // @match       https://worldbuilding.stackexchange.com/*
 // @match       https://writing.stackexchange.com/*
 //
+// Blogger sites
+// @match       https://daviddeley.com/*
+//
+// Habr sites
+// @match       https://habr.com/*
+// @match       https://*.habr.com/*
+//
 // ==/UserScript==
 
 const loc = window.location.href;
@@ -873,6 +880,42 @@ if (loc.startsWith("https://claude.ai/chat/")) {
     'button[class="text-xs text-text-500/80 hover:text-text-100 transition opacity-0 group-hover/timeline-text:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"]',
     // "Show more" on user's prompt
     'button[class="pb-3 pt-1 text-xs text-text-500/80 hover:text-text-100 transition w-3/4 text-left rounded-lg"]',
+  ], el => {
+    clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://daviddeley.com/autohotkey/parameters/parameters.htm
+// Expected: plus image button blocks are expanded
+if (loc.startsWith("https://daviddeley.com/")) {
+  observe(1000, [
+    // "[+]..."
+    '[class^="expand"]',
+  ], el => {
+    clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://habr.com/ru/articles/1023352/
+// Expected: spoiler blocks and comments are expanded
+if (window.location.host === "habr.com" || window.location.host.endsWith(".habr.com")) {
+  observe(1000, [
+    // ">..."
+    'details[class^="spoiler"]',
+    // "> Spoiler header"
+    'div.spoiler:not(.spoiler_open)',
+  ], el => {
+    if (el.nodeName === 'DETAILS') {
+      el.classList.replace('spoiler', 'spoiler_open'); // to avoid selection
+      el.open = true;
+    } else if (el.nodeName === 'DIV') {
+      el.classList.add('spoiler_open');
+    }
+  });
+
+  observe(1000, [
+    // "Show all comments"
+    '[class^="tm-height-limiter__expand-button"]',
   ], el => {
     clickIfUnclicked(el);
   });
