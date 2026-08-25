@@ -902,9 +902,15 @@ if (window.location.host === "habr.com" || window.location.host.endsWith(".habr.
   observe(1000, [
     // ">..."
     'details[class^="spoiler"]',
+    // "> Spoiler header"
+    'div.spoiler:not(.spoiler_open)',
   ], el => {
-    el.classList.replace('spoiler', 'spoiler_open'); // to avoid selection
-    el.open = true
+    if (el.nodeName === 'DETAILS') {
+      el.classList.replace('spoiler', 'spoiler_open'); // to avoid selection
+      el.open = true;
+    } else if (el.nodeName === 'DIV') {
+      el.classList.add('spoiler_open');
+    }
   });
 
   observe(1000, [
