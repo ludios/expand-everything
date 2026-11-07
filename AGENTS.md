@@ -125,9 +125,30 @@ Expand Everything is a userscript, `expand.user.js`, that clicks the "show more"
 - A new site needs a `@match` line in the metadata block (without one, the userscript manager never runs the script there) and a line in the "Supported sites" list in `README.md`.
 - The user releases a version by changing `@version` in a commit of its own, whose subject line is only the version (e.g. `3.2.0`). Don't change `@version` unless asked.
 
+# The end-to-end tests
+
+`e2e/` is a Rust crate that tests `expand.user.js` against the live sites, in Chrome driven by `zendriver`. `zendriver` is a path dependency on the user's fork at `~/code/crawling/zendriver-rs` (the crate in its `crates/zendriver`). When `zendriver` lacks something or gets something wrong, fixing the fork can be better than working around it here: say so, and ask the user.
+
+- `src/userscript.rs` turns `expand.user.js` into the scripts that Chrome injects into every document, imitating what Violentmonkey does: it runs the userscript in the page's main world, once the DOM has been parsed (`document-end`), in documents whose URL a `@match` line allows. It refuses any metadata key whose handling it doesn't imitate, so a userscript change that adds one (e.g. `@run-at`) must teach `src/userscript.rs` about it.
+- `src/lib.rs` is the harness: `with_chrome`, `open`, and `wait_for`. The injected harness records each `click()` that the userscript makes; a test's condition includes `CLICKED_TEXTS`, so that it can't pass just because a site stopped hiding things.
+- `tests/sites/` has one module per site. Each test checks one `// Expected:` of a `// Test page:` in `expand.user.js`, and must fail against a userscript without the fix or block that it tests: check that with `E2E_USERSCRIPT=/path/to/older.user.js cargo test`.
+- `examples/probe.rs` shows a page as the userscript leaves it, for writing or fixing a test: `cargo run --example probe -- URL [--wait SECONDS] [--html FILE] [EXPRESSION...]`. Set `E2E_HEADFUL=1` to watch Chrome.
+
+The sites change without notice, so a failing test may mean that the site changed rather than that the last commit broke something. Keep live runs few, and never run them in a loop: to study a page, save its DOM once (`probe --html`) and work from the saved copy.
+
 # Before committing
 
 	node --check expand.user.js
+
+and in `e2e/`:
+
+	cargo fmt
+	cargo clippy --all-targets --locked -- -D warnings
+	cargo test --locked --lib
+
+and, against the live sites, the tests of each site whose block you changed (or all of them, if you changed the harness or the shared code at the top of `expand.user.js`):
+
+	cargo test --locked --test sites SITE
 
 # Using git safely
 

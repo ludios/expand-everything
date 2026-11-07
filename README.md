@@ -65,7 +65,9 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://www.hwinfo.com/forum/ (expand quote blocks)
 - https://mastodon.social/ and https://social.pixie.town/ (expand toots hidden behind a spoiler)
 
-For test pages, see the "Test page:" comments in expand.user.js.
+For test pages, see the "Test page:" comments in expand.user.js. The
+end-to-end tests in [e2e/](e2e/) load some of these pages in Chrome with the
+userscript and check that it still expands them.
 
 ## Demo
 

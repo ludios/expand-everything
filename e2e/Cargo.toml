@@ -1,0 +1,26 @@
+[package]
+name = "expand-everything-e2e"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "End-to-end tests of expand.user.js against live sites, in Chrome driven by zendriver"
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+zendriver = { path = "/home/at/code/crawling/zendriver-rs/crates/zendriver" }
+
+[dev-dependencies]
+regex = "1"
+
+[profile.dev]
+# Reduce debug rebuild time
+# https://github.com/rust-gamedev/wg/issues/50#issuecomment-527160611
+debug = false
+
+# Optimize our dependencies (but not our own crate to avoid long rebuild times)
+[profile.dev.package."*"]
+opt-level = 3
