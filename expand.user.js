@@ -1041,6 +1041,8 @@ if (loc.startsWith("https://claude.ai/chat/")) {
 // Test page: https://dispatchesfromtheautismwars.substack.com/p/how-i-learned-to-stop-worrying-and/comments
 // Test page: https://www.gurwinder.blog/p/tiktok-may-be-a-chinese-bio-weapon/comments
 // Expected: "Load More" button at the bottom is clicked; all comments are shown
+//
+// This block should be the last one in the script.
 if (
   observer === null &&
   (window.location.host.endsWith(".substack.com") ||
