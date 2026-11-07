@@ -673,33 +673,45 @@ if (loc.startsWith("https://old.reddit.com/")) {
 // Test page: https://www.lesswrong.com/posts/uKp6tBFStnsvrot5t/what-dall-e-2-can-and-cannot-do
 // Expected: all comments expanded; no one-line previews
 //
-// Test page: https://www.lesswrong.com/users/blueiris
+// Test page: https://www.lesswrong.com/users/blueiris2
 // Expected: all downvoted comments are expanded; no [+]
 //
-// Test page: https://www.lesswrong.com/users/blueiris2
-// Expected: all downvoted comments are expanded; no [+]; "Load More" at the end is not visible
-//
 // Test page: https://www.lesswrong.com/users/valentine
-// Expected: all downvoted comments are expanded; no [+]; "Load More" at the end is not visible
+// Expected: all the user's posts are listed; "Load More" below them is not visible
 if (loc.startsWith("https://www.lesswrong.com/")) {
   observe(2000, [
     // Comments truncated to a single line
     '.SingleLineComment-truncatedHighlight',
-    // Fully collapsed comments
-    'a.CommentsItemMeta-collapse',
-    // Downvoted comments
+    // The "+" or "-" in the [+] of a collapsed comment (such as a downvoted
+    // comment) or the [-] of an expanded comment
     'span.CommentsItemMeta-collapseCharacter',
-    // "Load more" at the end of a /users/ page
+    // "Load More" below the posts on a /users/ page
     'a.LoadMore-root',
   ], el => {
-    if (el.classList.contains("CommentsItemMeta-collapse")) {
-      // Click only if [+], not [-]
-      if (el.innerText == "[+]") {
-        clickIfUnclicked(el);
-      }
-    } else {
-      clickIfUnclicked(el);
+    // React ignores a click on an element until it hydrates the element.
+    // Hydration doesn't change the page, so an element skipped here gets
+    // clicked only after something else changes the page, which LessWrong
+    // keeps doing while it loads.
+    const hydrated = Object.keys(el).some(key => key.startsWith("__reactProps$"));
+    if (!hydrated) {
+      return;
     }
+    if (el.classList.contains("CommentsItemMeta-collapseCharacter") && el.textContent !== "+") {
+      return;
+    }
+    if (el.classList.contains("LoadMore-root")) {
+      // In the task in which LessWrong shows the posts that a click on "Load
+      // More" loaded, a click on "Load More" loads the same posts again, so
+      // click in a later task. By then, LessWrong may have removed the link,
+      // and a click on a removed link would still navigate to its href, "#".
+      setTimeout(() => {
+        if (el.isConnected) {
+          clickIfUnclicked(el);
+        }
+      }, 0);
+      return;
+    }
+    clickIfUnclicked(el);
   });
 }
 
