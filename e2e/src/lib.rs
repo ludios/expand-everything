@@ -4,8 +4,9 @@
 //! Chrome gets the userscript injected into every document (see
 //! [`userscript`]), as if a userscript manager had it installed. A test opens
 //! a page with [`open`], and waits with [`wait_for`] until the page shows what
-//! the userscript should have expanded, and [`userscript::CLICKED_TEXTS`]
-//! shows that it was the userscript that clicked.
+//! the userscript should have expanded, and the clicks that the harness
+//! recorded (such as [`userscript::CLICKED_TEXTS`]) show that it was the
+//! userscript that clicked.
 
 pub mod userscript;
 

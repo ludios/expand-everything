@@ -1,5 +1,5 @@
 use anyhow::Result;
-use expand_everything_e2e::userscript::CLICKED_TEXTS;
+use expand_everything_e2e::userscript::HARNESS_GLOBAL;
 use expand_everything_e2e::{open, wait_for, with_chrome};
 use serde::Deserialize;
 use std::time::Duration;
@@ -19,12 +19,16 @@ struct Buttons {
     /// How many of the buttons or links are shown (with `display`, and the
     /// `display` of every ancestor, not `none`).
     shown: usize,
+    /// For each click that the userscript made on one of the buttons or links
+    /// (whatever its text), the text that it had just before the click, in
+    /// the order of the clicks.
     clicked: Vec<String>,
 }
 
-/// A JavaScript expression for the [`Buttons`] that match the CSS selector
-/// `css` (and whose text is `text`, if given), evaluated after the JavaScript
-/// statements `before`.
+/// A JavaScript expression, evaluated after the JavaScript statements
+/// `before`, for the [`Buttons`] that match the CSS selector `css`. If `text`
+/// is given, [`Buttons::total`] and [`Buttons::shown`] count only the buttons
+/// whose text is `text`.
 fn buttons_expression(before: &str, css: &str, text: Option<&str>) -> String {
     let css = serde_json::to_string(css).expect("strings serialize");
     let text = serde_json::to_string(&text).expect("strings serialize");
@@ -36,7 +40,7 @@ fn buttons_expression(before: &str, css: &str, text: Option<&str>) -> String {
             return {{
                 total: buttons.length,
                 shown: buttons.filter((b) => b.checkVisibility()).length,
-                clicked: {CLICKED_TEXTS},
+                clicked: window.{HARNESS_GLOBAL}.clicks.filter((c) => c.element.matches({css})).map((c) => c.text),
             }};
         }})()"#
     )
