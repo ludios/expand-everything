@@ -11,6 +11,10 @@ const GAME: &str = "https://store.steampowered.com/app/1147890/Bonfire_Peaks/";
 /// above a "READ MORE" link.
 const EARLY_ACCESS_GAME: &str = "https://store.steampowered.com/app/1592280/Selaco/";
 
+/// A game whose page cuts off its Awards and its "About This Game" above a
+/// "READ MORE" button each.
+const AWARDED_GAME: &str = "https://store.steampowered.com/app/1145360/Hades/";
+
 /// The state of the page, as far as one kind of button or link on it goes.
 #[derive(Debug, Deserialize)]
 struct Buttons {
@@ -90,6 +94,30 @@ async fn early_access_information_is_expanded() -> Result<()> {
             |b: &Buttons| {
                 b.total > 0 && b.shown == 0 && b.clicked.iter().any(|text| text == "READ MORE")
             },
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn awards_and_description_are_expanded() -> Result<()> {
+    with_chrome(async |browser| {
+        let tab = open(browser, AWARDED_GAME).await?;
+        // The "READ MORE" of the Awards, and the "READ MORE" of "About This Game".
+        let expression = buttons_expression(
+            "",
+            "#awardsTable .game_page_autocollapse_readmore, #aboutThisGame ~ .game_page_autocollapse_fade > .game_page_autocollapse_readmore",
+            None,
+        );
+        wait_for(
+            &tab,
+            "the userscript to click \"READ MORE\" on the Awards and on \"About This Game\"",
+            &expression,
+            Duration::from_secs(30),
+            Duration::from_secs(1),
+            |b: &Buttons| b.total == 2 && b.shown == 0 && b.clicked.len() == 2,
         )
         .await?;
         Ok(())

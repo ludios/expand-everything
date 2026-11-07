@@ -736,10 +736,17 @@ if (loc.startsWith("https://nextdoor.com/")) {
 //
 // Test page: https://store.steampowered.com/app/1592280/Selaco/
 // Expected: review text is expanded on all reviews; Early Access information is expanded and "READ MORE" is not visible
+//
+// Test page: https://store.steampowered.com/app/1145360/Hades/
+// Expected: Awards and "About This Game" are expanded; "READ MORE" is not visible
 if (loc.startsWith("https://store.steampowered.com/")) {
   observe(200, [
     // "READ MORE" on Early Access information
     'a.morebutton[href="#"][onclick]',
+    // "READ MORE" on other sections cut off at a maximum height, such as Awards and
+    // "About This Game". A click does nothing until Steam has found the section too
+    // tall and added the class "collapsed".
+    '.game_page_autocollapse_ctn.collapsed > .game_page_autocollapse_fade > .game_page_autocollapse_readmore',
     // "Read More" on reviews of the game. The class names of this button don't say
     // what it is, and each review has other buttons, for rating the review, which
     // must never be clicked. So we check the button's text below (which works only
