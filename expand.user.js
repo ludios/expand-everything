@@ -759,7 +759,7 @@ if (loc.startsWith("https://old.reddit.com/")) {
 }
 
 // Test page: https://www.lesswrong.com/posts/uKp6tBFStnsvrot5t/what-dall-e-2-can-and-cannot-do
-// Expected: all comments expanded; no one-line previews
+// Expected: all comments expanded; no one-line previews; no "(read more)"
 //
 // Test page: https://www.lesswrong.com/users/blueiris2
 // Expected: all downvoted comments are expanded; no [+]
@@ -768,8 +768,11 @@ if (loc.startsWith("https://old.reddit.com/")) {
 // Expected: all the user's posts are listed; "Load More" below them is not visible
 if (loc.startsWith("https://www.lesswrong.com/")) {
   const selectors = [
-    // Comments truncated to a single line
-    '.SingleLineComment-truncatedHighlight',
+    // Comments truncated to a single line (which show no text if they have
+    // a score of -5 or lower)
+    '.SingleLineComment-root',
+    // "(read more)" at the end of a truncated comment
+    '.CommentBody-root .read-more-button',
     // The "+" in the [+] of a collapsed comment (such as a downvoted one), or
     // the "-" in the [-] of an expanded comment
     'span.CommentsItemMeta-collapseCharacter',

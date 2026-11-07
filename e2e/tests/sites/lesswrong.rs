@@ -28,6 +28,8 @@ struct Comments {
     collapsed: usize,
     /// How many comments the page truncates to one line.
     one_line: usize,
+    /// How many comments the page truncates above "(read more)".
+    read_more: usize,
     /// How many of the userscript's clicks were on a comment truncated to one
     /// line.
     one_line_clicks: usize,
@@ -42,6 +44,7 @@ fn comments_expression() -> String {
             shown: document.querySelectorAll(".CommentsItem-root").length,
             collapsed: document.querySelectorAll(".CommentsItem-root:not(:has(.CommentBody-root, .CommentDeletedMetadata-root))").length,
             one_line: document.querySelectorAll(".SingleLineComment-root").length,
+            read_more: document.querySelectorAll(".CommentBody-root .read-more-button").length,
             one_line_clicks: window.{HARNESS_GLOBAL}.clicks.filter((c) => c.element.closest(".SingleLineComment-root")).length,
             clicked: {CLICKED_TEXTS},
         }})"#
@@ -54,7 +57,7 @@ async fn post_comments_are_expanded() -> Result<()> {
         let tab = open(browser, POST).await?;
         wait_for(
             &tab,
-            "the userscript to expand every comment truncated to one line, and to collapse no comment",
+            "the userscript to expand every comment truncated to one line or above \"(read more)\", and to collapse no comment",
             &comments_expression(),
             Duration::from_secs(30),
             Duration::from_secs(2),
@@ -63,6 +66,8 @@ async fn post_comments_are_expanded() -> Result<()> {
                     && c.collapsed == 0
                     && c.one_line == 0
                     && c.one_line_clicks > 0
+                    && c.read_more == 0
+                    && c.clicked.iter().any(|text| text == "(read more)")
                     && !c.clicked.iter().any(|text| text == "-")
             },
         )
