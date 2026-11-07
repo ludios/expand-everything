@@ -420,6 +420,8 @@ if (loc.startsWith("https://www.imdb.com/title/")) {
 
 // Test page: https://www.youtube.com/watch?v=ben9qDbrLYU
 // Test page: https://www.youtube.com/ followed by click on a video
+// Test page: https://www.youtube.com/watch?v=ben9qDbrLYU followed by scrolling to the comments
+//            (so that the MutationObserver is disconnected) and a click on a related video
 // Expected: video description is expanded
 // Expected: "show more" in the comments is clicked, for the loaded comments
 // Expected: replies for the top-most comments are clicked
@@ -738,9 +740,10 @@ if (loc.startsWith("https://store.steampowered.com/")) {
   observe(200, [
     // "READ MORE" on Early Access information
     'a.morebutton[href="#"][onclick]',
-    // "Read More" on reviews of the game. Its class names don't say what it is,
-    // and the reviews have other buttons (e.g. for rating a review), so we check
-    // its text below.
+    // "Read More" on reviews of the game. The class names of this button don't say
+    // what it is, and each review has other buttons, for rating the review, which
+    // must never be clicked. So we check the button's text below (which works only
+    // in English).
     '#app_reviews_hash button',
   ], el => {
     if (el.tagName === "BUTTON" && el.innerText !== "Read More") {
