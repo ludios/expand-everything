@@ -765,12 +765,13 @@ if (loc.startsWith("https://old.reddit.com/")) {
 // Expected: all downvoted comments are expanded; no [+]
 //
 // Test page: https://www.lesswrong.com/users/valentine
-// Expected: all the user's posts are listed; "Load More" below them is not visible; the bio ends in "See less"
+// Expected: all the user's posts are listed; "Load More" below them is not visible; the bio is expanded, above "See less"
 if (loc.startsWith("https://www.lesswrong.com/")) {
   // For each selector, the text that a selected element must have to be
   // clicked, or null if any text will do. An element with some other text,
-  // such as the "-" in the [-] of an expanded comment, is never clicked, so
-  // that if the user collapses what it expanded, it stays collapsed.
+  // such as the "-" in the [-] of an expanded comment, is marked as already
+  // clicked: if the user collapses the comment, the userscript leaves the
+  // comment collapsed.
   const textToClick = {
     // Comments truncated to a single line (which show no text if they have
     // a score of -5 or lower)
@@ -781,7 +782,8 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
     // the "-" in the [-] of an expanded comment
     'span.CommentsItemMeta-collapseCharacter': "+",
     // On a /users/ page, "See more" or "See less" below the user's bio, or
-    // another link styled like them
+    // another link styled like them. ("Show all" is also styled like them,
+    // but it is in the row of 'a.LoadMore-root', which clicks any text.)
     'a.ProfilePage-readMoreLink:not(.LoadMore-root)': "See more",
     // On a /users/ page, "Load More" below the posts, and "Show all" below
     // the grids of squares that stand for the posts and comments

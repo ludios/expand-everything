@@ -111,7 +111,7 @@ fn total_posts(clicked: &[String]) -> Option<usize> {
 }
 
 #[tokio::test]
-async fn all_posts_and_the_whole_bio_are_shown() -> Result<()> {
+async fn all_posts_are_listed_and_the_bio_is_expanded() -> Result<()> {
     #[derive(Debug, Deserialize)]
     struct UserPage {
         /// How many different posts the list shows.
@@ -150,6 +150,7 @@ async fn all_posts_and_the_whole_bio_are_shown() -> Result<()> {
                     && !p.bio_links.is_empty()
                     && p.bio_links.iter().all(|text| text == "See less")
                     && p.clicked.iter().any(|text| text == "See more")
+                    && !p.clicked.iter().any(|text| text == "See less")
             },
         )
         .await?;
