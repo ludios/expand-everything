@@ -56,7 +56,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://www.imdb.com/ (expand film review text, load more reviews)
 - https://www.criticker.com/ (expand minireview text)
 - https://\*.linkedin.com/ (expand text in profiles, comments on posts)
-- https://www.lesswrong.com/ (expand collapsed comments)
+- https://www.lesswrong.com/ (expand comments; on user pages, load all posts, expand bio)
 - https://tvtropes.org/ (open all folders)
 - https://cohost.org/ (expand posts on actual post pages)
 - https://nextdoor.com/ (expand posts and comments)
