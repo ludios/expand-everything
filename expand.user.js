@@ -488,15 +488,18 @@ if (
 ) {
   observe(100, [
     // "No thanks" on the subscribe overlay; clicking removes the overlay
-    'div.intro-popup button',
+    'div.intro-popup [data-testid="maybeLater"]',
     // "See more" below a long comment
-    'div.comment-body.long + button',
+    'div.comment-body.long:not(.expanded) + button',
     // "Load More" at the end of a comments page
-    'div.comment-list > button',
+    'div.comment-list-items + button',
   ], el => {
-    // The class names of these buttons don't say what they are, so we check their text.
-    if (el.innerText === "No thanks" || el.innerText === "See more" || el.innerText === "Load More") {
+    // Substack reuses the "Load More" button for each page of comments, so it
+    // must be clicked more than once.
+    if (el.matches('div.comment-list-items + button')) {
       el.click();
+    } else {
+      clickIfUnclicked(el);
     }
   });
 }
