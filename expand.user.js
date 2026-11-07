@@ -735,9 +735,14 @@ if (loc.startsWith("https://store.steampowered.com/")) {
   observe(200, [
     // "READ MORE" on Early Access information
     'a.morebutton[href="#"][onclick]',
-    // "READ MORE" on reviews of the game
-    'div.view_more > a[href="#"][onclick]',
+    // "Read More" on reviews of the game. Its class names don't say what it is,
+    // and the reviews have other buttons (e.g. for rating a review), so we check
+    // its text below.
+    '#app_reviews_hash button',
   ], el => {
+    if (el.tagName === "BUTTON" && el.innerText !== "Read More") {
+      return;
+    }
     clickIfUnclicked(el);
   });
 }
