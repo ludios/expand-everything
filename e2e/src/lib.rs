@@ -25,9 +25,12 @@ const POLL_INTERVAL: Duration = Duration::from_millis(250);
 /// How long [`open`] waits for the userscript to start running.
 const START_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// Registers the scripts made by [`Userscript`] on each new page and iframe
-/// target, before the target runs anything, so that they run in every
-/// document that the target loads.
+/// Registers the scripts made by [`Userscript`] on each page and iframe
+/// target once zendriver attaches to it, so that they run in every document
+/// that the target loads after that. A target that Chrome creates after
+/// launch is paused until then; the main tab already has its first document
+/// (`about:blank`), but zendriver's `launch` returns only after this
+/// registration, so every page that a test loads gets the scripts.
 #[derive(Debug)]
 struct InjectUserscript {
     /// The scripts, in the order in which they run in each document.
@@ -150,10 +153,11 @@ pub async fn wait_for<T: DeserializeOwned + Debug>(
 }
 
 /// Load `url` in the main tab of `browser`, and wait for the userscript to
-/// start running in it.
+/// start running in it. Every call uses the same tab, so a second call
+/// replaces the page of the first.
 ///
 /// Returns the tab, or an error if the page doesn't load, no `@match` line
-/// allows the page's URL, the scripts were injected more than once, or the
+/// allows the page's URL, the harness script didn't run exactly once, or the
 /// userscript doesn't start within `START_TIMEOUT` or throws while starting.
 pub async fn open(browser: &Browser, url: &str) -> Result<Tab> {
     let tab = browser.main_tab();
@@ -195,7 +199,9 @@ pub async fn open(browser: &Browser, url: &str) -> Result<Tab> {
     }
     if state.injections != Some(1) {
         bail!(
-            "the scripts were injected more than once into {}: {state:?}",
+            "the harness script didn't run exactly once in {} (did zendriver attach to the tab \
+             more than once? The fork at ~/code/crawling/zendriver-rs attached to the main tab \
+             twice until its commit 8fd829948): {state:?}",
             state.url
         );
     }

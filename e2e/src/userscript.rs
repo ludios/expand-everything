@@ -222,8 +222,7 @@ impl Userscript {
     /// document, it creates `window[HARNESS_GLOBAL]`, an object with:
     ///
     /// - `injections`: how many times this script has run in the document,
-    ///   which should be 1. (It was 2 in the main tab while zendriver attached
-    ///   to the main tab twice, before the fork's commit 8fd829948.)
+    ///   which [`crate::open`] requires to be 1.
     /// - `matched`: whether a `@match` line allows the document's URL, which
     ///   decides whether the userscript runs.
     /// - `ran`: whether the userscript has started running.
@@ -316,7 +315,10 @@ const start = () => {
   try {
     run();
   } catch (error) {
-    harness.error = String(error?.stack ?? error);
+    harness.error = "an exception that can't be shown as text";
+    try {
+      harness.error = String(error?.stack ?? error);
+    } catch {}
     throw error;
   }
 };
