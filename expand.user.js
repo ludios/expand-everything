@@ -469,13 +469,12 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 // Test page: https://jenniferdaniel.substack.com/
 // Expected: the subscribe modal with "No thanks" is bypassed
 //
-// Test page: https://philo.substack.com/p/scarcity-truthers/comments#comment-6543771
-// Test page: https://philo.substack.com/p/scarcity-truthers/comment/6543771
-// Expected: "Expand full comment" is clicked; the full text of the comment is shown
-//
-// Test page: https://gurwinder.substack.com/p/tiktok-may-be-a-chinese-bio-weapon/comments
 // Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
-// Expected: "Load more" button at the bottom is clicked; all comments are shown
+// Expected: "See more" is clicked below each long comment; the full text of each comment is shown
+//
+// Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
+// Test page: https://dispatchesfromtheautismwars.substack.com/p/how-i-learned-to-stop-worrying-and/comments
+// Expected: "Load More" button at the bottom is clicked; all comments are shown
 if (
   window.location.host.endsWith(".substack.com") ||
   window.location.host === "www.platformer.news" ||
@@ -488,14 +487,17 @@ if (
   window.location.host === "www.noahpinion.blog"
 ) {
   observe(100, [
-    // "No thanks" button; clicking removes the overlay
-    'button.maybe-later',
-    // "Expand full comment"
-    'div.comment-body:not(.expanded) > div.show-all-toggle > div.show-all-toggle-label',
-    // "Load more" at the end of a comments page
-    'button.button.collapsed-reply',
+    // "No thanks" on the subscribe overlay; clicking removes the overlay
+    'div.intro-popup button',
+    // "See more" below a long comment
+    'div.comment-body.long + button',
+    // "Load More" at the end of a comments page
+    'div.comment-list > button',
   ], el => {
-    el.click();
+    // The class names of these buttons don't say what they are, so we check their text.
+    if (el.innerText === "No thanks" || el.innerText === "See more" || el.innerText === "Load More") {
+      el.click();
+    }
   });
 }
 
