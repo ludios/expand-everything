@@ -745,7 +745,7 @@ if (loc.startsWith("https://store.steampowered.com/")) {
     'a.morebutton[href="#"][onclick]',
     // "READ MORE" on other sections cut off at a maximum height, such as Awards and
     // "About This Game". A click does nothing until Steam has found the section too
-    // tall and added the class "collapsed".
+    // tall and added the class "collapsed" to the section's wrapper.
     '.game_page_autocollapse_ctn.collapsed > .game_page_autocollapse_fade > .game_page_autocollapse_readmore',
     // "Read More" on reviews of the game. The class names of this button don't say
     // what it is, and each review has other buttons, for rating the review, which
