@@ -765,21 +765,29 @@ if (loc.startsWith("https://old.reddit.com/")) {
 // Expected: all downvoted comments are expanded; no [+]
 //
 // Test page: https://www.lesswrong.com/users/valentine
-// Expected: all the user's posts are listed; "Load More" below them is not visible
+// Expected: all the user's posts are listed; "Load More" below them is not visible; the bio ends in "See less"
 if (loc.startsWith("https://www.lesswrong.com/")) {
-  const selectors = [
+  // For each selector, the text that a selected element must have to be
+  // clicked, or null if any text will do. An element with some other text,
+  // such as the "-" in the [-] of an expanded comment, is never clicked, so
+  // that if the user collapses what it expanded, it stays collapsed.
+  const textToClick = {
     // Comments truncated to a single line (which show no text if they have
     // a score of -5 or lower)
-    '.SingleLineComment-root',
+    '.SingleLineComment-root': null,
     // "(read more)" at the end of a truncated comment
-    '.CommentBody-root .read-more-button',
+    '.CommentBody-root .read-more-button': null,
     // The "+" in the [+] of a collapsed comment (such as a downvoted one), or
     // the "-" in the [-] of an expanded comment
-    'span.CommentsItemMeta-collapseCharacter',
+    'span.CommentsItemMeta-collapseCharacter': "+",
+    // On a /users/ page, "See more" or "See less" below the user's bio, or
+    // another link styled like them
+    'a.ProfilePage-readMoreLink:not(.LoadMore-root)': "See more",
     // On a /users/ page, "Load More" below the posts, and "Show all" below
     // the grids of squares that stand for the posts and comments
-    'a.LoadMore-root',
-  ];
+    'a.LoadMore-root': null,
+  };
+  const selectors = Object.keys(textToClick);
   // The timer that will pass every selected element to `expand` again, or null
   let lookAgainTimer = null;
 
@@ -805,8 +813,8 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
       }, 500);
       return;
     }
-    if (el.classList.contains("CommentsItemMeta-collapseCharacter") && el.textContent !== "+") {
-      // The comment is expanded; if the user collapses it, keep it collapsed.
+    const text = textToClick[selectors.find(selector => el.matches(selector))];
+    if (text !== null && el.textContent.trim() !== text) {
       alreadyClicked.set(el, true);
       return;
     }

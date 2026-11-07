@@ -14,7 +14,8 @@ const POST: &str =
 const USER_WITH_DOWNVOTED_COMMENTS: &str = "https://www.lesswrong.com/users/blueiris2";
 
 /// A user page that lists the user's posts (28 in November 2026), 7 at a
-/// time, above a "Load More" link.
+/// time, above a "Load More" link, and cuts the user's bio off above "See
+/// more".
 const USER_WITH_POSTS: &str = "https://www.lesswrong.com/users/valentine";
 
 /// What a test of comments waits for.
@@ -110,14 +111,18 @@ fn total_posts(clicked: &[String]) -> Option<usize> {
 }
 
 #[tokio::test]
-async fn all_posts_are_listed() -> Result<()> {
+async fn all_posts_and_the_whole_bio_are_shown() -> Result<()> {
     #[derive(Debug, Deserialize)]
-    struct Posts {
+    struct UserPage {
         /// How many different posts the list shows.
         listed: usize,
         /// Whether the list ends in a "Load More" link or in the spinner that
         /// replaces the link while LessWrong loads more posts.
         more: bool,
+        /// The texts of the links below the user's bio ("See more" or "See
+        /// less"), of which the page has one for wide screens and one for
+        /// narrow screens.
+        bio_links: Vec<String>,
         clicked: Vec<String>,
     }
     with_chrome(async |browser| {
@@ -128,17 +133,24 @@ async fn all_posts_are_listed() -> Result<()> {
                 return {{
                     listed: new Set([...(list?.querySelectorAll("article a[href^='/posts/']") ?? [])].map((a) => a.pathname)).size,
                     more: list?.querySelector("a.LoadMore-root, .Loading-spinner") != null,
+                    bio_links: [...document.querySelectorAll("a.ProfilePage-readMoreLink")].map((a) => a.textContent).filter((text) => text.startsWith("See ")),
                     clicked: {CLICKED_TEXTS},
                 }};
             }})()"#
         );
         wait_for(
             &tab,
-            "the userscript to click \"Load More\" until the list shows every post",
+            "the userscript to click \"Load More\" until the list shows every post, and \"See more\" below the bio",
             &expression,
             Duration::from_secs(30),
             Duration::from_secs(2),
-            |p: &Posts| !p.more && total_posts(&p.clicked) == Some(p.listed),
+            |p: &UserPage| {
+                !p.more
+                    && total_posts(&p.clicked) == Some(p.listed)
+                    && !p.bio_links.is_empty()
+                    && p.bio_links.iter().all(|text| text == "See less")
+                    && p.clicked.iter().any(|text| text == "See more")
+            },
         )
         .await?;
         Ok(())
