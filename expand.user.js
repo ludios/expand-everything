@@ -41,6 +41,8 @@
 // @match       https://www.tracingwoodgrains.com/*
 // @match       https://www.theintrinsicperspective.com/*
 // @match       https://www.noahpinion.blog/*
+// @match       https://www.md-a.co/*
+// @match       https://www.gurwinder.blog/*
 //
 // Mastodon sites
 // @match       https://mastodon.social/*
@@ -471,10 +473,12 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 // Expected: the subscribe modal with "No thanks" is bypassed
 //
 // Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
+// Test page: https://www.md-a.co/p/scarcity-truthers/comments
 // Expected: "See more" is clicked below each long comment; the full text of each comment is shown
 //
 // Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
 // Test page: https://dispatchesfromtheautismwars.substack.com/p/how-i-learned-to-stop-worrying-and/comments
+// Test page: https://www.gurwinder.blog/p/tiktok-may-be-a-chinese-bio-weapon/comments
 // Expected: "Load More" button at the bottom is clicked; all comments are shown
 //
 // Substack serves each publication on <name>.substack.com, or on a domain of

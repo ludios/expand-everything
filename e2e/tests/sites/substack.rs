@@ -8,9 +8,12 @@ use std::time::Duration;
 /// overlay with a "No thanks" button.
 const HOME_PAGE: &str = "https://shimmeringvoid.substack.com/";
 
-/// The comments page of a post with about 80 comments, of which the page at
-/// first shows about 30, above a "Load More" button.
-const COMMENTS_PAGE: &str = "https://dispatchesfromtheautismwars.substack.com/p/how-i-learned-to-stop-worrying-and/comments";
+/// The comments page of a post with about 100 comments, of which the page at
+/// first shows about 30, above a "Load More" button. The publication is on a
+/// domain of its own, not on a subdomain of substack.com, so that a test runs
+/// the userscript on such a domain.
+const COMMENTS_PAGE: &str =
+    "https://www.gurwinder.blog/p/tiktok-may-be-a-chinese-bio-weapon/comments";
 
 /// The comments page of a post with more than 200 comments, which the page
 /// shows about 30 at a time, above a "Load More" button. A few of the comments
