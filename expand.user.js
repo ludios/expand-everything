@@ -476,15 +476,14 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 // Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
 // Test page: https://dispatchesfromtheautismwars.substack.com/p/how-i-learned-to-stop-worrying-and/comments
 // Expected: "Load More" button at the bottom is clicked; all comments are shown
+//
+// Substack serves each publication on <name>.substack.com, or on a domain of
+// the publication's own, which runs this userscript only if a @match line
+// lists it. Every page of a publication links to substackcdn.com. So do the
+// pages of substack.com, which the next block handles.
 if (
-  window.location.host.endsWith(".substack.com") ||
-  window.location.host === "www.henrikkarlsson.xyz" ||
-  window.location.host === "www.experimental-history.com" ||
-  window.location.host === "www.astralcodexten.com" ||
-  window.location.host === "www.computerenhance.com" ||
-  window.location.host === "www.tracingwoodgrains.com" ||
-  window.location.host === "www.theintrinsicperspective.com" ||
-  window.location.host === "www.noahpinion.blog"
+  window.location.host !== "substack.com" &&
+  document.querySelector('link[href^="https://substackcdn.com"]')
 ) {
   observe(100, [
     // "No thanks" on the subscribe overlay; clicking removes the overlay

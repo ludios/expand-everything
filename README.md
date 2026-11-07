@@ -44,7 +44,8 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://x.com/ & https://twitter.com/ ("show more" on long tweets; in threads, show replies to replies, show "probable spam")
 - https://claude.ai/chat/ (expand reasoning and user prompt)
 - https://stackoverflow.com/ and all other Stack Exchange sites (show all comments)
-- https://\*.substack.com/ (dismiss subscribe overlay, expand comment text)
+- https://\*.substack.com/ and some Substack publications on their own domains (dismiss subscribe overlay, expand comment text)
+  - To add another such publication in Violentmonkey, add a rule like `https://www.example.com/*` to "@match rules" in the script's Settings tab, leaving "Keep original" checked.
 - https://substack.com/ (expand comment text on notes)
 - https://www.goodreads.com/ (expand book review text)
 - https://old.reddit.com/ (expand comments below threshold, expand deleted comments)
