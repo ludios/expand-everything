@@ -149,19 +149,14 @@ pub async fn wait_for<T: DeserializeOwned + Debug>(
     bail!("waited {timeout:?} for {what}, but the last value was {last}{settling}")
 }
 
-/// Load `url` in a new tab of `browser`, and wait for the userscript to
+/// Load `url` in the main tab of `browser`, and wait for the userscript to
 /// start running in it.
-///
-/// Not the main tab, which zendriver attaches to twice: the scripts are then
-/// injected twice into each document, and the second attachment's injections
-/// race with the first navigation. (The new tab is attached once, and paused
-/// until the scripts are registered.)
 ///
 /// Returns the tab, or an error if the page doesn't load, no `@match` line
 /// allows the page's URL, the scripts were injected more than once, or the
 /// userscript doesn't start within `START_TIMEOUT` or throws while starting.
 pub async fn open(browser: &Browser, url: &str) -> Result<Tab> {
-    let tab = browser.new_tab().await.context("opening a tab")?;
+    let tab = browser.main_tab();
     tab.goto(url)
         .await
         .with_context(|| format!("loading {url}"))?;
