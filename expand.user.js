@@ -767,40 +767,64 @@ if (loc.startsWith("https://old.reddit.com/")) {
 // Test page: https://www.lesswrong.com/users/valentine
 // Expected: all the user's posts are listed; "Load More" below them is not visible
 if (loc.startsWith("https://www.lesswrong.com/")) {
-  observe(2000, [
+  const selectors = [
     // Comments truncated to a single line
     '.SingleLineComment-truncatedHighlight',
-    // The "+" or "-" in the [+] of a collapsed comment (such as a downvoted
-    // comment) or the [-] of an expanded comment
+    // The "+" in the [+] of a collapsed comment (such as a downvoted one), or
+    // the "-" in the [-] of an expanded comment
     'span.CommentsItemMeta-collapseCharacter',
-    // "Load More" below the posts on a /users/ page
+    // On a /users/ page, "Load More" below the posts, and "Show all" below
+    // the grids of squares that stand for the posts and comments
     'a.LoadMore-root',
-  ], el => {
-    // React ignores a click on an element until it hydrates the element.
-    // Hydration doesn't change the page, so an element skipped here gets
-    // clicked only after something else changes the page, which LessWrong
-    // keeps doing while it loads.
-    const hydrated = Object.keys(el).some(key => key.startsWith("__reactProps$"));
-    if (!hydrated) {
+  ];
+  // The timer that will pass every selected element to `expand` again, or null
+  let lookAgainTimer = null;
+
+  // Click `el` (a selected element) if it should be clicked now. Mark it in
+  // `alreadyClicked` once it is clicked or should never be clicked.
+  function expand(el) {
+    if (alreadyClicked.get(el)) {
+      return;
+    }
+    if (el.classList.contains("LoadMore-root") && !location.pathname.startsWith("/users/")) {
+      // Elsewhere, such as on the front page, "Load More" loads posts without end.
+      return;
+    }
+    // React ignores a click on an element until it hydrates the element, and
+    // hydration doesn't change the page (so the MutationObserver doesn't
+    // report it), so look at the skipped elements again in a moment.
+    if (!Object.keys(el).some(key => key.startsWith("__reactProps$"))) {
+      lookAgainTimer ??= setTimeout(() => {
+        lookAgainTimer = null;
+        for (const selector of selectors) {
+          queryElements(selector, expand);
+        }
+      }, 500);
       return;
     }
     if (el.classList.contains("CommentsItemMeta-collapseCharacter") && el.textContent !== "+") {
+      // The comment is expanded; if the user collapses it, keep it collapsed.
+      alreadyClicked.set(el, true);
       return;
     }
     if (el.classList.contains("LoadMore-root")) {
-      // In the task in which LessWrong shows the posts that a click on "Load
-      // More" loaded, a click on "Load More" loads the same posts again, so
-      // click in a later task. By then, LessWrong may have removed the link,
-      // and a click on a removed link would still navigate to its href, "#".
+      // LessWrong updates its count of loaded posts a moment after it shows
+      // the posts that a click on "Load More" loaded, and a click on "Load
+      // More" before that loads the same posts again, so click after a delay.
+      // By then, LessWrong may have removed the link, and a click on a removed
+      // link would navigate to its href, "#".
+      alreadyClicked.set(el, true);
       setTimeout(() => {
         if (el.isConnected) {
-          clickIfUnclicked(el);
+          el.click();
         }
-      }, 0);
+      }, 500);
       return;
     }
     clickIfUnclicked(el);
-  });
+  }
+
+  observe(2000, selectors, expand);
 }
 
 // Test page: https://cohost.org/mcc/post/718898-andi-s-game-of-the-y

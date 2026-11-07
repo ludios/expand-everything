@@ -1,5 +1,5 @@
 use anyhow::Result;
-use expand_everything_e2e::userscript::CLICKED_TEXTS;
+use expand_everything_e2e::userscript::{CLICKED_TEXTS, HARNESS_GLOBAL};
 use expand_everything_e2e::{open, wait_for, with_chrome};
 use serde::Deserialize;
 use std::time::Duration;
@@ -23,10 +23,14 @@ struct Comments {
     /// How many comments the page shows, whether expanded or collapsed (not
     /// counting the comments that it truncates to one line).
     shown: usize,
-    /// How many of the `shown` comments are collapsed (showing no body).
+    /// How many of the `shown` comments are collapsed: they show neither a
+    /// body nor the notice that replaces the body of a deleted comment.
     collapsed: usize,
     /// How many comments the page truncates to one line.
     one_line: usize,
+    /// How many of the userscript's clicks were on a comment truncated to one
+    /// line.
+    one_line_clicks: usize,
     /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
     clicked: Vec<String>,
 }
@@ -36,8 +40,9 @@ fn comments_expression() -> String {
     format!(
         r#"({{
             shown: document.querySelectorAll(".CommentsItem-root").length,
-            collapsed: document.querySelectorAll(".CommentsItem-root:not(:has(.CommentBody-root))").length,
-            one_line: document.querySelectorAll(".SingleLineComment-truncatedHighlight").length,
+            collapsed: document.querySelectorAll(".CommentsItem-root:not(:has(.CommentBody-root, .CommentDeletedMetadata-root))").length,
+            one_line: document.querySelectorAll(".SingleLineComment-root").length,
+            one_line_clicks: window.{HARNESS_GLOBAL}.clicks.filter((c) => c.element.closest(".SingleLineComment-root")).length,
             clicked: {CLICKED_TEXTS},
         }})"#
     )
@@ -47,17 +52,18 @@ fn comments_expression() -> String {
 async fn post_comments_are_expanded() -> Result<()> {
     with_chrome(async |browser| {
         let tab = open(browser, POST).await?;
-        // LessWrong renders the comments a few seconds after the page loads.
-        // The settling time is long enough to catch a userscript that
-        // collapses comments after expanding them.
         wait_for(
             &tab,
             "the userscript to expand every comment truncated to one line, and to collapse no comment",
             &comments_expression(),
             Duration::from_secs(30),
-            Duration::from_secs(3),
+            Duration::from_secs(2),
             |c: &Comments| {
-                c.shown > 0 && c.collapsed == 0 && c.one_line == 0 && !c.clicked.is_empty()
+                c.shown > 0
+                    && c.collapsed == 0
+                    && c.one_line == 0
+                    && c.one_line_clicks > 0
+                    && !c.clicked.iter().any(|text| text == "-")
             },
         )
         .await?;
@@ -86,11 +92,23 @@ async fn downvoted_comments_are_expanded() -> Result<()> {
     .await
 }
 
+/// The number of posts in a list, according to the last text in `clicked`
+/// (the texts of the userscript's clicks) of the form "Load More
+/// (LOADED/TOTAL)", or None if there is no such text.
+fn total_posts(clicked: &[String]) -> Option<usize> {
+    let text = clicked
+        .iter()
+        .rev()
+        .find(|text| text.starts_with("Load More ("))?;
+    let (_, total) = text.strip_suffix(')')?.split_once('/')?;
+    total.parse().ok()
+}
+
 #[tokio::test]
 async fn all_posts_are_listed() -> Result<()> {
     #[derive(Debug, Deserialize)]
     struct Posts {
-        /// How many posts the list shows.
+        /// How many different posts the list shows.
         listed: usize,
         /// Whether the list ends in a "Load More" link or in the spinner that
         /// replaces the link while LessWrong loads more posts.
@@ -103,7 +121,7 @@ async fn all_posts_are_listed() -> Result<()> {
             r#"(() => {{
                 const list = document.querySelector(".ProfilePageAllPostsTabUnshared-postsList");
                 return {{
-                    listed: list?.querySelectorAll("article").length ?? 0,
+                    listed: new Set([...(list?.querySelectorAll("article a[href^='/posts/']") ?? [])].map((a) => a.pathname)).size,
                     more: list?.querySelector("a.LoadMore-root, .Loading-spinner") != null,
                     clicked: {CLICKED_TEXTS},
                 }};
@@ -115,11 +133,7 @@ async fn all_posts_are_listed() -> Result<()> {
             &expression,
             Duration::from_secs(30),
             Duration::from_secs(2),
-            |p: &Posts| {
-                p.listed > 0
-                    && !p.more
-                    && p.clicked.iter().any(|text| text.starts_with("Load More"))
-            },
+            |p: &Posts| !p.more && total_posts(&p.clicked) == Some(p.listed),
         )
         .await?;
         Ok(())

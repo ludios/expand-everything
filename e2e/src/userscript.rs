@@ -435,6 +435,7 @@ mod tests {
         assert!(script.matches("https://dispatchesfromtheautismwars.substack.com/p/x/comments"));
         assert!(script.matches("https://www.youtube.com/watch?v=x"));
         assert!(script.matches("https://store.steampowered.com/app/1/X/"));
+        assert!(script.matches("https://www.lesswrong.com/users/x"));
         assert!(!script.matches("https://example.com/"));
     }
 
