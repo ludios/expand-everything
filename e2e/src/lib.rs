@@ -61,6 +61,8 @@ impl TargetObserver for InjectUserscript {
 /// `work` with it, and then close Chrome, even if `work` returned an error.
 ///
 /// Chrome is headless unless the environment variable `E2E_HEADFUL` is set.
+/// It asks sites for English (US), because the userscript and the tests look
+/// for some buttons by their English text.
 ///
 /// Returns what `work` returns, or the error from loading the userscript or
 /// launching Chrome. An error from closing Chrome is only printed, because it
@@ -73,6 +75,7 @@ pub async fn with_chrome<T>(work: impl AsyncFnOnce(&Browser) -> Result<T>) -> Re
     };
     let browser = Browser::builder()
         .headless(std::env::var_os("E2E_HEADFUL").is_none())
+        .lang("en-US")
         .observer(Arc::new(observer))
         .launch()
         .await
