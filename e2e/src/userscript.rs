@@ -32,6 +32,10 @@ pub const CLICKED_TEXTS: &str = concat!("window.", harness_global!(), ".clicks.m
 /// call made by the userscript from one made by the page.
 const USERSCRIPT_SOURCE_URL: &str = "expand.user.js";
 
+/// A JavaScript expression for whether the userscript is watching the page
+/// for elements to click (see `observing` in [`Userscript::harness_script`]).
+pub const OBSERVING: &str = concat!("window.", harness_global!(), ".observing");
+
 /// The metadata keys whose meaning the injected scripts imitate.
 const SUPPORTED_KEYS: &[&str] = &[
     "name",
@@ -209,6 +213,8 @@ impl Userscript {
     ///   userscript made, where `text` is the element's `innerText` (trimmed,
     ///   and cut to 200 characters) just before the click, and `time` is
     ///   `performance.now()`.
+    /// - `observing`: whether the userscript's last call of a
+    ///   `MutationObserver`'s `observe` or `disconnect` was to `observe`.
     pub fn harness_script(&self) -> String {
         let regexes = serde_json::to_string(&self.match_regexes).expect("strings serialize");
         format!(
@@ -223,18 +229,34 @@ impl Userscript {
     matched: {regexes}.some((re) => new RegExp(re).test(url)),
     ran: false,
     clicks: [],
+    observing: false,
   }};
   window.{HARNESS_GLOBAL} = harness;
   if (!harness.matched) {{
     return;
   }}
+  const calledByUserscript = () => new Error().stack.includes("{USERSCRIPT_SOURCE_URL}:");
   const nativeClick = HTMLElement.prototype.click;
   HTMLElement.prototype.click = function click() {{
-    if (new Error().stack.includes("{USERSCRIPT_SOURCE_URL}:")) {{
+    if (calledByUserscript()) {{
       const text = (this.innerText || "").trim().slice(0, 200);
       harness.clicks.push({{ element: this, text, time: performance.now() }});
     }}
     return nativeClick.call(this);
+  }};
+  const nativeObserve = MutationObserver.prototype.observe;
+  MutationObserver.prototype.observe = function observe(...args) {{
+    if (calledByUserscript()) {{
+      harness.observing = true;
+    }}
+    return nativeObserve.apply(this, args);
+  }};
+  const nativeDisconnect = MutationObserver.prototype.disconnect;
+  MutationObserver.prototype.disconnect = function disconnect() {{
+    if (calledByUserscript()) {{
+      harness.observing = false;
+    }}
+    return nativeDisconnect.call(this);
   }};
 }})();
 //# sourceURL=e2e-harness.js
