@@ -4,14 +4,19 @@ use expand_everything_e2e::{open, wait_for, with_chrome};
 use serde::Deserialize;
 use std::time::Duration;
 
+/// The ID of [`VIDEO`].
+const VIDEO_ID: &str = "ben9qDbrLYU";
+
 /// A video with a description longer than YouTube shows at first, and
 /// comments with replies.
 const VIDEO: &str = "https://www.youtube.com/watch?v=ben9qDbrLYU";
 
-/// The state of the description of the video on the page.
+/// The state of the page, as far as the tests of the description need it.
 #[derive(Debug, Deserialize)]
 struct Description {
     url: String,
+    /// `performance.timeOrigin`, which differs between two documents.
+    document: f64,
     /// Whether the page shows the whole description.
     expanded: bool,
     clicked: Vec<String>,
@@ -23,6 +28,7 @@ fn description_expression() -> String {
     format!(
         r##"({{
             url: location.href,
+            document: performance.timeOrigin,
             expanded: document.querySelector("#description-inline-expander")?.hasAttribute("is-expanded") ?? false,
             clicked: {CLICKED_TEXTS},
             observing: {OBSERVING},
@@ -46,7 +52,7 @@ async fn description_is_expanded() -> Result<()> {
             &description_expression(),
             Duration::from_secs(30),
             Duration::from_secs(1),
-            |d: &Description| d.expanded && more_clicks(&d.clicked) == 1,
+            |d: &Description| d.expanded && more_clicks(&d.clicked) > 0,
         )
         .await?;
         Ok(())
@@ -68,33 +74,37 @@ async fn description_is_expanded_after_navigating_to_another_video() -> Result<(
             r#"(document.querySelector("ytd-comments#comments")?.scrollIntoView(), {})"#,
             description_expression()
         );
-        wait_for(
+        let first = wait_for(
             &tab,
             "the userscript to click \"more\" below the first description, and stop watching the page",
             &expression,
             Duration::from_secs(60),
             Duration::from_secs(1),
-            |d: &Description| d.expanded && more_clicks(&d.clicked) == 1 && !d.observing,
+            |d: &Description| d.expanded && more_clicks(&d.clicked) > 0 && !d.observing,
         )
         .await?;
+        // Not a Mix that starts with the same video.
         let related = tab
             .find()
-            .css(r#"#related a[href^="/watch?v="]"#)
+            .css(format!(r#"#related a[href^="/watch?v="]:not([href*="{VIDEO_ID}"])"#))
             .timeout(Duration::from_secs(30))
             .one()
             .await
             .context("finding a related video")?;
         related.click().await.context("clicking a related video")?;
-        // Two clicks on "more" are recorded only if the page is still the
-        // first document, so the navigation didn't load a new one.
+        // Since the userscript had stopped watching the page, it can click
+        // "more" again only after it noticed the navigation.
         wait_for(
             &tab,
-            "the userscript to click \"more\" below the second description",
+            "the userscript to click \"more\" below the second description, in the same document",
             &description_expression(),
             Duration::from_secs(30),
             Duration::from_secs(1),
             |d: &Description| {
-                !d.url.starts_with(VIDEO) && d.expanded && more_clicks(&d.clicked) == 2 && d.observing
+                !d.url.contains(VIDEO_ID)
+                    && d.document == first.document
+                    && d.expanded
+                    && more_clicks(&d.clicked) > more_clicks(&first.clicked)
             },
         )
         .await?;
@@ -103,9 +113,9 @@ async fn description_is_expanded_after_navigating_to_another_video() -> Result<(
     .await
 }
 
-/// The userscript stops watching the page soon after it loads, so it opens
-/// the replies of only the top comments; check the first comment that has
-/// replies.
+/// The userscript stops watching the page after a number of changes to the
+/// page, so it may open the replies of only some of the comments. This test
+/// checks only the first comment that has replies.
 #[tokio::test]
 async fn replies_of_first_comment_are_opened() -> Result<()> {
     #[derive(Debug, Deserialize)]

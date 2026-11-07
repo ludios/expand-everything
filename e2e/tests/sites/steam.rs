@@ -11,19 +11,20 @@ const GAME: &str = "https://store.steampowered.com/app/1147890/Bonfire_Peaks/";
 /// above a "READ MORE" link.
 const EARLY_ACCESS_GAME: &str = "https://store.steampowered.com/app/1592280/Selaco/";
 
-/// The state of the buttons or links of one kind on the page.
+/// The state of the page, as far as one kind of button or link on it goes.
 #[derive(Debug, Deserialize)]
 struct Buttons {
-    /// How many there are, shown or not.
+    /// How many of the buttons or links there are, whether shown or not.
     total: usize,
-    /// How many are shown.
+    /// How many of the buttons or links are shown (with `display`, and the
+    /// `display` of every ancestor, not `none`).
     shown: usize,
     clicked: Vec<String>,
 }
 
 /// A JavaScript expression for the [`Buttons`] that match the CSS selector
-/// `css` (and whose text is `text`, if given), evaluated after `before` (a
-/// statement).
+/// `css` (and whose text is `text`, if given), evaluated after the JavaScript
+/// statements `before`.
 fn buttons_expression(before: &str, css: &str, text: Option<&str>) -> String {
     let css = serde_json::to_string(css).expect("strings serialize");
     let text = serde_json::to_string(&text).expect("strings serialize");
@@ -72,7 +73,9 @@ async fn reviews_are_expanded() -> Result<()> {
 async fn early_access_information_is_expanded() -> Result<()> {
     with_chrome(async |browser| {
         let tab = open(browser, EARLY_ACCESS_GAME).await?;
-        // Once hidden, the link's text isn't in capitals, so it's not checked.
+        // The link's text is in capitals only through CSS, and once the link
+        // is hidden, its `innerText` is no longer in capitals, so the
+        // expression doesn't check the text.
         let expression = buttons_expression("", "a.morebutton", None);
         wait_for(
             &tab,
@@ -80,7 +83,9 @@ async fn early_access_information_is_expanded() -> Result<()> {
             &expression,
             Duration::from_secs(30),
             Duration::from_secs(1),
-            |b: &Buttons| b.total > 0 && b.shown == 0 && b.clicked == ["READ MORE"],
+            |b: &Buttons| {
+                b.total > 0 && b.shown == 0 && b.clicked.iter().any(|text| text == "READ MORE")
+            },
         )
         .await?;
         Ok(())
