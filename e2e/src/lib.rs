@@ -200,8 +200,8 @@ pub async fn open(browser: &Browser, url: &str) -> Result<Tab> {
     if state.injections != Some(1) {
         bail!(
             "the harness script didn't run exactly once in {} (did zendriver attach to the tab \
-             more than once? The fork at ~/code/crawling/zendriver-rs attached to the main tab \
-             twice until its commit 8fd829948): {state:?}",
+             more than once? github.com/ludios/zendriver-rs attached to the main tab twice \
+             until its commit 8fd829948): {state:?}",
             state.url
         );
     }

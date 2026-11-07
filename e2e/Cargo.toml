@@ -11,7 +11,7 @@ async-trait = "0.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
-zendriver = { path = "/home/at/code/crawling/zendriver-rs/crates/zendriver" }
+zendriver = { git = "https://github.com/ludios/zendriver-rs", branch = "prime" }
 
 [dev-dependencies]
 regex = "1"
