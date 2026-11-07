@@ -1,12 +1,16 @@
 //! Reading `expand.user.js` and turning it into the scripts that the harness
 //! injects into each new document, imitating what Violentmonkey does with it.
 //!
-//! Violentmonkey runs a `@grant none` script in the page's main world, at
-//! `document-end` (unless `@run-at` says otherwise), in each document whose
-//! URL a `@match` line allows. The injected scripts do the same, and
-//! [`Userscript::parse`] refuses a metadata key that they don't imitate, so
-//! that the tests never silently run the script differently from
-//! Violentmonkey.
+//! Violentmonkey runs a script at `document-end` (unless `@run-at` says
+//! otherwise), in each document whose URL a `@match` line allows. The injected
+//! scripts do the same, and [`Userscript::parse`] refuses a metadata key or a
+//! `@match` pattern that they don't imitate.
+//!
+//! The injected scripts always run the userscript in the page's main world.
+//! Violentmonkey does that by default too, but if a page's Content Security
+//! Policy blocks it, Violentmonkey falls back to its content script's isolated
+//! world, where page globals (such as `window.StackExchange`) are missing. The
+//! tests don't cover that fallback.
 
 use anyhow::{Context, Result, bail, ensure};
 use std::path::PathBuf;
@@ -19,7 +23,8 @@ macro_rules! harness_global {
     };
 }
 
-/// See [`harness_global`].
+/// The name of the global (in the page's main world) through which the
+/// harness script reports to the tests. See [`Userscript::harness_script`].
 pub const HARNESS_GLOBAL: &str = harness_global!();
 
 /// A JavaScript expression for the texts of the elements that the userscript
@@ -29,7 +34,9 @@ pub const CLICKED_TEXTS: &str = concat!("window.", harness_global!(), ".clicks.m
 
 /// The `sourceURL` of the injected userscript. Stack traces name the
 /// userscript's frames with it, which is how the harness tells a `click()`
-/// call made by the userscript from one made by the page.
+/// call made directly by the userscript from one made by the page (even one
+/// made by a page's click handler while the userscript's click is being
+/// dispatched).
 const USERSCRIPT_SOURCE_URL: &str = "expand.user.js";
 
 /// A JavaScript expression for whether the userscript is watching the page
@@ -56,7 +63,9 @@ pub struct Userscript {
     match_regexes: Vec<String>,
 }
 
-/// The `@key value` lines of the metadata block in `source`, in order.
+/// The `@key value` lines of the metadata block in `source`, in order. As in
+/// Violentmonkey, a line is one only if it starts with `// @` (after any
+/// whitespace), and every other line is ignored.
 ///
 /// Returns an error if `source` has no complete `==UserScript==` block.
 fn metadata(source: &str) -> Result<Vec<(&str, &str)>> {
@@ -70,11 +79,7 @@ fn metadata(source: &str) -> Result<Vec<(&str, &str)>> {
         if line == "// ==/UserScript==" {
             return Ok(entries);
         }
-        // Lines without an `@key` are comments for humans.
-        let Some(entry) = line.strip_prefix("//").map(str::trim_start) else {
-            bail!("non-comment line inside the metadata block: {line:?}");
-        };
-        let Some(entry) = entry.strip_prefix('@') else {
+        let Some(entry) = line.strip_prefix("// @") else {
             continue;
         };
         let (key, value) = entry.split_once(char::is_whitespace).unwrap_or((entry, ""));
@@ -97,19 +102,20 @@ fn escape_regex(text: &str) -> String {
 }
 
 /// Convert a `@match` pattern to a regex that matches the URLs (without
-/// their `#fragment`) that the pattern allows, following Chrome's match
-/// patterns (https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns),
+/// their `#fragment`) that the pattern allows, following Chrome's
+/// [match patterns](https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns),
 /// which Violentmonkey's `@match` follows:
 ///
 /// - The scheme is `http`, `https`, or `*` (either of those two).
 /// - The host is `*` (any host), `*.` followed by a domain (that domain or
-///   any of its subdomains), or a host to match exactly. A URL with any port
-///   matches.
+///   any of its subdomains), or a host to match exactly, in lowercase. A URL
+///   with any port matches.
 /// - The path (which includes the query string) is a glob in which `*`
-///   matches any characters.
+///   matches any characters, and which ends with `*`.
 ///
-/// Returns an error for anything else, such as `<all_urls>` or a pattern
-/// with a port, which the tests don't need yet.
+/// Returns an error for anything else, such as `<all_urls>`, a pattern with a
+/// port or a `#`, or a path that doesn't end with `*` (where Violentmonkey and
+/// Chrome disagree about the query string), which the tests don't need yet.
 pub fn match_pattern_to_regex(pattern: &str) -> Result<String> {
     let Some((scheme, rest)) = pattern.split_once("://") else {
         bail!("@match {pattern:?} has no `://`");
@@ -119,6 +125,10 @@ pub fn match_pattern_to_regex(pattern: &str) -> Result<String> {
         "http" | "https" => scheme,
         _ => bail!("@match {pattern:?} has an unsupported scheme"),
     };
+    ensure!(
+        !rest.contains('#'),
+        "@match {pattern:?} has a `#`, which isn't supported"
+    );
     let Some(path_start) = rest.find('/') else {
         bail!("@match {pattern:?} has no path");
     };
@@ -126,6 +136,14 @@ pub fn match_pattern_to_regex(pattern: &str) -> Result<String> {
     ensure!(
         !host.contains(':'),
         "@match {pattern:?} has a port, which isn't supported"
+    );
+    ensure!(
+        host == host.to_ascii_lowercase(),
+        "@match {pattern:?} has capital letters in its host, which isn't supported"
+    );
+    ensure!(
+        path.ends_with('*'),
+        "@match {pattern:?} has a path that doesn't end with `*`, which isn't supported"
     );
     let domain = host.strip_prefix("*.").unwrap_or(host);
     ensure!(
@@ -209,11 +227,13 @@ impl Userscript {
     /// - `matched`: whether a `@match` line allows the document's URL, which
     ///   decides whether the userscript runs.
     /// - `ran`: whether the userscript has started running.
+    /// - `error`: the exception (as text) that the userscript's top-level code
+    ///   threw, if it threw one.
     /// - `clicks`: one `{element, text, time}` for each `click()` call that the
-    ///   userscript made, where `text` is the element's `innerText` (trimmed,
+    ///   userscript made directly, where `text` is the element's `innerText` (trimmed,
     ///   and cut to 200 characters) just before the click, and `time` is
     ///   `performance.now()`.
-    /// - `observing`: whether the userscript's last call of a
+    /// - `observing`: whether the userscript's last direct call of a
     ///   `MutationObserver`'s `observe` or `disconnect` was to `observe`.
     pub fn harness_script(&self) -> String {
         let regexes = serde_json::to_string(&self.match_regexes).expect("strings serialize");
@@ -228,6 +248,7 @@ impl Userscript {
     injections: 1,
     matched: {regexes}.some((re) => new RegExp(re).test(url)),
     ran: false,
+    error: null,
     clicks: [],
     observing: false,
   }};
@@ -235,7 +256,15 @@ impl Userscript {
   if (!harness.matched) {{
     return;
   }}
-  const calledByUserscript = () => new Error().stack.includes("{USERSCRIPT_SOURCE_URL}:");
+  // Whether the caller of the method that calls this is in the userscript.
+  // (Frame 0 is this function, frame 1 the method.)
+  const calledByUserscript = () => {{
+    const limit = Error.stackTraceLimit;
+    Error.stackTraceLimit = 3;
+    const frames = new Error().stack.split("\n").slice(1);
+    Error.stackTraceLimit = limit;
+    return frames.length === 3 && frames[2].includes("{USERSCRIPT_SOURCE_URL}:");
+  }};
   const nativeClick = HTMLElement.prototype.click;
   HTMLElement.prototype.click = function click() {{
     if (calledByUserscript()) {{
@@ -267,20 +296,37 @@ impl Userscript {
     /// The userscript, wrapped so that it runs only where
     /// [`Userscript::harness_script`] found a matching `@match` line, and only
     /// once the DOM has been parsed (Violentmonkey's default
-    /// `@run-at document-end`).
+    /// `@run-at document-end`). Like Violentmonkey, it waits for
+    /// `DOMContentLoaded` on `window`, so that the page's listeners on
+    /// `document` run first.
     ///
-    /// The wrapper's opening goes on the userscript's first line, so that line
-    /// numbers in stack traces are the line numbers in `expand.user.js`.
+    /// The userscript is the whole body of a function, so that its top-level
+    /// names can't clash with the wrapper's, and a `"use strict"` at its top
+    /// would apply. The wrapper's opening goes on the userscript's first line,
+    /// so that line numbers in stack traces are the line numbers in
+    /// `expand.user.js`.
     pub fn wrapped_script(&self) -> String {
         let open = format!(
-            "(() => {{ const harness = window.{HARNESS_GLOBAL}; if (!harness.matched) {{ return; }} const run = () => {{ harness.ran = true; "
+            "(() => {{ const harness = window.{HARNESS_GLOBAL}; if (!harness.matched) {{ return; }} const run = () => {{ "
         );
         let close = r#"
 };
+const start = () => {
+  harness.ran = true;
+  try {
+    run();
+  } catch (error) {
+    harness.error = String(error?.stack ?? error);
+    throw error;
+  }
+};
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", run, { once: true });
+  window.addEventListener("DOMContentLoaded", async () => {
+    await 0;
+    start();
+  }, { once: true });
 } else {
-  run();
+  start();
 }
 })();
 "#;
@@ -354,8 +400,8 @@ mod tests {
                 "https://www.imdb.com/title/tt1/",
                 false,
             ),
-            ("*://example.com/a.b", "http://example.com/a.b", true),
-            ("*://example.com/a.b", "https://example.com/aXb", false),
+            ("*://example.com/a.b*", "http://example.com/a.b", true),
+            ("*://example.com/a.b*", "https://example.com/aXb", false),
             ("https://*/*", "https://x.org/", true),
             ("https://evil.com/*", "https://evil.com.example/", false),
         ];
@@ -368,6 +414,9 @@ mod tests {
     #[test]
     fn unsupported_match_patterns_are_errors() {
         for pattern in [
+            "https://x.com/page",
+            "https://X.com/*",
+            "https://x.com/*#a",
             "<all_urls>",
             "ftp://x.com/*",
             "https://x.com",
@@ -399,5 +448,14 @@ mod tests {
         assert!(parse("// @grant GM_xmlhttpRequest\n// @match https://x.com/*").is_err());
         assert!(parse("// @match https://x.com/*").is_err());
         assert!(parse("// @grant none").is_err());
+    }
+
+    #[test]
+    fn metadata_lines_follow_violentmonkey() {
+        let source = "// ==UserScript==\n\n// @grant  none\n//@run-at document-start\n//  @match https://y.com/*\n  // @match https://x.com/*\nlet x;\n// ==/UserScript==\n// @match https://z.com/*\n";
+        let script = Userscript::parse(source.to_string()).unwrap();
+        assert!(script.matches("https://x.com/"));
+        assert!(!script.matches("https://y.com/"));
+        assert!(!script.matches("https://z.com/"));
     }
 }

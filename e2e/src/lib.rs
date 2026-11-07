@@ -85,15 +85,16 @@ pub async fn with_chrome<T>(work: impl AsyncFnOnce(&Browser) -> Result<T>) -> Re
 }
 
 /// Poll the JavaScript `expression` in the main world of the page in `tab`
-/// until `done` returns true for each of its values for `settle` (so that a
-/// value that is only briefly right, such as a page between two loads of
-/// comments, doesn't end the wait).
+/// until `done` has returned true for every value of `expression` during one
+/// uninterrupted interval of length `settle` (so that a value that is only
+/// briefly right, such as a page between two loads of comments, doesn't end
+/// the wait).
 ///
 /// `what` describes what is awaited, for the error message.
 ///
 /// Returns the last value of `expression`, or an error that shows the last
-/// value (or the last error from evaluating `expression`) if `timeout` passed
-/// first.
+/// value that an evaluation of `expression` gave (or the error that it gave) if `timeout`
+/// elapses first.
 pub async fn wait_for<T: DeserializeOwned + Debug>(
     tab: &Tab,
     what: &str,
@@ -102,25 +103,47 @@ pub async fn wait_for<T: DeserializeOwned + Debug>(
     settle: Duration,
     done: impl Fn(&T) -> bool,
 ) -> Result<T> {
-    let start = Instant::now();
+    let deadline = Instant::now() + timeout;
     let mut done_since = None;
+    let mut last = None;
     loop {
-        let value = tab.evaluate_main::<T>(expression).await;
+        // An evaluation that is still running at the deadline is abandoned.
+        let Ok(value) = tokio::time::timeout_at(deadline, tab.evaluate_main::<T>(expression)).await
+        else {
+            break;
+        };
         let now = Instant::now();
-        match &value {
-            Ok(v) if done(v) => {
+        match value {
+            Ok(v) if done(&v) => {
                 let since = *done_since.get_or_insert(now);
                 if now - since >= settle {
-                    return Ok(value?);
+                    return Ok(v);
                 }
+                last = Some(Ok(v));
             }
-            _ => done_since = None,
+            other => {
+                done_since = None;
+                last = Some(other);
+            }
         }
-        if now - start >= timeout {
-            bail!("waited {timeout:?} for {what}, but the last value was {value:?}");
+        if now >= deadline {
+            break;
         }
         tokio::time::sleep(POLL_INTERVAL).await;
     }
+    let last = match last {
+        Some(Ok(value)) => format!("{value:?}"),
+        Some(Err(error)) => format!("an error: {error}"),
+        None => "missing, because no evaluation finished".to_string(),
+    };
+    let settling = match done_since {
+        Some(since) => format!(
+            " (which was right, but only for {:?} of {settle:?})",
+            Instant::now() - since
+        ),
+        None => String::new(),
+    };
+    bail!("waited {timeout:?} for {what}, but the last value was {last}{settling}")
 }
 
 /// Load `url` in a new tab of `browser`, and wait for the userscript to
@@ -133,20 +156,21 @@ pub async fn wait_for<T: DeserializeOwned + Debug>(
 ///
 /// Returns the tab, or an error if the page doesn't load, no `@match` line
 /// allows the page's URL, the scripts were injected more than once, or the
-/// userscript doesn't start within `START_TIMEOUT`.
+/// userscript doesn't start within `START_TIMEOUT` or throws while starting.
 pub async fn open(browser: &Browser, url: &str) -> Result<Tab> {
     let tab = browser.new_tab().await.context("opening a tab")?;
     tab.goto(url)
         .await
         .with_context(|| format!("loading {url}"))?;
     let expression = format!(
-        "(({{ injections, matched, ran }}) => ({{ injections, matched, ran, url: location.href, title: document.title, ready_state: document.readyState }}))(window.{HARNESS_GLOBAL} ?? {{}})"
+        "(({{ injections, matched, ran, error }}) => ({{ injections, matched, ran, error, url: location.href, title: document.title, ready_state: document.readyState }}))(window.{HARNESS_GLOBAL} ?? {{}})"
     );
     #[derive(Debug, serde::Deserialize)]
     struct State {
         injections: Option<u32>,
         matched: Option<bool>,
         ran: Option<bool>,
+        error: Option<String>,
         url: String,
         #[allow(dead_code, reason = "shown in the error message")]
         title: String,
@@ -164,6 +188,12 @@ pub async fn open(browser: &Browser, url: &str) -> Result<Tab> {
     .await?;
     if state.matched == Some(false) {
         bail!("no @match line in the userscript allows {}", state.url);
+    }
+    if let Some(error) = &state.error {
+        bail!(
+            "the userscript threw while starting in {}: {error}",
+            state.url
+        );
     }
     if state.injections != Some(1) {
         bail!(
