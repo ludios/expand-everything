@@ -5,5 +5,6 @@
 //! userscript did the clicking (so that a test doesn't pass only because the
 //! site stopped hiding anything).
 
+mod steam;
 mod substack;
 mod youtube;
