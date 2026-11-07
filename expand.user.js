@@ -1014,17 +1014,6 @@ if (loc.startsWith("https://claude.ai/chat/")) {
 // Test page: https://dispatchesfromtheautismwars.substack.com/p/how-i-learned-to-stop-worrying-and/comments
 // Test page: https://www.gurwinder.blog/p/tiktok-may-be-a-chinese-bio-weapon/comments
 // Expected: "Load More" button at the bottom is clicked; all comments are shown
-//
-// Substack serves each publication on <name>.substack.com or on a domain of
-// the publication's own. The userscript manager runs this userscript on such
-// a domain only if a @match rule allows the domain: either a @match line
-// above, or a rule that the user added in the userscript manager. Every page
-// of a publication has a <link> whose href starts with https://substackcdn.com.
-// On <name>.substack.com, this block recognizes the publication by the host
-// alone, so that it keeps working there even if Substack removes such <link>s.
-//
-// Such a <link> could also be on a page of another site, so this block is the
-// last one, and does nothing if a block above has already called observe().
 if (
   observer === null &&
   (window.location.host.endsWith(".substack.com") ||
