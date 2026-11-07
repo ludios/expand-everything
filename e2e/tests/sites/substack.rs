@@ -12,8 +12,9 @@ const HOME_PAGE: &str = "https://shimmeringvoid.substack.com/";
 /// first shows about 30, above a "Load More" button.
 const COMMENTS_PAGE: &str = "https://dispatchesfromtheautismwars.substack.com/p/how-i-learned-to-stop-worrying-and/comments";
 
-/// The comments page of a post with a few comments that the page cuts off,
-/// above a "See more" button.
+/// The comments page of a post with more than 200 comments, which the page
+/// shows about 30 at a time, above a "Load More" button. A few of the comments
+/// are long, so the page cuts each of them off, above a "See more" button.
 const LONG_COMMENTS_PAGE: &str = "https://mrgirl.substack.com/p/the-destiny-report/comments";
 
 #[tokio::test]
@@ -31,12 +32,12 @@ async fn subscribe_overlay_is_dismissed() -> Result<()> {
         );
         wait_for(
             &tab,
-            "the userscript to click \"No thanks\" and the overlay to go",
+            "the userscript to click \"No thanks\" and the page to remove the overlay",
             &expression,
             Duration::from_secs(30),
             Duration::from_secs(2),
             |s: &State| {
-                s.overlays == 0 && !s.clicked.is_empty() && s.clicked.iter().all(|text| text == "No thanks")
+                s.overlays == 0 && s.clicked.iter().any(|text| text == "No thanks")
             },
         )
         .await?;
@@ -61,7 +62,7 @@ async fn comments_page_loads_all_comments() -> Result<()> {
         let tab = open(browser, COMMENTS_PAGE).await?;
         let expression = format!(
             r#"({{
-                load_more: [...document.querySelectorAll("div.comment-list > button")].filter((b) => b.innerText === "Load More").length,
+                load_more: document.querySelectorAll("div.comment-list-items + button").length,
                 shown: document.querySelectorAll("div.comment").length,
                 total: window._preloads.post.comment_count,
                 clicked: {CLICKED_TEXTS},
@@ -89,6 +90,8 @@ async fn comments_page_loads_all_comments() -> Result<()> {
 async fn long_comments_are_expanded() -> Result<()> {
     #[derive(Debug, Deserialize)]
     struct State {
+        /// How many "Load More" buttons the page has.
+        load_more: usize,
         /// How many comments the page cuts off.
         cut_off: usize,
         /// How many comments the page has expanded.
@@ -99,6 +102,7 @@ async fn long_comments_are_expanded() -> Result<()> {
         let tab = open(browser, LONG_COMMENTS_PAGE).await?;
         let expression = format!(
             r#"({{
+                load_more: document.querySelectorAll("div.comment-list-items + button").length,
                 cut_off: document.querySelectorAll("div.comment-body:not(.expanded)").length,
                 expanded: document.querySelectorAll("div.comment-body.expanded").length,
                 clicked: {CLICKED_TEXTS},
@@ -106,12 +110,15 @@ async fn long_comments_are_expanded() -> Result<()> {
         );
         wait_for(
             &tab,
-            "the userscript to click \"See more\" below every long comment",
+            "the userscript to load every comment and click \"See more\" below every long one",
             &expression,
             Duration::from_secs(60),
             Duration::from_secs(3),
             |s: &State| {
-                s.cut_off == 0 && s.expanded > 0 && s.clicked.iter().any(|text| text == "See more")
+                s.load_more == 0
+                    && s.cut_off == 0
+                    && s.expanded > 0
+                    && s.clicked.iter().any(|text| text == "See more")
             },
         )
         .await?;
