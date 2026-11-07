@@ -34,7 +34,6 @@
 // Substack sites
 // @match       https://substack.com/*
 // @match       https://*.substack.com/*
-// @match       https://www.platformer.news/*
 // @match       https://www.henrikkarlsson.xyz/*
 // @match       https://www.experimental-history.com/*
 // @match       https://www.astralcodexten.com/*
@@ -479,7 +478,6 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 // Expected: "Load More" button at the bottom is clicked; all comments are shown
 if (
   window.location.host.endsWith(".substack.com") ||
-  window.location.host === "www.platformer.news" ||
   window.location.host === "www.henrikkarlsson.xyz" ||
   window.location.host === "www.experimental-history.com" ||
   window.location.host === "www.astralcodexten.com" ||
