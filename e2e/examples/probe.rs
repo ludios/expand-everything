@@ -5,7 +5,7 @@
 //! Opens URL in Chrome with the userscript injected, waits SECONDS (default
 //! 10), and then prints each click that the userscript made and the JSON value
 //! of each JavaScript EXPRESSION (evaluated in the page's main world). With
-//! `--html`, also saves the page's DOM to FILE, to study it without loading
+//! `--html`, first saves the page's DOM to FILE, to study it without loading
 //! the page again.
 
 use anyhow::{Context, Result, bail};
@@ -32,9 +32,11 @@ fn parse_args() -> Result<Args> {
         match arg.as_str() {
             "--wait" => {
                 let seconds = args.next().context("--wait needs a value")?;
-                wait = Duration::from_secs_f64(seconds.parse().context("parsing --wait")?);
+                wait = Duration::try_from_secs_f64(seconds.parse().context("parsing --wait")?)
+                    .context("--wait needs a number of seconds")?;
             }
             "--html" => html = Some(args.next().context("--html needs a value")?),
+            _ if arg.starts_with("--") => bail!("unknown option {arg}"),
             _ if url.is_none() => url = Some(arg),
             _ => expressions.push(arg),
         }
@@ -56,6 +58,9 @@ async fn main() -> Result<()> {
     with_chrome(async |browser| {
         let tab = open(browser, &args.url).await?;
         tokio::time::sleep(args.wait).await;
+        if let Some(path) = &args.html {
+            std::fs::write(path, tab.content().await?).with_context(|| format!("writing {path}"))?;
+        }
         let clicks: serde_json::Value = tab
             .evaluate_main(format!(
                 "window.{HARNESS_GLOBAL}.clicks.map((c) => [Math.round(c.time), c.element.tagName + '.' + c.element.className, c.text])"
@@ -65,9 +70,6 @@ async fn main() -> Result<()> {
         for expression in &args.expressions {
             let value: serde_json::Value = tab.evaluate_main(expression).await?;
             println!("{expression}\n=> {}", serde_json::to_string_pretty(&value)?);
-        }
-        if let Some(path) = &args.html {
-            std::fs::write(path, tab.content().await?).with_context(|| format!("writing {path}"))?;
         }
         Ok(())
     })
