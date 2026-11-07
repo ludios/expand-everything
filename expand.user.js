@@ -594,45 +594,6 @@ if (loc.startsWith("https://www.linkedin.com/")) {
   });
 }
 
-// Test page: https://shimmeringvoid.substack.com/
-// Test page: https://jenniferdaniel.substack.com/
-// Expected: the subscribe modal with "No thanks" is bypassed
-//
-// Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
-// Test page: https://www.md-a.co/p/scarcity-truthers/comments
-// Expected: "See more" is clicked below each long comment; the full text of each comment is shown
-//
-// Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
-// Test page: https://dispatchesfromtheautismwars.substack.com/p/how-i-learned-to-stop-worrying-and/comments
-// Test page: https://www.gurwinder.blog/p/tiktok-may-be-a-chinese-bio-weapon/comments
-// Expected: "Load More" button at the bottom is clicked; all comments are shown
-//
-// Substack serves each publication on <name>.substack.com, or on a domain of
-// the publication's own, which runs this userscript only if a @match line
-// lists it. Every page of a publication links to substackcdn.com. So do the
-// pages of substack.com, which the next block handles.
-if (
-  window.location.host !== "substack.com" &&
-  document.querySelector('link[href^="https://substackcdn.com"]')
-) {
-  observe(100, [
-    // "No thanks" on the subscribe overlay; clicking removes the overlay
-    'div.intro-popup [data-testid="maybeLater"]',
-    // "See more" below a long comment
-    'div.comment-body.long:not(.expanded) + button',
-    // "Load More" at the end of a comments page
-    'div.comment-list-items + button',
-  ], el => {
-    // Substack reuses the "Load More" button for each page of comments, so it
-    // must be clicked more than once.
-    if (el.matches('div.comment-list-items + button')) {
-      el.click();
-    } else {
-      clickIfUnclicked(el);
-    }
-  });
-}
-
 // Test page: https://substack.com/@meaningness/note/c-59538921
 // Expected: all comments are expanded; "See more..." is not visible
 if (loc.startsWith("https://substack.com/")) {
@@ -1038,5 +999,51 @@ if (loc.startsWith("https://claude.ai/chat/")) {
     'button[class="pb-3 pt-1 text-xs text-text-500/80 hover:text-text-100 transition w-3/4 text-left rounded-lg"]',
   ], el => {
     clickIfUnclicked(el);
+  });
+}
+
+// Test page: https://shimmeringvoid.substack.com/
+// Test page: https://jenniferdaniel.substack.com/
+// Expected: the subscribe modal with "No thanks" is bypassed
+//
+// Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
+// Test page: https://www.md-a.co/p/scarcity-truthers/comments
+// Expected: "See more" is clicked below each long comment; the full text of each comment is shown
+//
+// Test page: https://mrgirl.substack.com/p/the-destiny-report/comments
+// Test page: https://dispatchesfromtheautismwars.substack.com/p/how-i-learned-to-stop-worrying-and/comments
+// Test page: https://www.gurwinder.blog/p/tiktok-may-be-a-chinese-bio-weapon/comments
+// Expected: "Load More" button at the bottom is clicked; all comments are shown
+//
+// Substack serves each publication on <name>.substack.com or on a domain of
+// the publication's own. The userscript manager runs this userscript on such
+// a domain only if a @match rule allows the domain: either a @match line
+// above, or a rule that the user added in the userscript manager. Every page
+// of a publication has a <link> whose href starts with https://substackcdn.com.
+// On <name>.substack.com, this block recognizes the publication by the host
+// alone, so that it keeps working there even if Substack removes such <link>s.
+//
+// Such a <link> could also be on a page of another site, so this block is the
+// last one, and does nothing if a block above has already called observe().
+if (
+  observer === null &&
+  (window.location.host.endsWith(".substack.com") ||
+    document.querySelector('link[href^="https://substackcdn.com"]'))
+) {
+  observe(100, [
+    // "No thanks" on the subscribe overlay; clicking removes the overlay
+    'div.intro-popup [data-testid="maybeLater"]',
+    // "See more" below a long comment
+    'div.comment-body.long:not(.expanded) + button',
+    // "Load More" at the end of a comments page
+    'div.comment-list-items + button',
+  ], el => {
+    // Substack reuses the "Load More" button for each page of comments, so it
+    // must be clicked more than once.
+    if (el.matches('div.comment-list-items + button')) {
+      el.click();
+    } else {
+      clickIfUnclicked(el);
+    }
   });
 }
