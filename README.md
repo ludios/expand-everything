@@ -60,7 +60,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://tvtropes.org/ (open all folders)
 - https://cohost.org/ (expand posts on actual post pages)
 - https://nextdoor.com/ (expand posts and comments)
-- https://store.steampowered.com/ (expand review text, early access information, and the sections cut off above "READ MORE", such as awards and game descriptions)
+- https://store.steampowered.com/ (expand review text, game info)
 - https://www.patreon.com/ (expand post bodies)
 - https://www.hwinfo.com/forum/ (expand quote blocks)
 - https://mastodon.social/ and https://social.pixie.town/ (expand toots hidden behind a spoiler)
