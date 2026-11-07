@@ -137,6 +137,14 @@ Expand Everything is a userscript, `expand.user.js`, that clicks the "show more"
 
 The sites change without notice, so a failing test may mean that the site changed rather than that the last commit broke something. Keep live runs few, and never run them in a loop: to study a page, save its DOM once (`probe --html`) and work from the saved copy.
 
+# Edits to README.md
+
+In the list of supported sites, descriptions must be extremely concise and possibly omissive; e.g.
+
+Bad: https://store.steampowered.com/ (expand review text, early access information, and the sections cut off above "READ MORE", such as awards and game descriptions)
+
+Good: https://store.steampowered.com/ (expand review text, game info)
+
 # Before committing
 
 	node --check expand.user.js
