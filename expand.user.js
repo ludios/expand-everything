@@ -382,6 +382,9 @@ let lookAtAll = null;
 // The ID of the pending timeout that will call lookAtAll (see
 // lookAgainUnless), or null if no such timeout is pending
 let lookAgainTimer = null;
+// How many times lookAgainUnless has called lookAtAll since the page loaded
+// or navigated
+let lookAgains = 0;
 // Used only by the polling mechanism
 let lastHref = location.href;
 let locationInterval = null;
@@ -425,6 +428,9 @@ function observe(maxMutations, selectors, callback) {
     observer.disconnect();
     resetAlreadyClicked();
     mutations = 0;
+    clearTimeout(lookAgainTimer);
+    lookAgainTimer = null;
+    lookAgains = 0;
     pageCounter = 0;
     reobserve();
   }
@@ -502,12 +508,19 @@ function clickIfUnclicked(el) {
 // ignore a click on yet, pass every selected element to the callback of
 // observe(...) again in 500 ms, because the page's scripts may get ready
 // without changing the page (so the MutationObserver wouldn't report it).
+// This looks again at most 120 times (for a minute) per page, so that an
+// element that never gets ready doesn't make the userscript look forever.
+// observe(...) must have been called.
 //
 // Returns `ready`.
 function lookAgainUnless(ready) {
-  if (!ready) {
+  if (lookAtAll === null) {
+    throw new Error(`lookAgainUnless(...) called before observe(...)`);
+  }
+  if (!ready && lookAgains < 120) {
     lookAgainTimer ??= setTimeout(() => {
       lookAgainTimer = null;
+      lookAgains++;
       lookAtAll();
     }, 500);
   }
