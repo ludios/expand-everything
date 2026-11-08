@@ -720,8 +720,12 @@ if (loc.startsWith("https://github.com/")) {
     // "Load more comments" on a commit page
     '#comments.react-comments-container > button',
   ];
-  // The chevron of a collapsed review thread (outdated or resolved) on a pull request page
-  const threadChevrons = 'review-thread-collapsible:not(.open) button.review-thread-chevron';
+  // The chevron of a review thread on a pull request page, which is clicked
+  // only if the thread is collapsed (as an outdated or resolved one is)
+  const threadChevrons = 'review-thread-collapsible button.review-thread-chevron';
+  // The <summary> of a <details> in a comment, a README, or other Markdown,
+  // which is clicked only if the <details> is closed
+  const markdownSummaries = '.markdown-body details > summary';
   observe(1000, [
     ...reactSelectors,
     // "N hidden items; Load more..." on a pull request page or a discussion page
@@ -736,8 +740,7 @@ if (loc.startsWith("https://github.com/")) {
     threadChevrons,
     // "Show N previous replies" on a discussion page
     '.discussion-nested-comment-paging-form button[type="submit"]',
-    // A <details> in a comment, a README, or other Markdown
-    '.markdown-body details:not([open]) > summary',
+    markdownSummaries,
     // "Load diff" button on PRs, where some diffs are collapsed because
     // "Large diffs are not rendered by default" and "This file was deleted".
     // This is disabled by default because some pages are just too large, e.g.
@@ -747,18 +750,27 @@ if (loc.startsWith("https://github.com/")) {
     if (alreadyClicked.get(el)) {
       return;
     }
-    if (el.matches(commentHeaderButtons) && document.getElementById(el.getAttribute("aria-labelledby"))?.textContent !== "show comment") {
+    // Mark an element that is not to be clicked, so that the userscript
+    // doesn't click it after the user collapses something
+    if (
+      (el.matches(commentHeaderButtons) && document.getElementById(el.getAttribute("aria-labelledby"))?.textContent !== "show comment") ||
+      (el.matches(markdownSummaries) && el.parentElement.open)
+    ) {
+      alreadyClicked.set(el, true);
       return;
     }
     if (reactSelectors.some(selector => el.matches(selector)) && !lookAgainUnless(reactHydrated(el))) {
       return;
     }
     if (el.matches(threadChevrons)) {
+      const thread = el.closest("review-thread-collapsible");
+      if (!thread.classList.contains("open")) {
+        el.click();
+      }
       // GitHub ignores a click on a chevron until a script that it loads late
-      // handles the click, which doesn't change the page, so click again in a
-      // moment if the thread didn't open.
-      el.click();
-      if (lookAgainUnless(el.closest("review-thread-collapsible").classList.contains("open"))) {
+      // handles the click, which doesn't change the page, so look again if
+      // the thread didn't open.
+      if (lookAgainUnless(thread.classList.contains("open"))) {
         alreadyClicked.set(el, true);
       }
       return;
