@@ -19,7 +19,7 @@ use std::path::PathBuf;
 /// harness script reports to the tests. See [`Userscript::harness_script`].
 macro_rules! harness_global {
     () => {
-        "__expandEverythingE2E"
+        "__expand_everything_e2e"
     };
 }
 
