@@ -508,8 +508,8 @@ function clickIfUnclicked(el) {
 // ignore a click on yet, pass every selected element to the callback of
 // observe(...) again in 500 ms, because the page's scripts may get ready
 // without changing the page (so the MutationObserver wouldn't report it).
-// This looks again at most 120 times (for a minute) per page, so that an
-// element that never gets ready doesn't make the userscript look forever.
+// This looks again at most 120 times between navigations, so that an element
+// that never gets ready doesn't make the userscript look forever.
 // observe(...) must have been called.
 //
 // Returns `ready`.
@@ -521,6 +521,9 @@ function lookAgainUnless(ready) {
     lookAgainTimer ??= setTimeout(() => {
       lookAgainTimer = null;
       lookAgains++;
+      if (lookAgains === 120) {
+        console.log(`${logPrefix}looked again ${lookAgains} times; not looking again until the next navigation`);
+      }
       lookAtAll();
     }, 500);
   }
@@ -528,14 +531,13 @@ function lookAgainUnless(ready) {
 }
 
 // Whether React has hydrated or created `el` (an element that React
-// renders), as shown by the props that React keeps on the element. React, as
-// LessWrong and GitHub use it, ignores a click on an element that it hasn't
-// hydrated yet.
+// renders), as shown by the props that React keeps on the element. React may
+// ignore a click on an element that it hasn't hydrated yet.
 function reactHydrated(el) {
   // Where a page's Content Security Policy keeps a userscript out of the
-  // page, as GitHub's does in Firefox, the userscript runs as a content
-  // script, which sees the page's own properties of `el` only through
-  // `el.wrappedJSObject`.
+  // page, a userscript manager may run it as a content script (as
+  // Violentmonkey does by default in Firefox), which sees the page's own
+  // properties of `el` only through `el.wrappedJSObject`.
   return Object.keys(el.wrappedJSObject ?? el).some(key => key.startsWith("__reactProps$"));
 }
 
