@@ -3,7 +3,9 @@
 //! Each test loads a page with the userscript injected, waits until the page
 //! shows what the userscript should have expanded, and checks that the
 //! userscript did the clicking (so that a test doesn't pass only because the
-//! site stopped hiding anything).
+//! site stopped hiding anything). A test of what the userscript must leave
+//! alone checks instead that the userscript observes the page but doesn't
+//! click it.
 
 mod github;
 mod lesswrong;

@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, ensure};
-use expand_everything_e2e::userscript::CLICKED_TEXTS;
+use expand_everything_e2e::userscript::{CLICKED_TEXTS, OBSERVING};
 use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
 use serde::Deserialize;
 use std::path::Path;
@@ -190,15 +190,17 @@ async fn outdated_review_threads_are_expanded() -> Result<()> {
 async fn profile_activity_is_not_expanded() -> Result<()> {
     with_chrome(async |browser| {
         let tab = open(browser, PROFILE).await?;
+        // That the userscript observes the page shows that the GitHub block
+        // runs.
         expect_expanded(
             &tab,
-            "the userscript to leave \"Show more activity\" unclicked, and the URL unchanged",
+            "the userscript to observe the page, but to leave \"Show more activity\" unclicked, and the URL unchanged",
             &format!(
-                r#"location.href === "{PROFILE}"
+                r#"{OBSERVING} && location.href === "{PROFILE}"
                     && [...document.querySelectorAll("button.ajax-pagination-btn")].some((b) => b.innerText === "Show more activity")"#
             ),
             Duration::from_secs(5),
-            |clicked| clicked.is_empty(),
+            |clicked| !clicked_on(clicked, "Show more activity"),
         )
         .await
     })
