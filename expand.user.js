@@ -532,7 +532,11 @@ function lookAgainUnless(ready) {
 // LessWrong and GitHub use it, ignores a click on an element that it hasn't
 // hydrated yet.
 function reactHydrated(el) {
-  return Object.keys(el).some(key => key.startsWith("__reactProps$"));
+  // Where a page's Content Security Policy keeps a userscript out of the
+  // page, as GitHub's does in Firefox, the userscript runs as a content
+  // script, which sees the page's own properties of `el` only through
+  // `el.wrappedJSObject`.
+  return Object.keys(el.wrappedJSObject ?? el).some(key => key.startsWith("__reactProps$"));
 }
 
 // Test page: https://www.goodreads.com/book/show/931984.The_Presentation_of_Self_in_Everyday_Life
