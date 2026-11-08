@@ -126,7 +126,9 @@ fn parse_cookies_txt(text: &str) -> Result<Vec<Cookie>> {
             let domain = domain.trim_start_matches('.');
             let expires: f64 = expires
                 .parse()
-                .with_context(|| format!("the expiry {expires:?} isn't a number"))?;
+                .ok()
+                .filter(|e: &f64| e.is_finite() && *e >= 0.0)
+                .with_context(|| format!("the expiry {expires:?} is neither 0 nor a time"))?;
             Ok(Cookie {
                 name: name.to_string(),
                 value: value.to_string(),
@@ -328,6 +330,8 @@ mod tests {
             "example.com\tFALSE\t/\tFALSE\t0\tname\n",
             "example.com\tYES\t/\tFALSE\t0\tname\tvalue\n",
             "example.com\tFALSE\t/\tFALSE\tnever\tname\tvalue\n",
+            "example.com\tFALSE\t/\tFALSE\t-2\tname\tvalue\n",
+            "example.com\tFALSE\t/\tFALSE\tinf\tname\tvalue\n",
         ] {
             let error = parse_cookies_txt(text).unwrap_err();
             assert!(
