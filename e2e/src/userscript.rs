@@ -229,9 +229,11 @@ impl Userscript {
     /// - `error`: the exception (as text) that the userscript's top-level code
     ///   threw, if it threw one.
     /// - `clicks`: one `{element, text, time}` for each `click()` call that the
-    ///   userscript made directly, where `text` is the element's `innerText` (trimmed,
-    ///   and cut to 200 characters) just before the click, and `time` is
-    ///   `performance.now()`.
+    ///   userscript made directly, where `text` is the element's `innerText`
+    ///   just before the click (or, if that is empty, as for an icon button,
+    ///   the element's `aria-label` or the text of the elements that its
+    ///   `aria-labelledby` names), trimmed and cut to 200 characters, and
+    ///   `time` is `performance.now()`.
     /// - `observing`: whether the userscript's last direct call of a
     ///   `MutationObserver`'s `observe` or `disconnect` was to `observe`.
     pub fn harness_script(&self) -> String {
@@ -267,7 +269,12 @@ impl Userscript {
   const nativeClick = HTMLElement.prototype.click;
   HTMLElement.prototype.click = function click() {{
     if (calledByUserscript()) {{
-      const text = (this.innerText || "").trim().slice(0, 200);
+      const labelledBy = (this.getAttribute("aria-labelledby") ?? "")
+        .split(/\s+/)
+        .map((id) => document.getElementById(id)?.textContent ?? "")
+        .join(" ");
+      const label = this.getAttribute("aria-label") || labelledBy;
+      const text = ((this.innerText || "").trim() || label.trim()).slice(0, 200);
       harness.clicks.push({{ element: this, text, time: performance.now() }});
     }}
     return nativeClick.call(this);
