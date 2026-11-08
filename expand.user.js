@@ -375,6 +375,12 @@ const logPrefix = "Expand Everything: ";
 let pageCounter = 0;
 let mutations = 0;
 let observer = null;
+// The function that passes every element that the selectors given to
+// observe(...) select to the callback given to observe(...), or null before
+// observe(...) is called
+let lookAtAll = null;
+// The timer that will call lookAtAll, or null
+let lookAgainTimer = null;
 // Used only by the polling mechanism
 let lastHref = location.href;
 let locationInterval = null;
@@ -385,22 +391,24 @@ function observe(maxMutations, selectors, callback) {
     throw new Error(`observe(...) called more than once`);
   }
 
+  lookAtAll = () => {
+    for (const selector of selectors) {
+      queryElements(selector, callback);
+    }
+  };
+
   observer = new MutationObserver(() => {
     mutations++;
     if (mutations >= maxMutations) {
       console.log(`${logPrefix}disconnecting MutationObserver after ${mutations} mutations to avoid slowing down the page`);
       observer.disconnect();
     }
-    for (const selector of selectors) {
-      queryElements(selector, callback);
-    }
+    lookAtAll();
   });
 
   function reobserve() {
     // Process elements that were present before MutationObserver
-    for (const selector of selectors) {
-      queryElements(selector, callback);
-    }
+    lookAtAll();
 
     // Start observing
     observer.observe(document.documentElement, {
@@ -487,6 +495,22 @@ function clickIfUnclicked(el) {
   }
   alreadyClicked.set(el, true);
   el.click();
+}
+
+// Whether React has hydrated `el` (an element that React renders), so that
+// React no longer ignores a click on it. Hydration doesn't change the page
+// (so the MutationObserver doesn't report it), so if React hasn't hydrated
+// `el`, every selected element is passed to the callback of observe(...)
+// again in a moment.
+function reactHydrated(el) {
+  if (Object.keys(el).some(key => key.startsWith("__reactProps$"))) {
+    return true;
+  }
+  lookAgainTimer ??= setTimeout(() => {
+    lookAgainTimer = null;
+    lookAtAll();
+  }, 500);
+  return false;
 }
 
 // Test page: https://www.goodreads.com/book/show/931984.The_Presentation_of_Self_in_Everyday_Life
@@ -790,8 +814,6 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
     'a.LoadMore-root': null,
   };
   const selectors = Object.keys(textToClick);
-  // The timer that will pass every selected element to `expand` again, or null
-  let lookAgainTimer = null;
 
   // Click `el` (a selected element) if it should be clicked now. Mark it in
   // `alreadyClicked` once it is clicked or should never be clicked.
@@ -803,16 +825,7 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
       // Elsewhere, such as on the front page, "Load More" loads posts without end.
       return;
     }
-    // React ignores a click on an element until it hydrates the element, and
-    // hydration doesn't change the page (so the MutationObserver doesn't
-    // report it), so look at the skipped elements again in a moment.
-    if (!Object.keys(el).some(key => key.startsWith("__reactProps$"))) {
-      lookAgainTimer ??= setTimeout(() => {
-        lookAgainTimer = null;
-        for (const selector of selectors) {
-          queryElements(selector, expand);
-        }
-      }, 500);
+    if (!reactHydrated(el)) {
       return;
     }
     const text = textToClick[selectors.find(selector => el.matches(selector))];
