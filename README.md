@@ -37,7 +37,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 
 ## Supported sites
 
-- https://github.com/ ("Load more" all the issue comments, expand minimized and similar comments, expand outdated review comments)
+- https://github.com/ ("Load more" all the comments and replies, expand minimized and similar comments, outdated review comments, `<details>`)
 - https://gist.github.com/ (load all comments)
 - https://www.youtube.com/ (expand video descriptions and comments, load more comments)
 - https://www.google.com/ (in reviews for a business, expand text)
