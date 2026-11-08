@@ -379,7 +379,8 @@ let observer = null;
 // observe(...) select to the callback given to observe(...), or null before
 // observe(...) is called
 let lookAtAll = null;
-// The timer that will call lookAtAll, or null
+// The ID of the pending timeout that will call lookAtAll (see
+// lookAgainUnless), or null if no such timeout is pending
 let lookAgainTimer = null;
 // Used only by the polling mechanism
 let lastHref = location.href;
@@ -497,20 +498,28 @@ function clickIfUnclicked(el) {
   el.click();
 }
 
-// Whether React has hydrated `el` (an element that React renders), so that
-// React no longer ignores a click on it. Hydration doesn't change the page
-// (so the MutationObserver doesn't report it), so if React hasn't hydrated
-// `el`, every selected element is passed to the callback of observe(...)
-// again in a moment.
-function reactHydrated(el) {
-  if (Object.keys(el).some(key => key.startsWith("__reactProps$"))) {
-    return true;
+// If `ready` is false, as for an element that the page's scripts would
+// ignore a click on yet, pass every selected element to the callback of
+// observe(...) again in 500 ms, because the page's scripts may get ready
+// without changing the page (so the MutationObserver wouldn't report it).
+//
+// Returns `ready`.
+function lookAgainUnless(ready) {
+  if (!ready) {
+    lookAgainTimer ??= setTimeout(() => {
+      lookAgainTimer = null;
+      lookAtAll();
+    }, 500);
   }
-  lookAgainTimer ??= setTimeout(() => {
-    lookAgainTimer = null;
-    lookAtAll();
-  }, 500);
-  return false;
+  return ready;
+}
+
+// Whether React has hydrated or created `el` (an element that React
+// renders), as shown by the props that React keeps on the element. React, as
+// LessWrong and GitHub use it, ignores a click on an element that it hasn't
+// hydrated yet.
+function reactHydrated(el) {
+  return Object.keys(el).some(key => key.startsWith("__reactProps$"));
 }
 
 // Test page: https://www.goodreads.com/book/show/931984.The_Presentation_of_Self_in_Everyday_Life
@@ -825,7 +834,7 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
       // Elsewhere, such as on the front page, "Load More" loads posts without end.
       return;
     }
-    if (!reactHydrated(el)) {
+    if (!lookAgainUnless(reactHydrated(el))) {
       return;
     }
     const text = textToClick[selectors.find(selector => el.matches(selector))];
