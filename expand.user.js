@@ -690,10 +690,7 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 // Expected: all comments are loaded; "N remaining items" and "Load more" are not visible
 //
 // Test page: https://github.com/JustAnotherArchivist/snscrape/issues/634
-// Expected: spam/outdated/duplicate/off-topic comments are expanded
-//
-// Test page: https://github.com/vitejs/vite/issues/8237
-// Expected: minimized comments are expanded
+// Expected: spam/off-topic comments are expanded
 //
 // Test page: https://github.com/NixOS/nixpkgs/pull/194310
 // Expected: outdated review comments are expanded
@@ -704,10 +701,15 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 // Test page: https://github.com/PolyMC/PolyMC/commit/ccf282593dcdbe189c99b81b8bc90cb203aed3ee
 // Expected: all comments are loaded; "Load more comments..." button is not visible
 if (loc.startsWith("https://github.com/")) {
+  // The icon buttons in the headers of comments on an issue page, of which
+  // only the one whose tooltip says "show comment" (on a minimized comment)
+  // is clicked
+  const commentHeaderButtons = '[data-testid="comment-header"] button[aria-labelledby]';
   // Elements that React renders
   const reactSelectors = [
     // "Load more" below "N remaining items" on an issue page
     'button[data-testid="issue-timeline-load-more-load-top"]',
+    commentHeaderButtons,
   ];
   observe(1000, [
     ...reactSelectors,
@@ -720,7 +722,7 @@ if (loc.startsWith("https://github.com/")) {
     '#all_commit_comments button.ajax-pagination-btn',
     // "N similar comments"
     'summary.pagination-loader-container > .Details-content--closed',
-    // "Show comment"
+    // "Show comment" on a minimized comment on a pull request page
     'div.minimized-comment > details:not([open]) > summary > div > .Details-content--closed',
     // "Show resolved"
     'summary[role="button"] > div > span.Details-content--closed',
@@ -730,6 +732,9 @@ if (loc.startsWith("https://github.com/")) {
     // https://github.com/sveltejs/svelte/commit/fe8a9ce31d5fb662b3953b318621ea364992e014
     //'button[data-view-component="true"].load-diff-button',
   ], el => {
+    if (el.matches(commentHeaderButtons) && document.getElementById(el.getAttribute("aria-labelledby"))?.textContent !== "show comment") {
+      return;
+    }
     if (reactSelectors.some(selector => el.matches(selector)) && !lookAgainUnless(reactHydrated(el))) {
       return;
     }

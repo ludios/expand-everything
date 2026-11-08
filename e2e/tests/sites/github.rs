@@ -16,6 +16,11 @@ const PULL_REQUEST: &str = "https://github.com/rust-lang/rust/pull/95035";
 /// remaining items" and a "Load more" button that loads 150 more at a time.
 const ISSUE_WITH_MANY_COMMENTS: &str = "https://github.com/rust-lang/rust/issues/57640";
 
+/// An issue with 37 comments, of which five are minimized as spam or
+/// off-topic, and some of which are first hidden behind "Load more".
+const ISSUE_WITH_MINIMIZED_COMMENTS: &str =
+    "https://github.com/JustAnotherArchivist/snscrape/issues/634";
+
 /// A user's profile, whose activity ends in a "Show more activity" button
 /// that changes the URL when clicked.
 const PROFILE: &str = "https://github.com/A";
@@ -111,6 +116,27 @@ async fn issue_comments_are_all_loaded() -> Result<()> {
             NO_REMAINING_ITEMS,
             Duration::from_secs(2),
             |clicked| clicked.iter().filter(|t| *t == "Load more").count() >= 2,
+        )
+        .await
+    })
+    .await
+}
+
+#[tokio::test]
+async fn minimized_issue_comments_are_expanded() -> Result<()> {
+    with_chrome(async |browser| {
+        // A minimized comment's "show comment" is only the tooltip of an icon
+        // button.
+        let tab = open(browser, ISSUE_WITH_MINIMIZED_COMMENTS).await?;
+        expect_expanded(
+            &tab,
+            "the userscript to load every comment, and to click \"show comment\" on every minimized one",
+            &format!(
+                r#"{NO_REMAINING_ITEMS} && ![...document.querySelectorAll('[data-testid="comment-header"] button[aria-labelledby]')]
+                    .some((b) => document.getElementById(b.getAttribute("aria-labelledby"))?.textContent === "show comment")"#
+            ),
+            Duration::from_secs(2),
+            |clicked| clicked_on(clicked, "show comment"),
         )
         .await
     })
