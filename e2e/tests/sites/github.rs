@@ -25,6 +25,11 @@ const ISSUE_WITH_MINIMIZED_COMMENTS: &str =
 /// that changes the URL when clicked.
 const PROFILE: &str = "https://github.com/A";
 
+/// A commit with 424 comments, of which GitHub first shows 12, below a "Load
+/// more comments" button that loads more of them each time it is clicked.
+const COMMIT: &str =
+    "https://github.com/PolyMC/PolyMC/commit/ccf282593dcdbe189c99b81b8bc90cb203aed3ee";
+
 /// A JavaScript expression for whether no part of the timeline of a pull
 /// request or a discussion is still cut off above "N hidden items".
 const NO_HIDDEN_ITEMS: &str = r##"document.querySelector("#js-progressive-timeline-item-container form.ajax-pagination-form") === null"##;
@@ -156,6 +161,28 @@ async fn profile_activity_is_not_expanded() -> Result<()> {
             ),
             Duration::from_secs(5),
             |clicked| clicked.is_empty(),
+        )
+        .await
+    })
+    .await
+}
+
+#[tokio::test]
+async fn commit_comments_are_all_loaded() -> Result<()> {
+    with_chrome(async |browser| {
+        // The comments start with a heading (for screen readers only) that
+        // says how many there are, such as "424 commit comments".
+        let tab = open(browser, COMMIT).await?;
+        expect_expanded(
+            &tab,
+            "the userscript to click \"Load more comments\" until every comment is loaded",
+            r##"(() => {
+                const comments = document.querySelector("#comments.react-comments-container");
+                return comments?.querySelector(":scope > button") === null
+                    && comments.querySelectorAll('[id^="commitcomment-"]').length === parseInt(comments.querySelector("h2")?.textContent);
+            })()"##,
+            Duration::from_secs(2),
+            |clicked| clicked_on(clicked, "Load more comments"),
         )
         .await
     })
