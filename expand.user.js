@@ -367,8 +367,8 @@
 const loc = window.location.href;
 
 function query_elements(selector, callback) {
-  const elements = document.querySelectorAll(selector);
-  elements.forEach(element => callback(element));
+	const elements = document.querySelectorAll(selector);
+	elements.forEach(element => callback(element));
 }
 
 const log_prefix = "Expand Everything: ";
@@ -391,117 +391,117 @@ let location_interval = null;
 
 // Observe some selectors and run a callback for each selected element.
 function observe(max_mutations, selectors, callback) {
-  if (observer !== null) {
-    throw new Error(`observe(...) called more than once`);
-  }
+	if (observer !== null) {
+		throw new Error(`observe(...) called more than once`);
+	}
 
-  look_at_all = () => {
-    for (const selector of selectors) {
-      query_elements(selector, callback);
-    }
-  };
+	look_at_all = () => {
+		for (const selector of selectors) {
+			query_elements(selector, callback);
+		}
+	};
 
-  observer = new MutationObserver(() => {
-    mutations++;
-    if (mutations >= max_mutations) {
-      console.log(`${log_prefix}disconnecting MutationObserver after ${mutations} mutations to avoid slowing down the page`);
-      observer.disconnect();
-    }
-    look_at_all();
-  });
+	observer = new MutationObserver(() => {
+		mutations++;
+		if (mutations >= max_mutations) {
+			console.log(`${log_prefix}disconnecting MutationObserver after ${mutations} mutations to avoid slowing down the page`);
+			observer.disconnect();
+		}
+		look_at_all();
+	});
 
-  function reobserve() {
-    // Process elements that were present before MutationObserver
-    look_at_all();
+	function reobserve() {
+		// Process elements that were present before MutationObserver
+		look_at_all();
 
-    // Start observing
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-    });
-  }
+		// Start observing
+		observer.observe(document.documentElement, {
+			childList: true,
+			subtree: true,
+		});
+	}
 
-  reobserve();
+	reobserve();
 
-  function navigated() {
-    console.log(`${log_prefix}navigated, resetting already_clicked and MutationObserver`);
-    observer.disconnect();
-    reset_already_clicked();
-    mutations = 0;
-    clearTimeout(look_again_timer);
-    look_again_timer = null;
-    look_agains = 0;
-    page_counter = 0;
-    reobserve();
-  }
+	function navigated() {
+		console.log(`${log_prefix}navigated, resetting already_clicked and MutationObserver`);
+		observer.disconnect();
+		reset_already_clicked();
+		mutations = 0;
+		clearTimeout(look_again_timer);
+		look_again_timer = null;
+		look_agains = 0;
+		page_counter = 0;
+		reobserve();
+	}
 
-  function start_polling_location() {
-    if (location_interval !== null) {
-      throw new Error(`location_interval already exists: ${location_interval}`);
-    }
-    location_interval = setInterval(
-      () => {
-        if (location.href !== last_href) {
-          last_href = location.href;
-          navigated();
-        }
-      },
-      1000
-    );
-  }
+	function start_polling_location() {
+		if (location_interval !== null) {
+			throw new Error(`location_interval already exists: ${location_interval}`);
+		}
+		location_interval = setInterval(
+			() => {
+				if (location.href !== last_href) {
+					last_href = location.href;
+					navigated();
+				}
+			},
+			1000
+		);
+	}
 
-  function stop_polling_location() {
-    if (location_interval === null) {
-      throw new Error(`location_interval === null`);
-    }
-    clearInterval(location_interval);
-    location_interval = null;
-  }
+	function stop_polling_location() {
+		if (location_interval === null) {
+			throw new Error(`location_interval === null`);
+		}
+		clearInterval(location_interval);
+		location_interval = null;
+	}
 
-  if (window.navigation && navigation.addEventListener) {
-    console.log(`${log_prefix}using Navigation API to detect location changes`);
-    navigation.addEventListener('navigate', (ev) => {
-      // We must ignore navigation events to the same location, or else we hang in Firefox as it loops infinitely on
-      // https://superuser.com/questions/681575/any-way-to-get-list-of-functions-defined-in-zsh-like-alias-command-for-aliases
-      //
-      // Possibly related to https://bugzilla.mozilla.org/show_bug.cgi?id=1997591
-      if (ev.destination.url === window.location.href) {
-        console.log(`${log_prefix}ignoring navigation event to the same location`);
-        return;
-      }
-      navigated();
-    });
-  } else {
-    // https://stackoverflow.com/questions/34999976/detect-changes-on-the-url
-    // suggests that setInterval is the best way to do it when we lack Navigation API.
-    console.log(`${log_prefix}using setInterval(..., 1000) to detect location changes`);
-    start_polling_location();
-    // Not necessary for correctness, but to save power, kill our setInterval when the page isn't visible.
-    document.addEventListener("visibilitychange", function() {
-      if (document.hidden) {
-        console.log(`${log_prefix}page has become hidden, stopping setInterval`);
-        stop_polling_location();
-      } else {
-        console.log(`${log_prefix}page has become visible, starting setInterval`);
-        start_polling_location();
-      }
-    });
-  }
+	if (window.navigation && navigation.addEventListener) {
+		console.log(`${log_prefix}using Navigation API to detect location changes`);
+		navigation.addEventListener('navigate', (ev) => {
+			// We must ignore navigation events to the same location, or else we hang in Firefox as it loops infinitely on
+			// https://superuser.com/questions/681575/any-way-to-get-list-of-functions-defined-in-zsh-like-alias-command-for-aliases
+			//
+			// Possibly related to https://bugzilla.mozilla.org/show_bug.cgi?id=1997591
+			if (ev.destination.url === window.location.href) {
+				console.log(`${log_prefix}ignoring navigation event to the same location`);
+				return;
+			}
+			navigated();
+		});
+	} else {
+		// https://stackoverflow.com/questions/34999976/detect-changes-on-the-url
+		// suggests that setInterval is the best way to do it when we lack Navigation API.
+		console.log(`${log_prefix}using setInterval(..., 1000) to detect location changes`);
+		start_polling_location();
+		// Not necessary for correctness, but to save power, kill our setInterval when the page isn't visible.
+		document.addEventListener("visibilitychange", function() {
+			if (document.hidden) {
+				console.log(`${log_prefix}page has become hidden, stopping setInterval`);
+				stop_polling_location();
+			} else {
+				console.log(`${log_prefix}page has become visible, starting setInterval`);
+				start_polling_location();
+			}
+		});
+	}
 }
 
 let already_clicked;
 function reset_already_clicked() {
-  already_clicked = new WeakMap();
+	already_clicked = new WeakMap();
 }
 reset_already_clicked();
 
 // Click on something if it hasn't already been clicked.
 function click_if_unclicked(el) {
-  if (already_clicked.get(el)) {
-    return;
-  }
-  already_clicked.set(el, true);
-  el.click();
+	if (already_clicked.get(el)) {
+		return;
+	}
+	already_clicked.set(el, true);
+	el.click();
 }
 
 // If `ready` is false, as for an element that the page's scripts would
@@ -514,31 +514,31 @@ function click_if_unclicked(el) {
 //
 // Returns `ready`.
 function look_again_unless(ready) {
-  if (look_at_all === null) {
-    throw new Error(`look_again_unless(...) called before observe(...)`);
-  }
-  if (!ready && look_agains < 120) {
-    look_again_timer ??= setTimeout(() => {
-      look_again_timer = null;
-      look_agains++;
-      if (look_agains === 120) {
-        console.log(`${log_prefix}looked again ${look_agains} times; not looking again until the next navigation`);
-      }
-      look_at_all();
-    }, 500);
-  }
-  return ready;
+	if (look_at_all === null) {
+		throw new Error(`look_again_unless(...) called before observe(...)`);
+	}
+	if (!ready && look_agains < 120) {
+		look_again_timer ??= setTimeout(() => {
+			look_again_timer = null;
+			look_agains++;
+			if (look_agains === 120) {
+				console.log(`${log_prefix}looked again ${look_agains} times; not looking again until the next navigation`);
+			}
+			look_at_all();
+		}, 500);
+	}
+	return ready;
 }
 
 // Whether React has hydrated or created `el` (an element that React
 // renders), as shown by the props that React keeps on the element. React may
 // ignore a click on an element that it hasn't hydrated yet.
 function react_hydrated(el) {
-  // Where a page's Content Security Policy keeps a userscript out of the
-  // page, a userscript manager may run it as a content script (as
-  // Violentmonkey does by default in Firefox), which sees the page's own
-  // properties of `el` only through `el.wrappedJSObject`.
-  return Object.keys(el.wrappedJSObject ?? el).some(key => key.startsWith("__reactProps$"));
+	// Where a page's Content Security Policy keeps a userscript out of the
+	// page, a userscript manager may run it as a content script (as
+	// Violentmonkey does by default in Firefox), which sees the page's own
+	// properties of `el` only through `el.wrappedJSObject`.
+	return Object.keys(el.wrappedJSObject ?? el).some(key => key.startsWith("__reactProps$"));
 }
 
 // Test page: https://www.goodreads.com/book/show/931984.The_Presentation_of_Self_in_Everyday_Life
@@ -547,22 +547,22 @@ function react_hydrated(el) {
 // Test page: https://www.goodreads.com/book/show/39736150-the-little-typer
 // Expected: all the lengthy user book reviews are expanded
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
-  observe(1000, [
-    'button[aria-label="Tap to show more review"]',
-    'button[aria-label="Tap to show more about the author"]',
-  ], el => {
-    click_if_unclicked(el);
-  });
+	observe(1000, [
+		'button[aria-label="Tap to show more review"]',
+		'button[aria-label="Tap to show more about the author"]',
+	], el => {
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://www.goodreads.com/review/list/35831082?utf8=%E2%9C%93&order=d&sort=review&view=reviews&per_page=infinite
 // Expected: all the lengthy user book reviews are expanded
 if (loc.startsWith("https://www.goodreads.com/review/list/")) {
-  observe(100, [
-    'a[data-text-id^="review"][href="#"][onclick="swapContent($(this));; return false;"]',
-  ], el => {
-    click_if_unclicked(el);
-  });
+	observe(100, [
+		'a[data-text-id^="review"][href="#"][onclick="swapContent($(this));; return false;"]',
+	], el => {
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://www.imdb.com/title/tt0809535/reviews?ref_=tt_urv
@@ -577,24 +577,24 @@ if (loc.startsWith("https://www.goodreads.com/review/list/")) {
 // (We don't want to click "Load more" so many times that we slow down
 // the page and also risk getting banned.)
 if (loc.startsWith("https://www.imdb.com/title/")) {
-  observe(100, [
-    // Longer film reviews by users and reviews with spoilers
-    '.ipl-expander:not(.ipl-expander--expanded) > div > div',
-    // "Load more" button at the end of a set of reviews
-    'button.ipl-load-more__button',
-  ], el => {
-    if (el.tagName == "BUTTON") {
-      if (page_counter < 5) {
-        page_counter++;
-        console.log(`${log_prefix}page counter: ${page_counter}`);
-        el.click();
-      }
-    } else {
-      // Avoid MutationObserver loop: imdb adds .ipl-expander--expanded
-      // to the element some time _after_ you click.
-      click_if_unclicked(el);
-    }
-  });
+	observe(100, [
+		// Longer film reviews by users and reviews with spoilers
+		'.ipl-expander:not(.ipl-expander--expanded) > div > div',
+		// "Load more" button at the end of a set of reviews
+		'button.ipl-load-more__button',
+	], el => {
+		if (el.tagName == "BUTTON") {
+			if (page_counter < 5) {
+				page_counter++;
+				console.log(`${log_prefix}page counter: ${page_counter}`);
+				el.click();
+			}
+		} else {
+			// Avoid MutationObserver loop: imdb adds .ipl-expander--expanded
+			// to the element some time _after_ you click.
+			click_if_unclicked(el);
+		}
+	});
 }
 
 // Test page: https://www.youtube.com/watch?v=ben9qDbrLYU
@@ -609,22 +609,22 @@ if (loc.startsWith("https://www.imdb.com/title/")) {
 // Test page (logged in): https://www.youtube.com/
 // Expected: after clicking the profile icon in the top-right, the modal/menu works normally (it is not immediately closed)
 if (loc.startsWith("https://www.youtube.com/")) {
-  observe(200, [
-    // Video description "show more"
-    'div#description > div#description-inner > #description-inline-expander > .button.ytd-text-inline-expander#expand',
-    // Video comments "show more" and replies
-    'div.ytd-comment-replies-renderer#expander .more-button#more-replies',
-  ], el => {
-    // We can't just el.click() unconditionally because that causes menus/modals to lose focus
-    // and disappear.
-    //
-    // We can't use click_if_unclicked due to YouTube oddities after navigating the SPA (the video
-    // description doesn't expand after clicking too early), but conveniently YouTube sets "hidden"
-    // on things that don't need to be clicked any more.
-    if (!el.hidden) {
-      el.click();
-    }
-  });
+	observe(200, [
+		// Video description "show more"
+		'div#description > div#description-inner > #description-inline-expander > .button.ytd-text-inline-expander#expand',
+		// Video comments "show more" and replies
+		'div.ytd-comment-replies-renderer#expander .more-button#more-replies',
+	], el => {
+		// We can't just el.click() unconditionally because that causes menus/modals to lose focus
+		// and disappear.
+		//
+		// We can't use click_if_unclicked due to YouTube oddities after navigating the SPA (the video
+		// description doesn't expand after clicking too early), but conveniently YouTube sets "hidden"
+		// on things that don't need to be clicked any more.
+		if (!el.hidden) {
+			el.click();
+		}
+	});
 }
 
 // Test page: https://www.linkedin.com/in/daraweiss (logged out)
@@ -636,38 +636,38 @@ if (loc.startsWith("https://www.youtube.com/")) {
 // Test page: https://www.linkedin.com/pulse/how-scaleways-object-storage-failed-me-files-lost-lack-di-battista-uvyme/
 // Expected: comments at the bottom are expanded; "…see more" is not visible
 if (loc.startsWith("https://www.linkedin.com/")) {
-  observe(100, [
-    // "show more" in profile sections
-    //'.inline-show-more-text__link-container-collapsed > .inline-show-more-text__button',
-    // "…see more" in the comments at the bottom of posts
-    'button.feed-shared-inline-show-more-text__see-more-less-toggle.see-more',
-  ], el => {
-    el.click();
-  });
+	observe(100, [
+		// "show more" in profile sections
+		//'.inline-show-more-text__link-container-collapsed > .inline-show-more-text__button',
+		// "…see more" in the comments at the bottom of posts
+		'button.feed-shared-inline-show-more-text__see-more-less-toggle.see-more',
+	], el => {
+		el.click();
+	});
 }
 
 // Test page: https://substack.com/@meaningness/note/c-59538921
 // Expected: all comments are expanded; "See more..." is not visible
 if (loc.startsWith("https://substack.com/")) {
-  observe(100, [
-    // "See more..."
-    'div.pencraft[class*=_seeMoreText_] > span.pencraft > a.pencraft',
-  ], el => {
-    if (el.innerText === "See more...") {
-      el.click();
-    }
-  });
+	observe(100, [
+		// "See more..."
+		'div.pencraft[class*=_seeMoreText_] > span.pencraft > a.pencraft',
+	], el => {
+		if (el.innerText === "See more...") {
+			el.click();
+		}
+	});
 }
 
 // Test page: https://tvtropes.org/pmwiki/pmwiki.php/OvershadowedByControversy/WebOriginal
 // Expected: all folders are opened
 if (loc.startsWith("https://tvtropes.org/")) {
-  observe(10, [
-    // "open/close all folders"
-    '.toggle-all-folders-button:not(.is-open)',
-  ], el => {
-    click_if_unclicked(el);
-  });
+	observe(10, [
+		// "open/close all folders"
+		'.toggle-all-folders-button:not(.is-open)',
+	], el => {
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://news.ycombinator.com/item?id=34282033 as a logged-in user with showdead enabled
@@ -676,12 +676,12 @@ if (loc.startsWith("https://tvtropes.org/")) {
 // Test page: https://news.ycombinator.com/threads?id=huppeldepup (or 'next' to the page with the collapsed 'I used to not worry about climate change. Now I do...')
 // Expected: all comments are shown; no '[N more]' links visible
 if (loc.startsWith("https://news.ycombinator.com/")) {
-  // No need for MutationObserver
-  query_elements('a.togg.clicky', el => {
-    if (el.innerText.endsWith(" more]")) {
-      el.click();
-    }
-  });
+	// No need for MutationObserver
+	query_elements('a.togg.clicky', el => {
+		if (el.innerText.endsWith(" more]")) {
+			el.click();
+		}
+	});
 }
 
 // Test page: https://github.com/rust-lang/rust/pull/95035
@@ -709,91 +709,91 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 // Test page: https://github.com/rust-lang/rust/issues/165052
 // Expected: every <details> ("Program output", "bisected with cargo-bisect-rustc") is open
 if (loc.startsWith("https://github.com/")) {
-  // The icon buttons in the headers of comments on an issue page, of which
-  // only the one whose tooltip says "show comment" (on a minimized comment)
-  // is clicked
-  const comment_header_buttons = '[data-testid="comment-header"] button[aria-labelledby]';
-  // Elements that React renders
-  const react_selectors = [
-    // "Load more" below "N remaining items" on an issue page (above the
-    // linked comment, and also below it)
-    'button[data-testid^="issue-timeline-load-more-load-"]',
-    comment_header_buttons,
-    // "Load more comments" on a commit page
-    '#comments.react-comments-container > button',
-  ];
-  // The chevron of a review thread on a pull request page, which is clicked
-  // only if the thread is collapsed (as an outdated or resolved one is)
-  const thread_chevrons = 'review-thread-collapsible button.review-thread-chevron';
-  // The <summary> of a <details> in a comment, a README, or other Markdown,
-  // which is clicked only if the <details> is closed
-  const markdown_summaries = '.markdown-body details > summary';
-  observe(1000, [
-    ...react_selectors,
-    // "N hidden items; Load more..." on a pull request page or a discussion page
-    //
-    // We don't want all button.ajax-pagination-btn because clicking button.ajax-pagination-btn
-    // on a profile page e.g. https://github.com/A causes the URL to start changing.
-    '#js-progressive-timeline-item-container button.ajax-pagination-btn',
-    // "N similar comments"
-    'details:not([open]) > summary.pagination-loader-container > .Details-content--closed',
-    // "Show comment" on a minimized comment on a pull request page
-    'div.minimized-comment > details:not([open]) > summary > div > .Details-content--closed',
-    thread_chevrons,
-    // "Show N previous replies" on a discussion page
-    '.discussion-nested-comment-paging-form button[type="submit"]',
-    markdown_summaries,
-    // "Load diff" button on PRs, where some diffs are collapsed because
-    // "Large diffs are not rendered by default" and "This file was deleted".
-    // This is disabled by default because some pages are just too large, e.g.
-    // https://github.com/sveltejs/svelte/commit/fe8a9ce31d5fb662b3953b318621ea364992e014
-    //'button[data-view-component="true"].load-diff-button',
-  ], el => {
-    if (already_clicked.get(el)) {
-      return;
-    }
-    // Mark an element that is not to be clicked, so that the userscript
-    // doesn't click it after the user collapses something
-    if (
-      (el.matches(comment_header_buttons) && document.getElementById(el.getAttribute("aria-labelledby"))?.textContent !== "show comment") ||
-      (el.matches(markdown_summaries) && el.parentElement.open)
-    ) {
-      already_clicked.set(el, true);
-      return;
-    }
-    if (react_selectors.some(selector => el.matches(selector)) && !look_again_unless(react_hydrated(el))) {
-      return;
-    }
-    if (el.matches(thread_chevrons)) {
-      const thread = el.closest("review-thread-collapsible");
-      if (!thread.classList.contains("open")) {
-        el.click();
-      }
-      // GitHub ignores a click on a chevron until a script that it loads late
-      // handles the click, which doesn't change the page, so look again if
-      // the thread didn't open.
-      if (look_again_unless(thread.classList.contains("open"))) {
-        already_clicked.set(el, true);
-      }
-      return;
-    }
-    click_if_unclicked(el);
-  });
+	// The icon buttons in the headers of comments on an issue page, of which
+	// only the one whose tooltip says "show comment" (on a minimized comment)
+	// is clicked
+	const comment_header_buttons = '[data-testid="comment-header"] button[aria-labelledby]';
+	// Elements that React renders
+	const react_selectors = [
+		// "Load more" below "N remaining items" on an issue page (above the
+		// linked comment, and also below it)
+		'button[data-testid^="issue-timeline-load-more-load-"]',
+		comment_header_buttons,
+		// "Load more comments" on a commit page
+		'#comments.react-comments-container > button',
+	];
+	// The chevron of a review thread on a pull request page, which is clicked
+	// only if the thread is collapsed (as an outdated or resolved one is)
+	const thread_chevrons = 'review-thread-collapsible button.review-thread-chevron';
+	// The <summary> of a <details> in a comment, a README, or other Markdown,
+	// which is clicked only if the <details> is closed
+	const markdown_summaries = '.markdown-body details > summary';
+	observe(1000, [
+		...react_selectors,
+		// "N hidden items; Load more..." on a pull request page or a discussion page
+		//
+		// We don't want all button.ajax-pagination-btn because clicking button.ajax-pagination-btn
+		// on a profile page e.g. https://github.com/A causes the URL to start changing.
+		'#js-progressive-timeline-item-container button.ajax-pagination-btn',
+		// "N similar comments"
+		'details:not([open]) > summary.pagination-loader-container > .Details-content--closed',
+		// "Show comment" on a minimized comment on a pull request page
+		'div.minimized-comment > details:not([open]) > summary > div > .Details-content--closed',
+		thread_chevrons,
+		// "Show N previous replies" on a discussion page
+		'.discussion-nested-comment-paging-form button[type="submit"]',
+		markdown_summaries,
+		// "Load diff" button on PRs, where some diffs are collapsed because
+		// "Large diffs are not rendered by default" and "This file was deleted".
+		// This is disabled by default because some pages are just too large, e.g.
+		// https://github.com/sveltejs/svelte/commit/fe8a9ce31d5fb662b3953b318621ea364992e014
+		//'button[data-view-component="true"].load-diff-button',
+	], el => {
+		if (already_clicked.get(el)) {
+			return;
+		}
+		// Mark an element that is not to be clicked, so that the userscript
+		// doesn't click it after the user collapses something
+		if (
+			(el.matches(comment_header_buttons) && document.getElementById(el.getAttribute("aria-labelledby"))?.textContent !== "show comment") ||
+			(el.matches(markdown_summaries) && el.parentElement.open)
+		) {
+			already_clicked.set(el, true);
+			return;
+		}
+		if (react_selectors.some(selector => el.matches(selector)) && !look_again_unless(react_hydrated(el))) {
+			return;
+		}
+		if (el.matches(thread_chevrons)) {
+			const thread = el.closest("review-thread-collapsible");
+			if (!thread.classList.contains("open")) {
+				el.click();
+			}
+			// GitHub ignores a click on a chevron until a script that it loads late
+			// handles the click, which doesn't change the page, so look again if
+			// the thread didn't open.
+			if (look_again_unless(thread.classList.contains("open"))) {
+				already_clicked.set(el, true);
+			}
+			return;
+		}
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://gist.github.com/ivan/5095670735ba941a6090a69fce4183df
 // Expected: all comments are loaded; "Load earlier comments..." is not visible
 // Expected: when restarting Chrome, tab is not redirected to a /load_comments page
 if (loc.startsWith("https://gist.github.com/")) {
-  // Wait for the JavaScript to load, because we don't want a button click to navigate us to /load_comments
-  window.onload = () => {
-    observe(5000, [
-      // "Load earlier comments..."
-      'form.ajax-pagination-form.js-ajax-pagination[action$="/load_comments"] > button.ajax-pagination-btn'
-    ], el => {
-      click_if_unclicked(el);
-    });
-  }
+	// Wait for the JavaScript to load, because we don't want a button click to navigate us to /load_comments
+	window.onload = () => {
+		observe(5000, [
+			// "Load earlier comments..."
+			'form.ajax-pagination-form.js-ajax-pagination[action$="/load_comments"] > button.ajax-pagination-btn'
+		], el => {
+			click_if_unclicked(el);
+		});
+	}
 }
 
 // Test page: https://stackoverflow.com/questions/59156473/what-is-the-difference-between-async-move-and-async-move
@@ -811,31 +811,31 @@ if (loc.startsWith("https://gist.github.com/")) {
 // Test page: https://superuser.com/questions/681575/any-way-to-get-list-of-functions-defined-in-zsh-like-alias-command-for-aliases
 // Expected: all comments are loaded; the page / Firefox does not hang.
 if (window.StackExchange) {
-  observe(100, [
-    // "Show N more comments" on superuser.com
-    'a.js-show-link:not(.dno)',
-    // "Show N more comments" on stackoverflow.com
-    'div.d-flex > button.comments-link',
-  ], el => {
-    if (el.tagName === "BUTTON") {
-      if (el.innerText.includes("more comment")) {
-        el.click();
-      }
-    } else {
-      el.click();
-    }
-  });
+	observe(100, [
+		// "Show N more comments" on superuser.com
+		'a.js-show-link:not(.dno)',
+		// "Show N more comments" on stackoverflow.com
+		'div.d-flex > button.comments-link',
+	], el => {
+		if (el.tagName === "BUTTON") {
+			if (el.innerText.includes("more comment")) {
+				el.click();
+			}
+		} else {
+			el.click();
+		}
+	});
 }
 
 // Test page: https://www.quora.com/Which-of-the-big-four-Google-Microsoft-Amazon-Facebook-tech-companies-have-the-most-selective-hiring-process-for-software-engineers?share=1
 // Expected: answers are fully visible; "Continue Reading" is not visible
 if (loc.startsWith("https://www.quora.com/")) {
-  observe(100, [
-    // "Continue Reading"
-    '.puppeteer_test_read_more_button',
-  ], el => {
-    click_if_unclicked(el);
-  });
+	observe(100, [
+		// "Continue Reading"
+		'.puppeteer_test_read_more_button',
+	], el => {
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://old.reddit.com/r/Windows10/comments/umf10d/should_windows_10_support_be_extended_beyond_2025/
@@ -844,17 +844,17 @@ if (loc.startsWith("https://www.quora.com/")) {
 // Test page: https://old.reddit.com/r/nextfuckinglevel/comments/108nsqn/student_creates_a_diy_projection_map_light_show/
 // Expected: all comments expanded; "[+]" is not visible; "comment score below threshold" is not visible
 if (loc.startsWith("https://old.reddit.com/")) {
-  observe(200, [
-    // Collapsed comments
-    'a.expand[href="javascript:void(0)"][onclick="return togglecomment(this)"]',
-    // For "load more comments", use https://github.com/honestbleeps/Reddit-Enhancement-Suite
-    // and enable "Never Ending Comments", "Load Child Comments" in the extension options;
-    // click "save options".
-  ], el => {
-    if (el.innerText == "[+]") {
-      click_if_unclicked(el);
-    }
-  });
+	observe(200, [
+		// Collapsed comments
+		'a.expand[href="javascript:void(0)"][onclick="return togglecomment(this)"]',
+		// For "load more comments", use https://github.com/honestbleeps/Reddit-Enhancement-Suite
+		// and enable "Never Ending Comments", "Load Child Comments" in the extension options;
+		// click "save options".
+	], el => {
+		if (el.innerText == "[+]") {
+			click_if_unclicked(el);
+		}
+	});
 }
 
 // Test page: https://www.lesswrong.com/posts/uKp6tBFStnsvrot5t/what-dall-e-2-can-and-cannot-do
@@ -866,76 +866,76 @@ if (loc.startsWith("https://old.reddit.com/")) {
 // Test page: https://www.lesswrong.com/users/valentine
 // Expected: all the user's posts are listed; "Load More" below them is not visible; the bio is expanded, above "See less"
 if (loc.startsWith("https://www.lesswrong.com/")) {
-  // For each selector, the text that a selected element must have to be
-  // clicked, or null if any text will do. An element with some other text,
-  // such as the "-" in the [-] of an expanded comment, is marked as already
-  // clicked: if the user collapses the comment, the userscript leaves the
-  // comment collapsed.
-  const text_to_click = {
-    // Comments truncated to a single line (which show no text if they have
-    // a score of -5 or lower)
-    '.SingleLineComment-root': null,
-    // "(read more)" at the end of a truncated comment
-    '.CommentBody-root .read-more-button': null,
-    // The "+" in the [+] of a collapsed comment (such as a downvoted one), or
-    // the "-" in the [-] of an expanded comment
-    'span.CommentsItemMeta-collapseCharacter': "+",
-    // On a /users/ page, "See more" or "See less" below the user's bio, or
-    // another link styled like them. ("Show all" is also styled like them,
-    // but it is in the row of 'a.LoadMore-root', which clicks any text.)
-    'a.ProfilePage-readMoreLink:not(.LoadMore-root)': "See more",
-    // On a /users/ page, "Load More" below the posts, and "Show all" below
-    // the grids of squares that stand for the posts and comments
-    'a.LoadMore-root': null,
-  };
-  const selectors = Object.keys(text_to_click);
+	// For each selector, the text that a selected element must have to be
+	// clicked, or null if any text will do. An element with some other text,
+	// such as the "-" in the [-] of an expanded comment, is marked as already
+	// clicked: if the user collapses the comment, the userscript leaves the
+	// comment collapsed.
+	const text_to_click = {
+		// Comments truncated to a single line (which show no text if they have
+		// a score of -5 or lower)
+		'.SingleLineComment-root': null,
+		// "(read more)" at the end of a truncated comment
+		'.CommentBody-root .read-more-button': null,
+		// The "+" in the [+] of a collapsed comment (such as a downvoted one), or
+		// the "-" in the [-] of an expanded comment
+		'span.CommentsItemMeta-collapseCharacter': "+",
+		// On a /users/ page, "See more" or "See less" below the user's bio, or
+		// another link styled like them. ("Show all" is also styled like them,
+		// but it is in the row of 'a.LoadMore-root', which clicks any text.)
+		'a.ProfilePage-readMoreLink:not(.LoadMore-root)': "See more",
+		// On a /users/ page, "Load More" below the posts, and "Show all" below
+		// the grids of squares that stand for the posts and comments
+		'a.LoadMore-root': null,
+	};
+	const selectors = Object.keys(text_to_click);
 
-  // Click `el` (a selected element) if it should be clicked now. Mark it in
-  // `already_clicked` once it is clicked or should never be clicked.
-  function expand(el) {
-    if (already_clicked.get(el)) {
-      return;
-    }
-    if (el.classList.contains("LoadMore-root") && !location.pathname.startsWith("/users/")) {
-      // Elsewhere, such as on the front page, "Load More" loads posts without end.
-      return;
-    }
-    if (!look_again_unless(react_hydrated(el))) {
-      return;
-    }
-    const text = text_to_click[selectors.find(selector => el.matches(selector))];
-    if (text !== null && el.textContent.trim() !== text) {
-      already_clicked.set(el, true);
-      return;
-    }
-    if (el.classList.contains("LoadMore-root")) {
-      // LessWrong updates its count of loaded posts a moment after it shows
-      // the posts that a click on "Load More" loaded, and a click on "Load
-      // More" before that loads the same posts again, so click after a delay.
-      // By then, LessWrong may have removed the link, and a click on a removed
-      // link would navigate to its href, "#".
-      already_clicked.set(el, true);
-      setTimeout(() => {
-        if (el.isConnected) {
-          el.click();
-        }
-      }, 500);
-      return;
-    }
-    click_if_unclicked(el);
-  }
+	// Click `el` (a selected element) if it should be clicked now. Mark it in
+	// `already_clicked` once it is clicked or should never be clicked.
+	function expand(el) {
+		if (already_clicked.get(el)) {
+			return;
+		}
+		if (el.classList.contains("LoadMore-root") && !location.pathname.startsWith("/users/")) {
+			// Elsewhere, such as on the front page, "Load More" loads posts without end.
+			return;
+		}
+		if (!look_again_unless(react_hydrated(el))) {
+			return;
+		}
+		const text = text_to_click[selectors.find(selector => el.matches(selector))];
+		if (text !== null && el.textContent.trim() !== text) {
+			already_clicked.set(el, true);
+			return;
+		}
+		if (el.classList.contains("LoadMore-root")) {
+			// LessWrong updates its count of loaded posts a moment after it shows
+			// the posts that a click on "Load More" loaded, and a click on "Load
+			// More" before that loads the same posts again, so click after a delay.
+			// By then, LessWrong may have removed the link, and a click on a removed
+			// link would navigate to its href, "#".
+			already_clicked.set(el, true);
+			setTimeout(() => {
+				if (el.isConnected) {
+					el.click();
+				}
+			}, 500);
+			return;
+		}
+		click_if_unclicked(el);
+	}
 
-  observe(2000, selectors, expand);
+	observe(2000, selectors, expand);
 }
 
 // Test page: https://cohost.org/mcc/post/718898-andi-s-game-of-the-y
 // Expected: the full post is shown; "read more" is not visible
 if (loc.startsWith("https://cohost.org/")) {
-  observe(100, ['div.overflow-hidden[data-testid="post-body"] > div > a.cursor-pointer.font-bold.text-cherry'], el => {
-    if (el.innerText == "read more") {
-      click_if_unclicked(el);
-    }
-  });
+	observe(100, ['div.overflow-hidden[data-testid="post-body"] > div > a.cursor-pointer.font-bold.text-cherry'], el => {
+		if (el.innerText == "read more") {
+			click_if_unclicked(el);
+		}
+	});
 }
 
 // Test page: https://nextdoor.com/p/bSFkfd2Smd5c?view=detail
@@ -944,16 +944,16 @@ if (loc.startsWith("https://cohost.org/")) {
 // Test page: https://nextdoor.com/
 // Expected: on timeline posts, all posts are expanded
 if (loc.startsWith("https://nextdoor.com/")) {
-  observe(200, [
-    // "See N more comments"
-    'button.see-previous-comments-button-paged',
-    // "See more" at the end of a post on the timeline
-    'button.truncate-view-more-link',
-    // "See more" at the end of a comment
-    'a.truncate-view-more-link',
-  ], el => {
-    click_if_unclicked(el);
-  });
+	observe(200, [
+		// "See N more comments"
+		'button.see-previous-comments-button-paged',
+		// "See more" at the end of a post on the timeline
+		'button.truncate-view-more-link',
+		// "See more" at the end of a comment
+		'a.truncate-view-more-link',
+	], el => {
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://store.steampowered.com/app/1147890/Bonfire_Peaks/
@@ -965,64 +965,64 @@ if (loc.startsWith("https://nextdoor.com/")) {
 // Test page: https://store.steampowered.com/app/1145360/Hades/
 // Expected: Awards and "About This Game" are expanded; "READ MORE" is not visible
 if (loc.startsWith("https://store.steampowered.com/")) {
-  observe(200, [
-    // "READ MORE" on Early Access information
-    'a.morebutton[href="#"][onclick]',
-    // "READ MORE" on other sections cut off at a maximum height, such as Awards and
-    // "About This Game". A click does nothing until Steam has found the section too
-    // tall and added the class "collapsed" to the section's wrapper. Steam checks
-    // the height as the page loads, and then every 250 ms. If a section becomes too
-    // tall only after the page has loaded (e.g. once the window is narrower), its
-    // "READ MORE" is clicked only if elements are added to or removed from the page
-    // afterwards, because observe() doesn't react to changes of classes.
-    '.game_page_autocollapse_ctn.collapsed > .game_page_autocollapse_fade > .game_page_autocollapse_readmore',
-    // "Read More" on reviews of the game. The class names of this button don't say
-    // what it is, and each review has other buttons, for rating the review, which
-    // must never be clicked. So we check the button's text below (which works only
-    // in English).
-    '#app_reviews_hash button',
-  ], el => {
-    if (el.tagName === "BUTTON" && el.innerText !== "Read More") {
-      return;
-    }
-    click_if_unclicked(el);
-  });
+	observe(200, [
+		// "READ MORE" on Early Access information
+		'a.morebutton[href="#"][onclick]',
+		// "READ MORE" on other sections cut off at a maximum height, such as Awards and
+		// "About This Game". A click does nothing until Steam has found the section too
+		// tall and added the class "collapsed" to the section's wrapper. Steam checks
+		// the height as the page loads, and then every 250 ms. If a section becomes too
+		// tall only after the page has loaded (e.g. once the window is narrower), its
+		// "READ MORE" is clicked only if elements are added to or removed from the page
+		// afterwards, because observe() doesn't react to changes of classes.
+		'.game_page_autocollapse_ctn.collapsed > .game_page_autocollapse_fade > .game_page_autocollapse_readmore',
+		// "Read More" on reviews of the game. The class names of this button don't say
+		// what it is, and each review has other buttons, for rating the review, which
+		// must never be clicked. So we check the button's text below (which works only
+		// in English).
+		'#app_reviews_hash button',
+	], el => {
+		if (el.tagName === "BUTTON" && el.innerText !== "Read More") {
+			return;
+		}
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://www.hwinfo.com/forum/threads/prometheus-adapter-for-hwinfo-grafana-dashboard.6281/page-5
 // Expected: "Rohirm said:" quote at the bottom is expanded; "Click to expand..." is not visible
 if (loc.startsWith("https://www.hwinfo.com/forum/")) {
-  observe(10, [
-    // "Click to expand..."
-    'div.js-expandLink > a[role="button"]',
-  ], el => {
-    el.click();
-  });
+	observe(10, [
+		// "Click to expand..."
+		'div.js-expandLink > a[role="button"]',
+	], el => {
+		el.click();
+	});
 }
 
 // Test page: https://www.patreon.com/comprehensiblejapanese/posts
 // Expected: all posts expanded; "Continue reading" is not visible
 if (loc.startsWith("https://www.patreon.com/")) {
-  observe(10, [
-    // "Continue reading"
-    'div[class][data-tag="post-content-collapse"] > div[class] > button[class]',
-  ], el => {
-    el.click();
-  });
+	observe(10, [
+		// "Continue reading"
+		'div[class][data-tag="post-content-collapse"] > div[class] > button[class]',
+	], el => {
+		el.click();
+	});
 }
 
 // Test page: https://social.pixie.town/@joepie91/110978280642849045
 // Expected: all toots expanded; "SHOW MORE" is not visible
 if (
-  window.location.host === "mastodon.social" ||
-  window.location.host === "social.pixie.town"
+	window.location.host === "mastodon.social" ||
+	window.location.host === "social.pixie.town"
 ) {
-  observe(20, [
-    // "SHOW MORE"
-    'div[data-spoiler="folded"] button.status__content__spoiler-link',
-  ], el => {
-    click_if_unclicked(el);
-  });
+	observe(20, [
+		// "SHOW MORE"
+		'div[data-spoiler="folded"] button.status__content__spoiler-link',
+	], el => {
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://x.com/AChillGhost/status/1761774191920005343
@@ -1040,57 +1040,57 @@ if (
 // Test page: https://x.com/terronk/status/1916218168626012356
 // Expected: "Show more" not visible on ActionGrad's reply
 if (loc.startsWith("https://twitter.com/") || loc.startsWith("https://x.com/")) {
-  observe(1000, [
-    // "Show replies"
-    'button[role="button"] > div > div > div[style][dir] > span[class^="css-"]',
-    // "Show probable spam"
-    'button[class][role="button"][type="button"] > div > div[dir="ltr"][style] > span[class^="css-"]',
-    // "Show additional replies, including those that may contain offensive content"
-    'button > div[style^="text-overflow: unset;"] > span[class][style="text-overflow: unset;"] > span[class][style="text-overflow: unset;"]',
-    // "Show more" on long tweets
-    'button[data-testid="tweet-text-show-more-link"][type="button"] > span[class]',
-    // "Show" button on Content Warning: Graphic Content
-    // "View" button on "The following media includes potentially sensitive content."
-    'button > div > div > span > span[class="css-1jxf684 r-bcqeeo r-1ttztb7 r-qvutc0 r-poiln3"]',
-  ], el => {
-    if (el.innerText === "Show replies" || el.innerText === "Show probable spam" || el.innerText === "Show" || el.innerText === "Show more" || el.innerText === "View") {
-      el.click();
-    }
-  });
+	observe(1000, [
+		// "Show replies"
+		'button[role="button"] > div > div > div[style][dir] > span[class^="css-"]',
+		// "Show probable spam"
+		'button[class][role="button"][type="button"] > div > div[dir="ltr"][style] > span[class^="css-"]',
+		// "Show additional replies, including those that may contain offensive content"
+		'button > div[style^="text-overflow: unset;"] > span[class][style="text-overflow: unset;"] > span[class][style="text-overflow: unset;"]',
+		// "Show more" on long tweets
+		'button[data-testid="tweet-text-show-more-link"][type="button"] > span[class]',
+		// "Show" button on Content Warning: Graphic Content
+		// "View" button on "The following media includes potentially sensitive content."
+		'button > div > div > span > span[class="css-1jxf684 r-bcqeeo r-1ttztb7 r-qvutc0 r-poiln3"]',
+	], el => {
+		if (el.innerText === "Show replies" || el.innerText === "Show probable spam" || el.innerText === "Show" || el.innerText === "Show more" || el.innerText === "View") {
+			el.click();
+		}
+	});
 }
 
 // Test page: https://www.google.com/search?q=Pacific+West+Home+Improvements
 // Expected: after clicking '54 Google reviews', all the reviews are expanded and the "More" links are not visible
 if (loc.startsWith("https://www.google.com/search")) {
-  observe(200, [
-    'div[class][jscontroller] > a[class][role="button"][tabindex="0"][aria-label^="Read more of "][jsaction][data-ved]',
-  ], el => {
-    if (el.innerText === " More") {
-      el.click();
-    }
-  });
+	observe(200, [
+		'div[class][jscontroller] > a[class][role="button"][tabindex="0"][aria-label^="Read more of "][jsaction][data-ved]',
+	], el => {
+		if (el.innerText === " More") {
+			el.click();
+		}
+	});
 }
 
 // Test page: https://www.nytimes.com/live/2024/07/07/world/france-election-2024
 // Expected: All mini articles expanded; "Show more" buttons are not visible
 if (loc.startsWith("https://www.nytimes.com/")) {
-  observe(20, [
-    // "Show more"
-    'button[class][data-testid="Show-More"][type="button"][aria-hidden="true"]',
-  ], el => {
-    click_if_unclicked(el);
-  });
+	observe(20, [
+		// "Show more"
+		'button[class][data-testid="Show-More"][type="button"][aria-hidden="true"]',
+	], el => {
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine
 // Expected: All articles are listed; "Load More Stories" button is not visible
 if (loc.startsWith("https://www.bloomberg.com/")) {
-  observe(1000, [
-    // "Load More Stories"
-    'button[type="button"][data-component="outlined-button"][aria-label="more stories"]',
-  ], el => {
-    el.click();
-  });
+	observe(1000, [
+		// "Load More Stories"
+		'button[type="button"][data-component="outlined-button"][aria-label="more stories"]',
+	], el => {
+		el.click();
+	});
 }
 
 // Test page: https://www.criticker.com/film/Cow-2021/
@@ -1099,14 +1099,14 @@ if (loc.startsWith("https://www.bloomberg.com/")) {
 // Test page: https://www.criticker.com/film/Eyes-Wide-Shut/
 // Expected: All minireviews are expanded; "More" is not visible
 if (loc.startsWith("https://www.criticker.com/")) {
-  observe(20, [
-    // "More"
-    'div.ratingcard_compact_more.tiny > a.textlink[href="#"]',
-  ], el => {
-    if (el.innerText === "More") {
-      click_if_unclicked(el);
-    }
-  });
+	observe(20, [
+		// "More"
+		'div.ratingcard_compact_more.tiny > a.textlink[href="#"]',
+	], el => {
+		if (el.innerText === "More") {
+			click_if_unclicked(el);
+		}
+	});
 }
 
 // Test page: https://claude.ai/chat/e82fbf77-29d5-4cde-ac52-affb4587f919
@@ -1115,16 +1115,16 @@ if (loc.startsWith("https://www.criticker.com/")) {
 // Test page: https://claude.ai/chat/55bd8c0d-6f9a-4240-9cfa-d6a5f3b9be3a
 // Expected: User's prompt is expanded, no "Show more"
 if (loc.startsWith("https://claude.ai/chat/")) {
-  observe(20, [
-    // Reasoning trace with one-line summary
-    'button[aria-expanded="false"][class="group/status flex items-center gap-2 py-1 text-sm transition-colors cursor-pointer text-left text-text-500 hover:text-text-300 flex-1 min-w-0"]',
-    // "Show more" on reasoning trace
-    'button[class="text-xs text-text-500/80 hover:text-text-100 transition opacity-0 group-hover/timeline-text:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"]',
-    // "Show more" on user's prompt
-    'button[class="pb-3 pt-1 text-xs text-text-500/80 hover:text-text-100 transition w-3/4 text-left rounded-lg"]',
-  ], el => {
-    click_if_unclicked(el);
-  });
+	observe(20, [
+		// Reasoning trace with one-line summary
+		'button[aria-expanded="false"][class="group/status flex items-center gap-2 py-1 text-sm transition-colors cursor-pointer text-left text-text-500 hover:text-text-300 flex-1 min-w-0"]',
+		// "Show more" on reasoning trace
+		'button[class="text-xs text-text-500/80 hover:text-text-100 transition opacity-0 group-hover/timeline-text:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"]',
+		// "Show more" on user's prompt
+		'button[class="pb-3 pt-1 text-xs text-text-500/80 hover:text-text-100 transition w-3/4 text-left rounded-lg"]',
+	], el => {
+		click_if_unclicked(el);
+	});
 }
 
 // Test page: https://shimmeringvoid.substack.com/
@@ -1142,24 +1142,24 @@ if (loc.startsWith("https://claude.ai/chat/")) {
 //
 // This block should be the last one in the script.
 if (
-  observer === null &&
-  (window.location.host.endsWith(".substack.com") ||
-    document.querySelector('link[href^="https://substackcdn.com"]'))
+	observer === null &&
+	(window.location.host.endsWith(".substack.com") ||
+		document.querySelector('link[href^="https://substackcdn.com"]'))
 ) {
-  observe(100, [
-    // "No thanks" on the subscribe overlay; clicking removes the overlay
-    'div.intro-popup [data-testid="maybeLater"]',
-    // "See more" below a long comment
-    'div.comment-body.long:not(.expanded) + button',
-    // "Load More" at the end of a comments page
-    'div.comment-list-items + button',
-  ], el => {
-    // Substack reuses the "Load More" button for each page of comments, so it
-    // must be clicked more than once.
-    if (el.matches('div.comment-list-items + button')) {
-      el.click();
-    } else {
-      click_if_unclicked(el);
-    }
-  });
+	observe(100, [
+		// "No thanks" on the subscribe overlay; clicking removes the overlay
+		'div.intro-popup [data-testid="maybeLater"]',
+		// "See more" below a long comment
+		'div.comment-body.long:not(.expanded) + button',
+		// "Load More" at the end of a comments page
+		'div.comment-list-items + button',
+	], el => {
+		// Substack reuses the "Load More" button for each page of comments, so it
+		// must be clicked more than once.
+		if (el.matches('div.comment-list-items + button')) {
+			el.click();
+		} else {
+			click_if_unclicked(el);
+		}
+	});
 }
