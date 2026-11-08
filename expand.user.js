@@ -684,6 +684,7 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 
 // Test page: https://github.com/rust-lang/rust/pull/95035
 // Expected: all comments are loaded; "N hidden items" button is not visible; "1 similar comment" is not visible
+// Expected (logged in): off-topic comments are expanded; "Show comment" is not visible
 //
 // Test page: https://github.com/rust-lang/rust/issues/57640
 // Expected: all comments are loaded; "N hidden items" button is not visible
