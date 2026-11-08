@@ -13,11 +13,12 @@ use anyhow::{Context, Result, bail};
 use serde::de::DeserializeOwned;
 use serde_json::json;
 use std::fmt::Debug;
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::Instant;
 use userscript::{HARNESS_GLOBAL, Userscript};
-use zendriver::{Browser, ObserverError, PausedSession, Tab, TargetObserver};
+use zendriver::{Browser, Cookie, ObserverError, PausedSession, Tab, TargetObserver};
 
 /// How long to wait between two evaluations in [`wait_for`].
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
@@ -88,6 +89,82 @@ pub async fn with_chrome<T>(work: impl AsyncFnOnce(&Browser) -> Result<T>) -> Re
         eprintln!("closing Chrome failed: {error}");
     }
     result
+}
+
+/// The cookies in `text`, the contents of a cookies.txt file in the Netscape
+/// format, which curl and browser extensions write. Each line that isn't
+/// blank and doesn't start with `#` is a cookie, as seven tab-separated
+/// fields: domain, whether subdomains get the cookie too (`TRUE` or
+/// `FALSE`), path, whether only HTTPS requests get it (`TRUE` or `FALSE`),
+/// when it expires (in seconds since the Unix epoch, or 0 for a cookie that
+/// expires once the browser closes), name, and value. A line that starts with
+/// `#HttpOnly_` is a cookie too, one that JavaScript can't read.
+///
+/// Returns an error that names the first line that isn't a comment, a blank
+/// line, or a cookie.
+fn parse_cookies_txt(text: &str) -> Result<Vec<Cookie>> {
+    let flag = |field: &str| match field {
+        "TRUE" => Ok(true),
+        "FALSE" => Ok(false),
+        _ => bail!("{field:?} is neither TRUE nor FALSE"),
+    };
+    let mut cookies = Vec::new();
+    for (index, line) in text.lines().enumerate() {
+        let mut http_only = false;
+        let mut line = line;
+        if let Some(rest) = line.strip_prefix("#HttpOnly_") {
+            http_only = true;
+            line = rest;
+        } else if line.trim().is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let parse = || -> Result<Cookie> {
+            let fields: Vec<&str> = line.split('\t').collect();
+            let [domain, subdomains, path, secure, expires, name, value] = fields[..] else {
+                bail!("it has {} tab-separated fields instead of 7", fields.len());
+            };
+            let domain = domain.trim_start_matches('.');
+            let expires: f64 = expires
+                .parse()
+                .with_context(|| format!("the expiry {expires:?} isn't a number"))?;
+            Ok(Cookie {
+                name: name.to_string(),
+                value: value.to_string(),
+                // Chrome gives a cookie whose domain starts with "." to the
+                // domain's subdomains too, and any other cookie only to the
+                // host that is its domain.
+                domain: if flag(subdomains)? {
+                    format!(".{domain}")
+                } else {
+                    domain.to_string()
+                },
+                path: path.to_string(),
+                expires: (expires != 0.0).then_some(expires),
+                http_only,
+                secure: flag(secure)?,
+                ..Default::default()
+            })
+        };
+        cookies.push(parse().with_context(|| format!("line {} isn't a cookie", index + 1))?);
+    }
+    Ok(cookies)
+}
+
+/// Give `browser` the cookies in the cookies.txt file at `path` (see
+/// [`parse_cookies_txt`]), such as to load pages as a user who is logged in.
+///
+/// Returns an error if the file can't be read or parsed, or if Chrome
+/// refuses a cookie.
+pub async fn add_cookies(browser: &Browser, path: &Path) -> Result<()> {
+    let text =
+        std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    let cookies =
+        parse_cookies_txt(&text).with_context(|| format!("parsing {}", path.display()))?;
+    browser
+        .cookies()
+        .set_many(cookies)
+        .await
+        .with_context(|| format!("giving Chrome the cookies in {}", path.display()))
 }
 
 /// Poll the JavaScript `expression` in the main world of the page in `tab`
@@ -205,4 +282,58 @@ pub async fn open(browser: &Browser, url: &str) -> Result<Tab> {
         );
     }
     Ok(tab)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cookies_txt_parses() {
+        let text = "# Netscape HTTP Cookie File\n\
+            \n\
+            .example.com\tTRUE\t/\tTRUE\t1825613861\ta\t1\n\
+            #HttpOnly_example.com\tFALSE\t/x\tFALSE\t0\t__Host-b\tc d\n";
+        let cookies = parse_cookies_txt(text).unwrap();
+        assert_eq!(
+            cookies,
+            [
+                Cookie {
+                    name: "a".into(),
+                    value: "1".into(),
+                    domain: ".example.com".into(),
+                    path: "/".into(),
+                    expires: Some(1825613861.0),
+                    http_only: false,
+                    secure: true,
+                    ..Default::default()
+                },
+                Cookie {
+                    name: "__Host-b".into(),
+                    value: "c d".into(),
+                    domain: "example.com".into(),
+                    path: "/x".into(),
+                    expires: None,
+                    http_only: true,
+                    secure: false,
+                    ..Default::default()
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn malformed_cookies_txt_is_an_error() {
+        for text in [
+            "example.com\tFALSE\t/\tFALSE\t0\tname\n",
+            "example.com\tYES\t/\tFALSE\t0\tname\tvalue\n",
+            "example.com\tFALSE\t/\tFALSE\tnever\tname\tvalue\n",
+        ] {
+            let error = parse_cookies_txt(text).unwrap_err();
+            assert!(
+                format!("{error:#}").starts_with("line 1 isn't a cookie"),
+                "{text:?}"
+            );
+        }
+    }
 }
