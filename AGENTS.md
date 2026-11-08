@@ -122,8 +122,8 @@ Expand Everything is a userscript, `expand.user.js`, that clicks the "show more"
 # The userscript
 
 - It must stay one dependency-free file that a userscript manager runs as-is: no build step, no imports, `@grant none`.
-- Keep its existing style: 2-space indentation, camelCase names, semicolons.
-- Each site has one block, guarded by a check of the URL or host, that calls `observe(maxMutations, selectors, callback)`. Above each block, `// Test page:` and `// Expected:` comments say how to check the block by hand; keep them correct when changing the block.
+- Keep its existing style: 2-space indentation, snake_case names for its own variables and functions, semicolons.
+- Each site has one block, guarded by a check of the URL or host, that calls `observe(max_mutations, selectors, callback)`. Above each block, `// Test page:` and `// Expected:` comments say how to check the block by hand; keep them correct when changing the block.
 - A new site needs a `@match` line in the metadata block (without one, the userscript manager never runs the script there) and a line in the "Supported sites" list in `README.md`.
 - The user releases a version by changing `@version` in a commit of its own, whose subject line is only the version (e.g. `3.2.0`). Don't change `@version` unless asked.
 

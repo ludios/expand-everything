@@ -366,53 +366,53 @@
 
 const loc = window.location.href;
 
-function queryElements(selector, callback) {
+function query_elements(selector, callback) {
   const elements = document.querySelectorAll(selector);
   elements.forEach(element => callback(element));
 }
 
-const logPrefix = "Expand Everything: ";
-let pageCounter = 0;
+const log_prefix = "Expand Everything: ";
+let page_counter = 0;
 let mutations = 0;
 let observer = null;
 // The function that passes every element that the selectors given to
 // observe(...) select to the callback given to observe(...), or null before
 // observe(...) is called
-let lookAtAll = null;
-// The ID of the pending timeout that will call lookAtAll (see
-// lookAgainUnless), or null if no such timeout is pending
-let lookAgainTimer = null;
-// How many times lookAgainUnless has called lookAtAll since the page loaded
+let look_at_all = null;
+// The ID of the pending timeout that will call look_at_all (see
+// look_again_unless), or null if no such timeout is pending
+let look_again_timer = null;
+// How many times look_again_unless has called look_at_all since the page loaded
 // or navigated
-let lookAgains = 0;
+let look_agains = 0;
 // Used only by the polling mechanism
-let lastHref = location.href;
-let locationInterval = null;
+let last_href = location.href;
+let location_interval = null;
 
 // Observe some selectors and run a callback for each selected element.
-function observe(maxMutations, selectors, callback) {
+function observe(max_mutations, selectors, callback) {
   if (observer !== null) {
     throw new Error(`observe(...) called more than once`);
   }
 
-  lookAtAll = () => {
+  look_at_all = () => {
     for (const selector of selectors) {
-      queryElements(selector, callback);
+      query_elements(selector, callback);
     }
   };
 
   observer = new MutationObserver(() => {
     mutations++;
-    if (mutations >= maxMutations) {
-      console.log(`${logPrefix}disconnecting MutationObserver after ${mutations} mutations to avoid slowing down the page`);
+    if (mutations >= max_mutations) {
+      console.log(`${log_prefix}disconnecting MutationObserver after ${mutations} mutations to avoid slowing down the page`);
       observer.disconnect();
     }
-    lookAtAll();
+    look_at_all();
   });
 
   function reobserve() {
     // Process elements that were present before MutationObserver
-    lookAtAll();
+    look_at_all();
 
     // Start observing
     observer.observe(document.documentElement, {
@@ -424,25 +424,25 @@ function observe(maxMutations, selectors, callback) {
   reobserve();
 
   function navigated() {
-    console.log(`${logPrefix}navigated, resetting alreadyClicked and MutationObserver`);
+    console.log(`${log_prefix}navigated, resetting already_clicked and MutationObserver`);
     observer.disconnect();
-    resetAlreadyClicked();
+    reset_already_clicked();
     mutations = 0;
-    clearTimeout(lookAgainTimer);
-    lookAgainTimer = null;
-    lookAgains = 0;
-    pageCounter = 0;
+    clearTimeout(look_again_timer);
+    look_again_timer = null;
+    look_agains = 0;
+    page_counter = 0;
     reobserve();
   }
 
-  function startPollingLocation() {
-    if (locationInterval !== null) {
-      throw new Error(`locationInterval already exists: ${locationInterval}`);
+  function start_polling_location() {
+    if (location_interval !== null) {
+      throw new Error(`location_interval already exists: ${location_interval}`);
     }
-    locationInterval = setInterval(
+    location_interval = setInterval(
       () => {
-        if (location.href !== lastHref) {
-          lastHref = location.href;
+        if (location.href !== last_href) {
+          last_href = location.href;
           navigated();
         }
       },
@@ -450,23 +450,23 @@ function observe(maxMutations, selectors, callback) {
     );
   }
 
-  function stopPollingLocation() {
-    if (locationInterval === null) {
-      throw new Error(`locationInterval === null`);
+  function stop_polling_location() {
+    if (location_interval === null) {
+      throw new Error(`location_interval === null`);
     }
-    clearInterval(locationInterval);
-    locationInterval = null;
+    clearInterval(location_interval);
+    location_interval = null;
   }
 
   if (window.navigation && navigation.addEventListener) {
-    console.log(`${logPrefix}using Navigation API to detect location changes`);
+    console.log(`${log_prefix}using Navigation API to detect location changes`);
     navigation.addEventListener('navigate', (ev) => {
       // We must ignore navigation events to the same location, or else we hang in Firefox as it loops infinitely on
       // https://superuser.com/questions/681575/any-way-to-get-list-of-functions-defined-in-zsh-like-alias-command-for-aliases
       //
       // Possibly related to https://bugzilla.mozilla.org/show_bug.cgi?id=1997591
       if (ev.destination.url === window.location.href) {
-        console.log(`${logPrefix}ignoring navigation event to the same location`);
+        console.log(`${log_prefix}ignoring navigation event to the same location`);
         return;
       }
       navigated();
@@ -474,33 +474,33 @@ function observe(maxMutations, selectors, callback) {
   } else {
     // https://stackoverflow.com/questions/34999976/detect-changes-on-the-url
     // suggests that setInterval is the best way to do it when we lack Navigation API.
-    console.log(`${logPrefix}using setInterval(..., 1000) to detect location changes`);
-    startPollingLocation();
+    console.log(`${log_prefix}using setInterval(..., 1000) to detect location changes`);
+    start_polling_location();
     // Not necessary for correctness, but to save power, kill our setInterval when the page isn't visible.
     document.addEventListener("visibilitychange", function() {
       if (document.hidden) {
-        console.log(`${logPrefix}page has become hidden, stopping setInterval`);
-        stopPollingLocation();
+        console.log(`${log_prefix}page has become hidden, stopping setInterval`);
+        stop_polling_location();
       } else {
-        console.log(`${logPrefix}page has become visible, starting setInterval`);
-        startPollingLocation();
+        console.log(`${log_prefix}page has become visible, starting setInterval`);
+        start_polling_location();
       }
     });
   }
 }
 
-let alreadyClicked;
-function resetAlreadyClicked() {
-  alreadyClicked = new WeakMap();
+let already_clicked;
+function reset_already_clicked() {
+  already_clicked = new WeakMap();
 }
-resetAlreadyClicked();
+reset_already_clicked();
 
 // Click on something if it hasn't already been clicked.
-function clickIfUnclicked(el) {
-  if (alreadyClicked.get(el)) {
+function click_if_unclicked(el) {
+  if (already_clicked.get(el)) {
     return;
   }
-  alreadyClicked.set(el, true);
+  already_clicked.set(el, true);
   el.click();
 }
 
@@ -513,18 +513,18 @@ function clickIfUnclicked(el) {
 // observe(...) must have been called.
 //
 // Returns `ready`.
-function lookAgainUnless(ready) {
-  if (lookAtAll === null) {
-    throw new Error(`lookAgainUnless(...) called before observe(...)`);
+function look_again_unless(ready) {
+  if (look_at_all === null) {
+    throw new Error(`look_again_unless(...) called before observe(...)`);
   }
-  if (!ready && lookAgains < 120) {
-    lookAgainTimer ??= setTimeout(() => {
-      lookAgainTimer = null;
-      lookAgains++;
-      if (lookAgains === 120) {
-        console.log(`${logPrefix}looked again ${lookAgains} times; not looking again until the next navigation`);
+  if (!ready && look_agains < 120) {
+    look_again_timer ??= setTimeout(() => {
+      look_again_timer = null;
+      look_agains++;
+      if (look_agains === 120) {
+        console.log(`${log_prefix}looked again ${look_agains} times; not looking again until the next navigation`);
       }
-      lookAtAll();
+      look_at_all();
     }, 500);
   }
   return ready;
@@ -533,7 +533,7 @@ function lookAgainUnless(ready) {
 // Whether React has hydrated or created `el` (an element that React
 // renders), as shown by the props that React keeps on the element. React may
 // ignore a click on an element that it hasn't hydrated yet.
-function reactHydrated(el) {
+function react_hydrated(el) {
   // Where a page's Content Security Policy keeps a userscript out of the
   // page, a userscript manager may run it as a content script (as
   // Violentmonkey does by default in Firefox), which sees the page's own
@@ -551,7 +551,7 @@ if (loc.startsWith("https://www.goodreads.com/book/show/")) {
     'button[aria-label="Tap to show more review"]',
     'button[aria-label="Tap to show more about the author"]',
   ], el => {
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -561,7 +561,7 @@ if (loc.startsWith("https://www.goodreads.com/review/list/")) {
   observe(100, [
     'a[data-text-id^="review"][href="#"][onclick="swapContent($(this));; return false;"]',
   ], el => {
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -584,15 +584,15 @@ if (loc.startsWith("https://www.imdb.com/title/")) {
     'button.ipl-load-more__button',
   ], el => {
     if (el.tagName == "BUTTON") {
-      if (pageCounter < 5) {
-        pageCounter++;
-        console.log(`${logPrefix}page counter: ${pageCounter}`);
+      if (page_counter < 5) {
+        page_counter++;
+        console.log(`${log_prefix}page counter: ${page_counter}`);
         el.click();
       }
     } else {
       // Avoid MutationObserver loop: imdb adds .ipl-expander--expanded
       // to the element some time _after_ you click.
-      clickIfUnclicked(el);
+      click_if_unclicked(el);
     }
   });
 }
@@ -618,7 +618,7 @@ if (loc.startsWith("https://www.youtube.com/")) {
     // We can't just el.click() unconditionally because that causes menus/modals to lose focus
     // and disappear.
     //
-    // We can't use clickIfUnclicked due to YouTube oddities after navigating the SPA (the video
+    // We can't use click_if_unclicked due to YouTube oddities after navigating the SPA (the video
     // description doesn't expand after clicking too early), but conveniently YouTube sets "hidden"
     // on things that don't need to be clicked any more.
     if (!el.hidden) {
@@ -666,7 +666,7 @@ if (loc.startsWith("https://tvtropes.org/")) {
     // "open/close all folders"
     '.toggle-all-folders-button:not(.is-open)',
   ], el => {
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -677,7 +677,7 @@ if (loc.startsWith("https://tvtropes.org/")) {
 // Expected: all comments are shown; no '[N more]' links visible
 if (loc.startsWith("https://news.ycombinator.com/")) {
   // No need for MutationObserver
-  queryElements('a.togg.clicky', el => {
+  query_elements('a.togg.clicky', el => {
     if (el.innerText.endsWith(" more]")) {
       el.click();
     }
@@ -712,24 +712,24 @@ if (loc.startsWith("https://github.com/")) {
   // The icon buttons in the headers of comments on an issue page, of which
   // only the one whose tooltip says "show comment" (on a minimized comment)
   // is clicked
-  const commentHeaderButtons = '[data-testid="comment-header"] button[aria-labelledby]';
+  const comment_header_buttons = '[data-testid="comment-header"] button[aria-labelledby]';
   // Elements that React renders
-  const reactSelectors = [
+  const react_selectors = [
     // "Load more" below "N remaining items" on an issue page (above the
     // linked comment, and also below it)
     'button[data-testid^="issue-timeline-load-more-load-"]',
-    commentHeaderButtons,
+    comment_header_buttons,
     // "Load more comments" on a commit page
     '#comments.react-comments-container > button',
   ];
   // The chevron of a review thread on a pull request page, which is clicked
   // only if the thread is collapsed (as an outdated or resolved one is)
-  const threadChevrons = 'review-thread-collapsible button.review-thread-chevron';
+  const thread_chevrons = 'review-thread-collapsible button.review-thread-chevron';
   // The <summary> of a <details> in a comment, a README, or other Markdown,
   // which is clicked only if the <details> is closed
-  const markdownSummaries = '.markdown-body details > summary';
+  const markdown_summaries = '.markdown-body details > summary';
   observe(1000, [
-    ...reactSelectors,
+    ...react_selectors,
     // "N hidden items; Load more..." on a pull request page or a discussion page
     //
     // We don't want all button.ajax-pagination-btn because clicking button.ajax-pagination-btn
@@ -739,32 +739,32 @@ if (loc.startsWith("https://github.com/")) {
     'details:not([open]) > summary.pagination-loader-container > .Details-content--closed',
     // "Show comment" on a minimized comment on a pull request page
     'div.minimized-comment > details:not([open]) > summary > div > .Details-content--closed',
-    threadChevrons,
+    thread_chevrons,
     // "Show N previous replies" on a discussion page
     '.discussion-nested-comment-paging-form button[type="submit"]',
-    markdownSummaries,
+    markdown_summaries,
     // "Load diff" button on PRs, where some diffs are collapsed because
     // "Large diffs are not rendered by default" and "This file was deleted".
     // This is disabled by default because some pages are just too large, e.g.
     // https://github.com/sveltejs/svelte/commit/fe8a9ce31d5fb662b3953b318621ea364992e014
     //'button[data-view-component="true"].load-diff-button',
   ], el => {
-    if (alreadyClicked.get(el)) {
+    if (already_clicked.get(el)) {
       return;
     }
     // Mark an element that is not to be clicked, so that the userscript
     // doesn't click it after the user collapses something
     if (
-      (el.matches(commentHeaderButtons) && document.getElementById(el.getAttribute("aria-labelledby"))?.textContent !== "show comment") ||
-      (el.matches(markdownSummaries) && el.parentElement.open)
+      (el.matches(comment_header_buttons) && document.getElementById(el.getAttribute("aria-labelledby"))?.textContent !== "show comment") ||
+      (el.matches(markdown_summaries) && el.parentElement.open)
     ) {
-      alreadyClicked.set(el, true);
+      already_clicked.set(el, true);
       return;
     }
-    if (reactSelectors.some(selector => el.matches(selector)) && !lookAgainUnless(reactHydrated(el))) {
+    if (react_selectors.some(selector => el.matches(selector)) && !look_again_unless(react_hydrated(el))) {
       return;
     }
-    if (el.matches(threadChevrons)) {
+    if (el.matches(thread_chevrons)) {
       const thread = el.closest("review-thread-collapsible");
       if (!thread.classList.contains("open")) {
         el.click();
@@ -772,12 +772,12 @@ if (loc.startsWith("https://github.com/")) {
       // GitHub ignores a click on a chevron until a script that it loads late
       // handles the click, which doesn't change the page, so look again if
       // the thread didn't open.
-      if (lookAgainUnless(thread.classList.contains("open"))) {
-        alreadyClicked.set(el, true);
+      if (look_again_unless(thread.classList.contains("open"))) {
+        already_clicked.set(el, true);
       }
       return;
     }
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -791,7 +791,7 @@ if (loc.startsWith("https://gist.github.com/")) {
       // "Load earlier comments..."
       'form.ajax-pagination-form.js-ajax-pagination[action$="/load_comments"] > button.ajax-pagination-btn'
     ], el => {
-      clickIfUnclicked(el);
+      click_if_unclicked(el);
     });
   }
 }
@@ -834,7 +834,7 @@ if (loc.startsWith("https://www.quora.com/")) {
     // "Continue Reading"
     '.puppeteer_test_read_more_button',
   ], el => {
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -852,7 +852,7 @@ if (loc.startsWith("https://old.reddit.com/")) {
     // click "save options".
   ], el => {
     if (el.innerText == "[+]") {
-      clickIfUnclicked(el);
+      click_if_unclicked(el);
     }
   });
 }
@@ -871,7 +871,7 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
   // such as the "-" in the [-] of an expanded comment, is marked as already
   // clicked: if the user collapses the comment, the userscript leaves the
   // comment collapsed.
-  const textToClick = {
+  const text_to_click = {
     // Comments truncated to a single line (which show no text if they have
     // a score of -5 or lower)
     '.SingleLineComment-root': null,
@@ -888,24 +888,24 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
     // the grids of squares that stand for the posts and comments
     'a.LoadMore-root': null,
   };
-  const selectors = Object.keys(textToClick);
+  const selectors = Object.keys(text_to_click);
 
   // Click `el` (a selected element) if it should be clicked now. Mark it in
-  // `alreadyClicked` once it is clicked or should never be clicked.
+  // `already_clicked` once it is clicked or should never be clicked.
   function expand(el) {
-    if (alreadyClicked.get(el)) {
+    if (already_clicked.get(el)) {
       return;
     }
     if (el.classList.contains("LoadMore-root") && !location.pathname.startsWith("/users/")) {
       // Elsewhere, such as on the front page, "Load More" loads posts without end.
       return;
     }
-    if (!lookAgainUnless(reactHydrated(el))) {
+    if (!look_again_unless(react_hydrated(el))) {
       return;
     }
-    const text = textToClick[selectors.find(selector => el.matches(selector))];
+    const text = text_to_click[selectors.find(selector => el.matches(selector))];
     if (text !== null && el.textContent.trim() !== text) {
-      alreadyClicked.set(el, true);
+      already_clicked.set(el, true);
       return;
     }
     if (el.classList.contains("LoadMore-root")) {
@@ -914,7 +914,7 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
       // More" before that loads the same posts again, so click after a delay.
       // By then, LessWrong may have removed the link, and a click on a removed
       // link would navigate to its href, "#".
-      alreadyClicked.set(el, true);
+      already_clicked.set(el, true);
       setTimeout(() => {
         if (el.isConnected) {
           el.click();
@@ -922,7 +922,7 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
       }, 500);
       return;
     }
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   }
 
   observe(2000, selectors, expand);
@@ -933,7 +933,7 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
 if (loc.startsWith("https://cohost.org/")) {
   observe(100, ['div.overflow-hidden[data-testid="post-body"] > div > a.cursor-pointer.font-bold.text-cherry'], el => {
     if (el.innerText == "read more") {
-      clickIfUnclicked(el);
+      click_if_unclicked(el);
     }
   });
 }
@@ -952,7 +952,7 @@ if (loc.startsWith("https://nextdoor.com/")) {
     // "See more" at the end of a comment
     'a.truncate-view-more-link',
   ], el => {
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -985,7 +985,7 @@ if (loc.startsWith("https://store.steampowered.com/")) {
     if (el.tagName === "BUTTON" && el.innerText !== "Read More") {
       return;
     }
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -1021,7 +1021,7 @@ if (
     // "SHOW MORE"
     'div[data-spoiler="folded"] button.status__content__spoiler-link',
   ], el => {
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -1078,7 +1078,7 @@ if (loc.startsWith("https://www.nytimes.com/")) {
     // "Show more"
     'button[class][data-testid="Show-More"][type="button"][aria-hidden="true"]',
   ], el => {
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -1104,7 +1104,7 @@ if (loc.startsWith("https://www.criticker.com/")) {
     'div.ratingcard_compact_more.tiny > a.textlink[href="#"]',
   ], el => {
     if (el.innerText === "More") {
-      clickIfUnclicked(el);
+      click_if_unclicked(el);
     }
   });
 }
@@ -1123,7 +1123,7 @@ if (loc.startsWith("https://claude.ai/chat/")) {
     // "Show more" on user's prompt
     'button[class="pb-3 pt-1 text-xs text-text-500/80 hover:text-text-100 transition w-3/4 text-left rounded-lg"]',
   ], el => {
-    clickIfUnclicked(el);
+    click_if_unclicked(el);
   });
 }
 
@@ -1159,7 +1159,7 @@ if (
     if (el.matches('div.comment-list-items + button')) {
       el.click();
     } else {
-      clickIfUnclicked(el);
+      click_if_unclicked(el);
     }
   });
 }
