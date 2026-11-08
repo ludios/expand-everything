@@ -12,6 +12,10 @@ use zendriver::Tab;
 /// expand).
 const PULL_REQUEST: &str = "https://github.com/rust-lang/rust/pull/95035";
 
+/// An issue with 512 comments, of which GitHub first shows 24, around "490
+/// remaining items" and a "Load more" button that loads 150 more at a time.
+const ISSUE_WITH_MANY_COMMENTS: &str = "https://github.com/rust-lang/rust/issues/57640";
+
 /// A user's profile, whose activity ends in a "Show more activity" button
 /// that changes the URL when clicked.
 const PROFILE: &str = "https://github.com/A";
@@ -19,6 +23,10 @@ const PROFILE: &str = "https://github.com/A";
 /// A JavaScript expression for whether no part of the timeline of a pull
 /// request or a discussion is still cut off above "N hidden items".
 const NO_HIDDEN_ITEMS: &str = r##"document.querySelector("#js-progressive-timeline-item-container form.ajax-pagination-form") === null"##;
+
+/// A JavaScript expression for whether no part of the timeline of an issue is
+/// still cut off above "N remaining items".
+const NO_REMAINING_ITEMS: &str = r#"document.querySelector('[data-testid="issue-timeline-load-more-container-load-top"]') === null"#;
 
 /// What a test waits for.
 #[derive(Debug, Deserialize)]
@@ -84,6 +92,25 @@ async fn pull_request_hidden_items_and_similar_comments_are_expanded() -> Result
             |clicked| {
                 clicked.iter().any(|t| is_hidden_items(t)) && clicked_on(clicked, "1 similar comment")
             },
+        )
+        .await
+    })
+    .await
+}
+
+#[tokio::test]
+async fn issue_comments_are_all_loaded() -> Result<()> {
+    with_chrome(async |browser| {
+        // GitHub replaces "Load more" with a new button each time it has
+        // loaded more comments, so more than one click shows that the
+        // userscript clicked each new button.
+        let tab = open(browser, ISSUE_WITH_MANY_COMMENTS).await?;
+        expect_expanded(
+            &tab,
+            "the userscript to click \"Load more\" until no comment remains to be loaded",
+            NO_REMAINING_ITEMS,
+            Duration::from_secs(2),
+            |clicked| clicked.iter().filter(|t| *t == "Load more").count() >= 2,
         )
         .await
     })

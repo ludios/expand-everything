@@ -687,10 +687,7 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 // Expected (logged in): off-topic comments are expanded; "Show comment" is not visible
 //
 // Test page: https://github.com/rust-lang/rust/issues/57640
-// Expected: all comments are loaded; "N hidden items" button is not visible
-//
-// Test page: https://github.com/uBlockOrigin/uAssets/issues/5190
-// Expected: all comments are loaded; "Load more" button is not visible
+// Expected: all comments are loaded; "N remaining items" and "Load more" are not visible
 //
 // Test page: https://github.com/JustAnotherArchivist/snscrape/issues/634
 // Expected: spam/outdated/duplicate/off-topic comments are expanded
@@ -707,9 +704,13 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 // Test page: https://github.com/PolyMC/PolyMC/commit/ccf282593dcdbe189c99b81b8bc90cb203aed3ee
 // Expected: all comments are loaded; "Load more comments..." button is not visible
 if (loc.startsWith("https://github.com/")) {
-  observe(1000, [
-    // "N remaining items; Load more..." on an issue page
+  // Elements that React renders
+  const reactSelectors = [
+    // "Load more" below "N remaining items" on an issue page
     'button[data-testid="issue-timeline-load-more-load-top"]',
+  ];
+  observe(1000, [
+    ...reactSelectors,
     // "N hidden items; Load more..." on a pull request page
     //
     // We don't want all button.ajax-pagination-btn because clicking button.ajax-pagination-btn
@@ -729,6 +730,9 @@ if (loc.startsWith("https://github.com/")) {
     // https://github.com/sveltejs/svelte/commit/fe8a9ce31d5fb662b3953b318621ea364992e014
     //'button[data-view-component="true"].load-diff-button',
   ], el => {
+    if (reactSelectors.some(selector => el.matches(selector)) && !lookAgainUnless(reactHydrated(el))) {
+      return;
+    }
     clickIfUnclicked(el);
   });
 }
