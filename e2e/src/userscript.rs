@@ -232,8 +232,9 @@ impl Userscript {
     ///   userscript made directly, where `text` is the element's `innerText`
     ///   just before the click (or, if that is empty, as for an icon button,
     ///   the element's `aria-label` or the text of the elements that its
-    ///   `aria-labelledby` names), trimmed and cut to 200 characters, and
-    ///   `time` is `performance.now()`.
+    ///   `aria-labelledby` names), trimmed and cut to 200 UTF-16 code units
+    ///   (where the cut splits a character, its first half becomes U+FFFD,
+    ///   which CDP's JSON can carry), and `time` is `performance.now()`.
     /// - `observing`: whether the userscript's last direct call of a
     ///   `MutationObserver`'s `observe` or `disconnect` was to `observe`.
     pub fn harness_script(&self) -> String {
@@ -274,7 +275,7 @@ impl Userscript {
         .map((id) => document.getElementById(id)?.textContent ?? "")
         .join(" ");
       const label = this.getAttribute("aria-label") || labelled_by;
-      const text = ((this.innerText || "").trim() || label.trim()).slice(0, 200);
+      const text = ((this.innerText || "").trim() || label.trim()).slice(0, 200).toWellFormed();
       harness.clicks.push({{ element: this, text, time: performance.now() }});
     }}
     return native_click.call(this);
