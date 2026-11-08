@@ -38,6 +38,9 @@ const COMMIT: &str =
 /// threads of replies it cuts off below "Show N previous replies".
 const DISCUSSION: &str = "https://github.com/orgs/community/discussions/12032";
 
+/// An issue whose description and two comments each have a `<details>`.
+const ISSUE_WITH_DETAILS: &str = "https://github.com/rust-lang/rust/issues/165052";
+
 /// A JavaScript expression for whether no part of the timeline of a pull
 /// request or a discussion is still cut off above "N hidden items".
 const NO_HIDDEN_ITEMS: &str = r##"document.querySelector("#js-progressive-timeline-item-container form.ajax-pagination-form") === null"##;
@@ -236,6 +239,25 @@ async fn discussion_replies_are_all_shown() -> Result<()> {
                     .iter()
                     .any(|t| t.starts_with("Show ") && t.contains(" previous repl"))
             },
+        )
+        .await
+    })
+    .await
+}
+
+#[tokio::test]
+async fn details_are_opened() -> Result<()> {
+    with_chrome(async |browser| {
+        let tab = open(browser, ISSUE_WITH_DETAILS).await?;
+        expect_expanded(
+            &tab,
+            "the userscript to open every <details> in the description and the comments",
+            r#"(() => {
+                const details = [...document.querySelectorAll(".markdown-body details")];
+                return details.length >= 3 && details.every((d) => d.open);
+            })()"#,
+            Duration::from_secs(2),
+            |clicked| clicked_on(clicked, "Program output"),
         )
         .await
     })
