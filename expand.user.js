@@ -700,6 +700,9 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 //
 // Test page: https://github.com/PolyMC/PolyMC/commit/ccf282593dcdbe189c99b81b8bc90cb203aed3ee
 // Expected: all comments are loaded; "Load more comments" button is not visible
+//
+// Test page: https://github.com/orgs/community/discussions/12032
+// Expected: all comments and replies are loaded; "N hidden items" and "Show N previous replies" are not visible
 if (loc.startsWith("https://github.com/")) {
   // The icon buttons in the headers of comments on an issue page, of which
   // only the one whose tooltip says "show comment" (on a minimized comment)
@@ -717,7 +720,7 @@ if (loc.startsWith("https://github.com/")) {
   const threadChevrons = 'review-thread-collapsible:not(.open) button.review-thread-chevron';
   observe(1000, [
     ...reactSelectors,
-    // "N hidden items; Load more..." on a pull request page
+    // "N hidden items; Load more..." on a pull request page or a discussion page
     //
     // We don't want all button.ajax-pagination-btn because clicking button.ajax-pagination-btn
     // on a profile page e.g. https://github.com/A causes the URL to start changing.
@@ -727,6 +730,8 @@ if (loc.startsWith("https://github.com/")) {
     // "Show comment" on a minimized comment on a pull request page
     'div.minimized-comment > details:not([open]) > summary > div > .Details-content--closed',
     threadChevrons,
+    // "Show N previous replies" on a discussion page
+    '.discussion-nested-comment-paging-form button[type="submit"]',
     // "Load diff" button on PRs, where some diffs are collapsed because
     // "Large diffs are not rendered by default" and "This file was deleted".
     // This is disabled by default because some pages are just too large, e.g.

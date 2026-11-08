@@ -34,6 +34,10 @@ const PROFILE: &str = "https://github.com/A";
 const COMMIT: &str =
     "https://github.com/PolyMC/PolyMC/commit/ccf282593dcdbe189c99b81b8bc90cb203aed3ee";
 
+/// A discussion that GitHub cuts off above "19 hidden items", and whose
+/// threads of replies it cuts off below "Show N previous replies".
+const DISCUSSION: &str = "https://github.com/orgs/community/discussions/12032";
+
 /// A JavaScript expression for whether no part of the timeline of a pull
 /// request or a discussion is still cut off above "N hidden items".
 const NO_HIDDEN_ITEMS: &str = r##"document.querySelector("#js-progressive-timeline-item-container form.ajax-pagination-form") === null"##;
@@ -210,6 +214,28 @@ async fn commit_comments_are_all_loaded() -> Result<()> {
             })()"##,
             Duration::from_secs(2),
             |clicked| clicked_on(clicked, "Load more comments"),
+        )
+        .await
+    })
+    .await
+}
+
+#[tokio::test]
+async fn discussion_replies_are_all_shown() -> Result<()> {
+    with_chrome(async |browser| {
+        let tab = open(browser, DISCUSSION).await?;
+        expect_expanded(
+            &tab,
+            "the userscript to load every hidden item, and to click every \"Show N previous replies\"",
+            &format!(
+                r#"{NO_HIDDEN_ITEMS} && document.querySelector(".discussion-nested-comment-paging-form") === null"#
+            ),
+            Duration::from_secs(2),
+            |clicked| {
+                clicked
+                    .iter()
+                    .any(|t| t.starts_with("Show ") && t.contains(" previous repl"))
+            },
         )
         .await
     })
