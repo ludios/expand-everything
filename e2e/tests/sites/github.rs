@@ -21,6 +21,10 @@ const ISSUE_WITH_MANY_COMMENTS: &str = "https://github.com/rust-lang/rust/issues
 const ISSUE_WITH_MINIMIZED_COMMENTS: &str =
     "https://github.com/JustAnotherArchivist/snscrape/issues/634";
 
+/// A pull request with 11 review threads, of which GitHub collapses the 7
+/// that are outdated or resolved.
+const PULL_REQUEST_WITH_OUTDATED_THREADS: &str = "https://github.com/NixOS/nixpkgs/pull/194310";
+
 /// A user's profile, whose activity ends in a "Show more activity" button
 /// that changes the URL when clicked.
 const PROFILE: &str = "https://github.com/A";
@@ -142,6 +146,29 @@ async fn minimized_issue_comments_are_expanded() -> Result<()> {
             ),
             Duration::from_secs(2),
             |clicked| clicked_on(clicked, "show comment"),
+        )
+        .await
+    })
+    .await
+}
+
+#[tokio::test]
+async fn outdated_review_threads_are_expanded() -> Result<()> {
+    with_chrome(async |browser| {
+        // A review thread's chevron is an icon button whose tooltip says
+        // "Comment thread".
+        let tab = open(browser, PULL_REQUEST_WITH_OUTDATED_THREADS).await?;
+        expect_expanded(
+            &tab,
+            "the userscript to expand every collapsed review thread",
+            &format!(
+                r#"{NO_HIDDEN_ITEMS} && (() => {{
+                    const threads = [...document.querySelectorAll("review-thread-collapsible")];
+                    return threads.length > 0 && threads.every((t) => t.classList.contains("open"));
+                }})()"#
+            ),
+            Duration::from_secs(2),
+            |clicked| clicked_on(clicked, "Comment thread"),
         )
         .await
     })

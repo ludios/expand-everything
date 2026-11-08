@@ -693,7 +693,7 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 // Expected: spam/off-topic comments are expanded
 //
 // Test page: https://github.com/NixOS/nixpkgs/pull/194310
-// Expected: outdated review comments are expanded
+// Expected: outdated and resolved review comments are expanded
 //
 // Test page: https://github.com/A
 // Expected: activity is not expanded; URL does not start changing
@@ -713,6 +713,8 @@ if (loc.startsWith("https://github.com/")) {
     // "Load more comments" on a commit page
     '#comments.react-comments-container > button',
   ];
+  // The chevron of a collapsed review thread (outdated or resolved) on a pull request page
+  const threadChevrons = 'review-thread-collapsible:not(.open) button.review-thread-chevron';
   observe(1000, [
     ...reactSelectors,
     // "N hidden items; Load more..." on a pull request page
@@ -724,18 +726,30 @@ if (loc.startsWith("https://github.com/")) {
     'summary.pagination-loader-container > .Details-content--closed',
     // "Show comment" on a minimized comment on a pull request page
     'div.minimized-comment > details:not([open]) > summary > div > .Details-content--closed',
-    // "Show resolved"
-    'summary[role="button"] > div > span.Details-content--closed',
+    threadChevrons,
     // "Load diff" button on PRs, where some diffs are collapsed because
     // "Large diffs are not rendered by default" and "This file was deleted".
     // This is disabled by default because some pages are just too large, e.g.
     // https://github.com/sveltejs/svelte/commit/fe8a9ce31d5fb662b3953b318621ea364992e014
     //'button[data-view-component="true"].load-diff-button',
   ], el => {
+    if (alreadyClicked.get(el)) {
+      return;
+    }
     if (el.matches(commentHeaderButtons) && document.getElementById(el.getAttribute("aria-labelledby"))?.textContent !== "show comment") {
       return;
     }
     if (reactSelectors.some(selector => el.matches(selector)) && !lookAgainUnless(reactHydrated(el))) {
+      return;
+    }
+    if (el.matches(threadChevrons)) {
+      // GitHub ignores a click on a chevron until a script that it loads late
+      // handles the click, which doesn't change the page, so click again in a
+      // moment if the thread didn't open.
+      el.click();
+      if (lookAgainUnless(el.closest("review-thread-collapsible").classList.contains("open"))) {
+        alreadyClicked.set(el, true);
+      }
       return;
     }
     clickIfUnclicked(el);
