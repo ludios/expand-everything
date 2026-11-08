@@ -13,6 +13,8 @@ Welcome. Before starting or resuming work, check what `hostname` outputs.
 - If it ends in "clank", run whatever commands you need.
 - Otherwise, stop and ask the user to edit this file.
 
+If this machine is too overloaded for benchmarks, ssh into `aclank`.
+
 # Environment
 
 All thinking is hidden from the user, so if you find anything they may wish to know about, please write to the output.
