@@ -730,7 +730,7 @@ if (loc.startsWith("https://github.com/")) {
     // on a profile page e.g. https://github.com/A causes the URL to start changing.
     '#js-progressive-timeline-item-container button.ajax-pagination-btn',
     // "N similar comments"
-    'summary.pagination-loader-container > .Details-content--closed',
+    'details:not([open]) > summary.pagination-loader-container > .Details-content--closed',
     // "Show comment" on a minimized comment on a pull request page
     'div.minimized-comment > details:not([open]) > summary > div > .Details-content--closed',
     threadChevrons,
