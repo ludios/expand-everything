@@ -259,39 +259,39 @@ impl Userscript {
   }}
   // Whether the caller of the method that calls this is in the userscript.
   // (Frame 0 is this function, frame 1 the method.)
-  const calledByUserscript = () => {{
+  const called_by_userscript = () => {{
     const limit = Error.stackTraceLimit;
     Error.stackTraceLimit = 3;
     const frames = new Error().stack.split("\n").slice(1);
     Error.stackTraceLimit = limit;
     return frames.length === 3 && frames[2].includes("{USERSCRIPT_SOURCE_URL}:");
   }};
-  const nativeClick = HTMLElement.prototype.click;
+  const native_click = HTMLElement.prototype.click;
   HTMLElement.prototype.click = function click() {{
-    if (calledByUserscript()) {{
-      const labelledBy = (this.getAttribute("aria-labelledby") ?? "")
+    if (called_by_userscript()) {{
+      const labelled_by = (this.getAttribute("aria-labelledby") ?? "")
         .split(/\s+/)
         .map((id) => document.getElementById(id)?.textContent ?? "")
         .join(" ");
-      const label = this.getAttribute("aria-label") || labelledBy;
+      const label = this.getAttribute("aria-label") || labelled_by;
       const text = ((this.innerText || "").trim() || label.trim()).slice(0, 200);
       harness.clicks.push({{ element: this, text, time: performance.now() }});
     }}
-    return nativeClick.call(this);
+    return native_click.call(this);
   }};
-  const nativeObserve = MutationObserver.prototype.observe;
+  const native_observe = MutationObserver.prototype.observe;
   MutationObserver.prototype.observe = function observe(...args) {{
-    if (calledByUserscript()) {{
+    if (called_by_userscript()) {{
       harness.observing = true;
     }}
-    return nativeObserve.apply(this, args);
+    return native_observe.apply(this, args);
   }};
-  const nativeDisconnect = MutationObserver.prototype.disconnect;
+  const native_disconnect = MutationObserver.prototype.disconnect;
   MutationObserver.prototype.disconnect = function disconnect() {{
-    if (calledByUserscript()) {{
+    if (called_by_userscript()) {{
       harness.observing = false;
     }}
-    return nativeDisconnect.call(this);
+    return native_disconnect.call(this);
   }};
 }})();
 //# sourceURL=e2e-harness.js
