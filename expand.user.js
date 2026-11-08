@@ -686,8 +686,8 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 // Expected: all comments are loaded; "N hidden items" button is not visible; "1 similar comment" is not visible
 // Expected (logged in): off-topic comments are expanded; "Show comment" is not visible
 //
-// Test page: https://github.com/rust-lang/rust/issues/57640
-// Expected: all comments are loaded; "N remaining items" and "Load more" are not visible
+// Test page: https://github.com/rust-lang/rust/issues/57640#issuecomment-456702793
+// Expected: all comments are loaded; "N remaining items" and "Load more" are not visible above or below the linked comment
 //
 // Test page: https://github.com/JustAnotherArchivist/snscrape/issues/634
 // Expected: spam/off-topic comments are expanded
@@ -713,8 +713,9 @@ if (loc.startsWith("https://github.com/")) {
   const commentHeaderButtons = '[data-testid="comment-header"] button[aria-labelledby]';
   // Elements that React renders
   const reactSelectors = [
-    // "Load more" below "N remaining items" on an issue page
-    'button[data-testid="issue-timeline-load-more-load-top"]',
+    // "Load more" below "N remaining items" on an issue page (above the
+    // linked comment, and also below it)
+    'button[data-testid^="issue-timeline-load-more-load-"]',
     commentHeaderButtons,
     // "Load more comments" on a commit page
     '#comments.react-comments-container > button',

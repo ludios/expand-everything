@@ -12,9 +12,12 @@ use zendriver::Tab;
 /// expand).
 const PULL_REQUEST: &str = "https://github.com/rust-lang/rust/pull/95035";
 
-/// An issue with 512 comments, of which GitHub first shows 24, around "490
-/// remaining items" and a "Load more" button that loads 150 more at a time.
-const ISSUE_WITH_MANY_COMMENTS: &str = "https://github.com/rust-lang/rust/issues/57640";
+/// A link to a comment in the middle of an issue with 512 comments. GitHub
+/// first shows the first comments, the linked comment, and the last
+/// comments, and above and below the linked comment, "N remaining items" and
+/// a "Load more" button that loads 150 more at a time.
+const ISSUE_WITH_MANY_COMMENTS: &str =
+    "https://github.com/rust-lang/rust/issues/57640#issuecomment-456702793";
 
 /// An issue with 37 comments, of which five are minimized as spam or
 /// off-topic, and some of which are first hidden behind "Load more".
@@ -46,8 +49,9 @@ const ISSUE_WITH_DETAILS: &str = "https://github.com/rust-lang/rust/issues/16505
 const NO_HIDDEN_ITEMS: &str = r##"document.querySelector("#js-progressive-timeline-item-container form.ajax-pagination-form") === null"##;
 
 /// A JavaScript expression for whether no part of the timeline of an issue is
-/// still cut off above "N remaining items".
-const NO_REMAINING_ITEMS: &str = r#"document.querySelector('[data-testid="issue-timeline-load-more-container-load-top"]') === null"#;
+/// still cut off at "N remaining items" (above or below a linked comment).
+const NO_REMAINING_ITEMS: &str =
+    r#"document.querySelector('[data-testid^="issue-timeline-load-more-container-"]') === null"#;
 
 /// What a test waits for.
 #[derive(Debug, Deserialize)]
