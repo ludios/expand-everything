@@ -371,6 +371,11 @@ function query_elements(selector, callback) {
 	elements.forEach(element => callback(element));
 }
 
+// `url` without its #fragment (if it has one)
+function without_fragment(url) {
+	return url.split("#")[0];
+}
+
 const log_prefix = "Expand Everything: ";
 let page_counter = 0;
 let mutations = 0;
@@ -385,8 +390,8 @@ let look_again_timer = null;
 // How many times look_again_unless has called look_at_all since the page loaded
 // or navigated
 let look_agains = 0;
-// Used only by the polling mechanism
-let last_href = location.href;
+// location.href without its #fragment, as last seen by the polling mechanism
+let last_href = without_fragment(location.href);
 let location_interval = null;
 
 // Observe some selectors and run a callback for each selected element.
@@ -441,8 +446,9 @@ function observe(max_mutations, selectors, callback) {
 		}
 		location_interval = setInterval(
 			() => {
-				if (location.href !== last_href) {
-					last_href = location.href;
+				const href = without_fragment(location.href);
+				if (href !== last_href) {
+					last_href = href;
 					navigated();
 				}
 			},
@@ -465,8 +471,10 @@ function observe(max_mutations, selectors, callback) {
 			// https://superuser.com/questions/681575/any-way-to-get-list-of-functions-defined-in-zsh-like-alias-command-for-aliases
 			//
 			// Possibly related to https://bugzilla.mozilla.org/show_bug.cgi?id=1997591
-			if (ev.destination.url === window.location.href) {
-				console.log(`${log_prefix}ignoring navigation event to the same location`);
+			//
+			// We also ignore navigation events to another #fragment of the page.
+			if (without_fragment(ev.destination.url) === without_fragment(location.href)) {
+				console.log(`${log_prefix}ignoring navigation event to the same page`);
 				return;
 			}
 			navigated();
@@ -710,6 +718,7 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 //
 // Test page: https://github.com/rust-lang/rust/issues/165052
 // Expected: every <details> ("Program output", "bisected with cargo-bisect-rustc") is open
+// Expected: after the user closes a <details> and then follows a link to a #fragment, the <details> stays closed
 if (loc.startsWith("https://github.com/")) {
 	// The icon buttons in the headers of comments on an issue page, of which
 	// only the one whose tooltip says "show comment" (on a minimized comment)

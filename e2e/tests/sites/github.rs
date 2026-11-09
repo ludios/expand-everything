@@ -4,7 +4,7 @@ use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
 use serde::Deserialize;
 use std::path::Path;
 use std::time::Duration;
-use zendriver::Tab;
+use zendriver::{Browser, Tab};
 
 /// A pull request whose timeline GitHub cuts off twice above "N hidden
 /// items", and which has a comment collapsed below "1 similar comment" and
@@ -251,21 +251,57 @@ async fn discussion_replies_are_all_shown() -> Result<()> {
     .await
 }
 
+/// Open [`ISSUE_WITH_DETAILS`] in `browser`, and wait for the userscript to
+/// open every `<details>` in the description and the comments.
+///
+/// Returns the tab of the issue.
+async fn open_issue_with_details(browser: &Browser) -> Result<Tab> {
+    let tab = open(browser, ISSUE_WITH_DETAILS).await?;
+    expect_expanded(
+        &tab,
+        "the userscript to open every <details> in the description and the comments",
+        r#"(() => {
+            const details = [...document.querySelectorAll(".markdown-body details")];
+            return details.length >= 3 && details.every((d) => d.open);
+        })()"#,
+        Duration::from_secs(2),
+        |clicked| clicked_on(clicked, "Program output"),
+    )
+    .await?;
+    Ok(tab)
+}
+
 #[tokio::test]
 async fn details_are_opened() -> Result<()> {
     with_chrome(async |browser| {
-        let tab = open(browser, ISSUE_WITH_DETAILS).await?;
-        expect_expanded(
-            &tab,
-            "the userscript to open every <details> in the description and the comments",
+        open_issue_with_details(browser).await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn details_closed_by_the_user_stay_closed_after_going_to_a_fragment() -> Result<()> {
+    with_chrome(async |browser| {
+        let tab = open_issue_with_details(browser).await?;
+        tab.evaluate_main::<bool>(
             r#"(() => {
-                const details = [...document.querySelectorAll(".markdown-body details")];
-                return details.length >= 3 && details.every((d) => d.open);
+                document.querySelector(".markdown-body details").open = false;
+                location.hash = "e2e-fragment";
+                return true;
             })()"#,
-            Duration::from_secs(2),
-            |clicked| clicked_on(clicked, "Program output"),
         )
-        .await
+        .await?;
+        wait_for(
+            &tab,
+            "the <details> that the test closed to stay closed",
+            r#"document.querySelector(".markdown-body details").open"#,
+            Duration::from_secs(10),
+            Duration::from_secs(3),
+            |open: &bool| !open,
+        )
+        .await?;
+        Ok(())
     })
     .await
 }
