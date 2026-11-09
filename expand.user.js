@@ -564,10 +564,9 @@ if (loc.startsWith("https://www.goodreads.com/book/show/")) {
 		'button[aria-label="Tap to show more book description"]',
 	], el => {
 		// Goodreads focuses each text that it expands, which scrolls the page to the text.
+		// Without a tabindex, the text can't be focused.
 		const text = el.closest(".TruncatedContent")?.querySelector(':scope > [data-testid="contentContainer"]');
-		if (text) {
-			text.focus = () => {};
-		}
+		text?.removeAttribute("tabindex");
 		click_if_unclicked(el);
 	});
 }
