@@ -787,14 +787,19 @@ if (loc.startsWith("https://github.com/")) {
 // Expected: all comments are loaded; "Load earlier comments..." is not visible
 // Expected: when restarting Chrome, tab is not redirected to a /load_comments page
 if (loc.startsWith("https://gist.github.com/")) {
-	// Wait for the JavaScript to load, because we don't want a button click to navigate us to /load_comments
-	window.onload = () => {
+	const observe_comments = () => {
 		observe(5000, [
 			// "Load earlier comments..."
 			'form.ajax-pagination-form.js-ajax-pagination[action$="/load_comments"] > button.ajax-pagination-btn'
 		], el => {
 			click_if_unclicked(el);
 		});
+	};
+	// Wait for the JavaScript to load, because we don't want a button click to navigate us to /load_comments
+	if (document.readyState === "complete") {
+		observe_comments();
+	} else {
+		window.addEventListener("load", observe_comments, { once: true });
 	}
 }
 
