@@ -559,6 +559,7 @@ function react_hydrated(el) {
 //
 // Test page: https://www.goodreads.com/book/show/7260188-mockingjay
 // Expected: all the reviews hidden because of spoilers are shown, and the lengthy ones are expanded
+// Expected: the passages of reviews that are marked as spoilers are not blurred
 // Expected: the page doesn't scroll down to the expanded texts
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
 	// "Show full review" on a review hidden because of spoilers. The server
@@ -569,6 +570,8 @@ if (loc.startsWith("https://www.goodreads.com/book/show/")) {
 		'button[aria-label="Tap to show more about the author"]',
 		'button[aria-label="Tap to show more book description"]',
 		show_full_review,
+		// A passage of a review that is marked as a spoiler, which is blurred until this is checked
+		'.Formatted input.spoiler__control[type="checkbox"]:not(:checked)',
 	], el => {
 		if (el.matches(show_full_review) && !look_again_unless(react_hydrated(el))) {
 			return;

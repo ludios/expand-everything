@@ -38,6 +38,10 @@ struct Page {
     /// How many reviews the page doesn't show the text of (as for a review
     /// hidden because of spoilers).
     hidden_reviews: usize,
+    /// How many passages of reviews are marked as spoilers.
+    spoiler_passages: usize,
+    /// How many of the [`Page::spoiler_passages`] the page hides.
+    hidden_passages: usize,
     /// How far the page is scrolled down, in CSS pixels.
     scroll_y: f64,
     /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
@@ -69,6 +73,8 @@ fn page_expression() -> String {
                 description_expanded: expanded('[data-testid="description"] [data-testid="contentContainer"]'),
                 cut_off: texts.filter((t) => !t.classList.contains(EXPANDED) && t.scrollHeight > t.clientHeight).length,
                 hidden_reviews: [...document.querySelectorAll(".ReviewCard")].filter((c) => !c.querySelector(".ReviewText__content")?.checkVisibility()).length,
+                spoiler_passages: document.querySelectorAll(".ReviewCard input.spoiler__control").length,
+                hidden_passages: document.querySelectorAll(".ReviewCard input.spoiler__control:not(:checked)").length,
                 scroll_y: window.scrollY,
                 clicked: {CLICKED_TEXTS},
             }};
@@ -166,6 +172,24 @@ async fn spoiler_reviews_are_shown_and_expanded() -> Result<()> {
                 && p.expanded_reviews > 0
                 && p.clicked_on("Show full review")
                 && p.clicked_on("Show more")
+        },
+    )
+    .await
+}
+
+#[tokio::test]
+async fn spoiler_passages_are_shown() -> Result<()> {
+    // Goodreads blurs a passage that is marked as a spoiler until the
+    // checkbox before it is checked.
+    expect(
+        SPOILED_BOOK,
+        "the userscript to check the checkbox before every passage that is marked as a spoiler",
+        |p| {
+            p.spoiler_passages > 0
+                && p.hidden_passages == 0
+                && p.clicked_on(
+                    "The following text has been marked spoiler. Toggle checkbox to reveal or hide.",
+                )
         },
     )
     .await
