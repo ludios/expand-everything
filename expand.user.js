@@ -553,10 +553,10 @@ function react_hydrated(el) {
 
 // Test page: https://www.goodreads.com/book/show/931984.The_Presentation_of_Self_in_Everyday_Life
 // Expected: the text about the author and all the lengthy user book reviews are expanded
-// Expected: the page doesn't scroll down to the expanded texts
 //
 // Test page: https://www.goodreads.com/book/show/39736150-the-little-typer
 // Expected: the book description and all the lengthy user book reviews are expanded
+// Expected: the page doesn't scroll down to the expanded texts
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
 	observe(1000, [
 		'button[aria-label="Tap to show more review"]',

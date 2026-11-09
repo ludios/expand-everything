@@ -9,7 +9,8 @@ use std::time::Duration;
 const BOOK: &str =
     "https://www.goodreads.com/book/show/931984.The_Presentation_of_Self_in_Everyday_Life";
 
-/// A book whose page cuts off its description above a "Show more" button.
+/// A book whose page cuts off its description, the text about its author,
+/// and some of its reviews, each above a "Show more" button.
 const DESCRIBED_BOOK: &str = "https://www.goodreads.com/book/show/39736150-the-little-typer";
 
 /// What a test waits for.
@@ -29,6 +30,14 @@ struct Page {
     clicked: Vec<String>,
 }
 
+impl Page {
+    /// Whether one of the userscript's clicks was on an element whose text
+    /// is `text`.
+    fn clicked_on(&self, text: &str) -> bool {
+        self.clicked.iter().any(|t| t == text)
+    }
+}
+
 /// A JavaScript expression for the [`Page`].
 fn page_expression() -> String {
     // Goodreads puts each text that it may cut off in a `contentContainer`,
@@ -42,7 +51,7 @@ fn page_expression() -> String {
             const texts = [...document.querySelectorAll('[data-testid="contentContainer"]')];
             return {{
                 expanded_reviews: document.querySelectorAll(`.ReviewCard .${{EXPANDED}}`).length,
-                author_expanded: expanded('.PageSection > .TruncatedContent > [data-testid="contentContainer"]'),
+                author_expanded: expanded('.AuthorPreview ~ .TruncatedContent > [data-testid="contentContainer"]'),
                 description_expanded: expanded('[data-testid="description"] [data-testid="contentContainer"]'),
                 cut_off: texts.filter((t) => !t.classList.contains(EXPANDED) && t.scrollHeight > t.clientHeight).length,
                 scroll_y: window.scrollY,
@@ -52,73 +61,70 @@ fn page_expression() -> String {
     )
 }
 
-#[tokio::test]
-async fn reviews_and_author_are_expanded() -> Result<()> {
+/// Open `url`, and wait until `done` has been true of the [`Page`] for 3
+/// seconds in a row.
+///
+/// `what` describes what `done` waits for, for the error message.
+///
+/// Returns an error if 30 seconds elapse first.
+async fn expect(url: &str, what: &str, done: impl Fn(&Page) -> bool) -> Result<()> {
     with_chrome(async |browser| {
-        let tab = open(browser, BOOK).await?;
+        let tab = open(browser, url).await?;
         wait_for(
             &tab,
-            "the userscript to click \"Show more\" on the text about the author and on every long review",
+            what,
             &page_expression(),
             Duration::from_secs(30),
-            Duration::from_secs(2),
-            |p: &Page| {
-                p.cut_off == 0
-                    && p.author_expanded
-                    && p.expanded_reviews > 0
-                    && p.clicked.iter().any(|text| text == "Show more")
-            },
+            Duration::from_secs(3),
+            done,
         )
         .await?;
         Ok(())
     })
+    .await
+}
+
+#[tokio::test]
+async fn reviews_and_author_are_expanded() -> Result<()> {
+    expect(
+        BOOK,
+        "the userscript to click \"Show more\" on the text about the author and on every long review",
+        |p| p.cut_off == 0 && p.author_expanded && p.expanded_reviews > 0 && p.clicked_on("Show more"),
+    )
     .await
 }
 
 #[tokio::test]
 async fn description_and_reviews_are_expanded() -> Result<()> {
-    with_chrome(async |browser| {
-        let tab = open(browser, DESCRIBED_BOOK).await?;
-        wait_for(
-            &tab,
-            "the userscript to click \"Show more\" on the book description and on every long review",
-            &page_expression(),
-            Duration::from_secs(30),
-            Duration::from_secs(2),
-            |p: &Page| {
-                p.cut_off == 0
-                    && p.description_expanded
-                    && p.expanded_reviews > 0
-                    && p.clicked.iter().any(|text| text == "Show more")
-            },
-        )
-        .await?;
-        Ok(())
-    })
+    expect(
+        DESCRIBED_BOOK,
+        "the userscript to click \"Show more\" on the book description and on every long review",
+        |p| {
+            p.cut_off == 0
+                && p.description_expanded
+                && p.expanded_reviews > 0
+                && p.clicked_on("Show more")
+        },
+    )
     .await
 }
 
 #[tokio::test]
 async fn page_does_not_scroll() -> Result<()> {
-    with_chrome(async |browser| {
-        let tab = open(browser, BOOK).await?;
-        // Goodreads focuses each text that "Show more" expands, which scrolls
-        // the page to the text unless the userscript prevents the focusing.
-        wait_for(
-            &tab,
-            "the userscript to click \"Show more\" on every long review, without the page scrolling down",
-            &page_expression(),
-            Duration::from_secs(30),
-            Duration::from_secs(3),
-            |p: &Page| {
-                p.cut_off == 0
-                    && p.expanded_reviews > 0
-                    && p.scroll_y == 0.0
-                    && p.clicked.iter().any(|text| text == "Show more")
-            },
-        )
-        .await?;
-        Ok(())
-    })
+    // Goodreads focuses each text that "Show more" expands, which scrolls
+    // the page to the text unless the userscript prevents the focusing.
+    expect(
+        DESCRIBED_BOOK,
+        "the userscript to click \"Show more\" on the book description, the text about the author, \
+         and every long review, without the page scrolling down",
+        |p| {
+            p.cut_off == 0
+                && p.description_expanded
+                && p.author_expanded
+                && p.expanded_reviews > 0
+                && p.scroll_y == 0.0
+                && p.clicked_on("Show more")
+        },
+    )
     .await
 }
