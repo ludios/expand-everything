@@ -475,7 +475,9 @@ function observe(max_mutations, selectors, callback) {
 		// https://stackoverflow.com/questions/34999976/detect-changes-on-the-url
 		// suggests that setInterval is the best way to do it when we lack Navigation API.
 		console.log(`${log_prefix}using setInterval(..., 1000) to detect location changes`);
-		start_polling_location();
+		if (!document.hidden) {
+			start_polling_location();
+		}
 		// Not necessary for correctness, but to save power, kill our setInterval when the page isn't visible.
 		document.addEventListener("visibilitychange", function() {
 			if (document.hidden) {
