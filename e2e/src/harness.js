@@ -20,11 +20,13 @@ function install_harness(harness_global, match_regexes, userscript_source_url) {
 		error: null,
 		clicks: [],
 		observing: false,
+		// Run `run` (the whole userscript, as a function) if `matched` is
+		// true, once the DOM has been parsed.
 		start: (run) => {
 			if (!harness.matched) {
 				return;
 			}
-			const start = () => {
+			const run_and_record = () => {
 				harness.ran = true;
 				try {
 					run();
@@ -38,11 +40,11 @@ function install_harness(harness_global, match_regexes, userscript_source_url) {
 			};
 			if (document.readyState === "loading") {
 				window.addEventListener("DOMContentLoaded", async () => {
-					await 0;
-					start();
+					await 0; // as Violentmonkey does
+					run_and_record();
 				}, { once: true });
 			} else {
-				start();
+				run_and_record();
 			}
 		},
 	};
