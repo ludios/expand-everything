@@ -1,0 +1,6 @@
+# Fix indentation
+f9d14f9a5261c894d22b7eeb9f440988be66c41e
+# Indent the userscript with tabs instead of 2 spaces
+faa4b367840d106496b31a2560aba1bf23e816ab
+# e2e: indent the harness's JS with tabs, like the userscript
+ea79788e2f94ec3e99e5e4e2c4f8e81b60df0f0b
