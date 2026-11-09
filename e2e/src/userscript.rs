@@ -241,59 +241,59 @@ impl Userscript {
         let regexes = serde_json::to_string(&self.match_regexes).expect("strings serialize");
         format!(
             r##"(() => {{
-  if (window.{HARNESS_GLOBAL}) {{
-    window.{HARNESS_GLOBAL}.injections++;
-    return;
-  }}
-  const url = location.href.split("#")[0];
-  const harness = {{
-    injections: 1,
-    matched: {regexes}.some((re) => new RegExp(re).test(url)),
-    ran: false,
-    error: null,
-    clicks: [],
-    observing: false,
-  }};
-  window.{HARNESS_GLOBAL} = harness;
-  if (!harness.matched) {{
-    return;
-  }}
-  // Whether the caller of the method that calls this is in the userscript.
-  // (Frame 0 is this function, frame 1 the method.)
-  const called_by_userscript = () => {{
-    const limit = Error.stackTraceLimit;
-    Error.stackTraceLimit = 3;
-    const frames = new Error().stack.split("\n").slice(1);
-    Error.stackTraceLimit = limit;
-    return frames.length === 3 && frames[2].includes("{USERSCRIPT_SOURCE_URL}:");
-  }};
-  const native_click = HTMLElement.prototype.click;
-  HTMLElement.prototype.click = function click() {{
-    if (called_by_userscript()) {{
-      const labelled_by = (this.getAttribute("aria-labelledby") ?? "")
-        .split(/\s+/)
-        .map((id) => document.getElementById(id)?.textContent ?? "")
-        .join(" ");
-      const label = this.getAttribute("aria-label") || labelled_by;
-      const text = ((this.innerText || "").trim() || label.trim()).slice(0, 200).toWellFormed();
-      harness.clicks.push({{ element: this, text, time: performance.now() }});
-    }}
-    return native_click.call(this);
-  }};
-  const native_observe = MutationObserver.prototype.observe;
-  MutationObserver.prototype.observe = function observe(...args) {{
-    if (called_by_userscript()) {{
-      harness.observing = true;
-    }}
-    return native_observe.apply(this, args);
-  }};
-  const native_disconnect = MutationObserver.prototype.disconnect;
-  MutationObserver.prototype.disconnect = function disconnect() {{
-    if (called_by_userscript()) {{
-      harness.observing = false;
-    }}
-    return native_disconnect.call(this);
-  }};
+	if (window.{HARNESS_GLOBAL}) {{
+		window.{HARNESS_GLOBAL}.injections++;
+		return;
+	}}
+	const url = location.href.split("#")[0];
+	const harness = {{
+		injections: 1,
+		matched: {regexes}.some((re) => new RegExp(re).test(url)),
+		ran: false,
+		error: null,
+		clicks: [],
+		observing: false,
+	}};
+	window.{HARNESS_GLOBAL} = harness;
+	if (!harness.matched) {{
+		return;
+	}}
+	// Whether the caller of the method that calls this is in the userscript.
+	// (Frame 0 is this function, frame 1 the method.)
+	const called_by_userscript = () => {{
+		const limit = Error.stackTraceLimit;
+		Error.stackTraceLimit = 3;
+		const frames = new Error().stack.split("\n").slice(1);
+		Error.stackTraceLimit = limit;
+		return frames.length === 3 && frames[2].includes("{USERSCRIPT_SOURCE_URL}:");
+	}};
+	const native_click = HTMLElement.prototype.click;
+	HTMLElement.prototype.click = function click() {{
+		if (called_by_userscript()) {{
+			const labelled_by = (this.getAttribute("aria-labelledby") ?? "")
+				.split(/\s+/)
+				.map((id) => document.getElementById(id)?.textContent ?? "")
+				.join(" ");
+			const label = this.getAttribute("aria-label") || labelled_by;
+			const text = ((this.innerText || "").trim() || label.trim()).slice(0, 200).toWellFormed();
+			harness.clicks.push({{ element: this, text, time: performance.now() }});
+		}}
+		return native_click.call(this);
+	}};
+	const native_observe = MutationObserver.prototype.observe;
+	MutationObserver.prototype.observe = function observe(...args) {{
+		if (called_by_userscript()) {{
+			harness.observing = true;
+		}}
+		return native_observe.apply(this, args);
+	}};
+	const native_disconnect = MutationObserver.prototype.disconnect;
+	MutationObserver.prototype.disconnect = function disconnect() {{
+		if (called_by_userscript()) {{
+			harness.observing = false;
+		}}
+		return native_disconnect.call(this);
+	}};
 }})();
 //# sourceURL=e2e-harness.js
 "##
@@ -319,24 +319,24 @@ impl Userscript {
         let close = r#"
 };
 const start = () => {
-  harness.ran = true;
-  try {
-    run();
-  } catch (error) {
-    harness.error = "an exception that can't be shown as text";
-    try {
-      harness.error = String(error?.stack ?? error);
-    } catch {}
-    throw error;
-  }
+	harness.ran = true;
+	try {
+		run();
+	} catch (error) {
+		harness.error = "an exception that can't be shown as text";
+		try {
+			harness.error = String(error?.stack ?? error);
+		} catch {}
+		throw error;
+	}
 };
 if (document.readyState === "loading") {
-  window.addEventListener("DOMContentLoaded", async () => {
-    await 0;
-    start();
-  }, { once: true });
+	window.addEventListener("DOMContentLoaded", async () => {
+		await 0;
+		start();
+	}, { once: true });
 } else {
-  start();
+	start();
 }
 })();
 "#;
