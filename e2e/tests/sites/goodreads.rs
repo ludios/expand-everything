@@ -9,6 +9,9 @@ use std::time::Duration;
 const BOOK: &str =
     "https://www.goodreads.com/book/show/931984.The_Presentation_of_Self_in_Everyday_Life";
 
+/// A book whose page cuts off its description above a "Show more" button.
+const DESCRIBED_BOOK: &str = "https://www.goodreads.com/book/show/39736150-the-little-typer";
+
 /// What a test waits for.
 #[derive(Debug, Deserialize)]
 struct Page {
@@ -16,6 +19,8 @@ struct Page {
     expanded_reviews: usize,
     /// Whether the page has expanded the text about the author.
     author_expanded: bool,
+    /// Whether the page has expanded the book description.
+    description_expanded: bool,
     /// How many texts the page still cuts off.
     cut_off: usize,
     /// How far the page is scrolled down, in CSS pixels.
@@ -38,6 +43,7 @@ fn page_expression() -> String {
             return {{
                 expanded_reviews: document.querySelectorAll(`.ReviewCard .${{EXPANDED}}`).length,
                 author_expanded: expanded('.PageSection > .TruncatedContent > [data-testid="contentContainer"]'),
+                description_expanded: expanded('[data-testid="description"] [data-testid="contentContainer"]'),
                 cut_off: texts.filter((t) => !t.classList.contains(EXPANDED) && t.scrollHeight > t.clientHeight).length,
                 scroll_y: window.scrollY,
                 clicked: {CLICKED_TEXTS},
@@ -59,6 +65,29 @@ async fn reviews_and_author_are_expanded() -> Result<()> {
             |p: &Page| {
                 p.cut_off == 0
                     && p.author_expanded
+                    && p.expanded_reviews > 0
+                    && p.clicked.iter().any(|text| text == "Show more")
+            },
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn description_and_reviews_are_expanded() -> Result<()> {
+    with_chrome(async |browser| {
+        let tab = open(browser, DESCRIBED_BOOK).await?;
+        wait_for(
+            &tab,
+            "the userscript to click \"Show more\" on the book description and on every long review",
+            &page_expression(),
+            Duration::from_secs(30),
+            Duration::from_secs(2),
+            |p: &Page| {
+                p.cut_off == 0
+                    && p.description_expanded
                     && p.expanded_reviews > 0
                     && p.clicked.iter().any(|text| text == "Show more")
             },

@@ -556,11 +556,12 @@ function react_hydrated(el) {
 // Expected: the page doesn't scroll down to the expanded texts
 //
 // Test page: https://www.goodreads.com/book/show/39736150-the-little-typer
-// Expected: all the lengthy user book reviews are expanded
+// Expected: the book description and all the lengthy user book reviews are expanded
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
 	observe(1000, [
 		'button[aria-label="Tap to show more review"]',
 		'button[aria-label="Tap to show more about the author"]',
+		'button[aria-label="Tap to show more book description"]',
 	], el => {
 		// Goodreads focuses each text that it expands, which scrolls the page to the text.
 		const text = el.closest(".TruncatedContent")?.querySelector(':scope > [data-testid="contentContainer"]');
