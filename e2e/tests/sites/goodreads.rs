@@ -18,6 +18,8 @@ struct Page {
     author_expanded: bool,
     /// How many texts the page still cuts off.
     cut_off: usize,
+    /// How far the page is scrolled down, in CSS pixels.
+    scroll_y: f64,
     /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
     clicked: Vec<String>,
 }
@@ -37,6 +39,7 @@ fn page_expression() -> String {
                 expanded_reviews: document.querySelectorAll(`.ReviewCard .${{EXPANDED}}`).length,
                 author_expanded: expanded('.PageSection > .TruncatedContent > [data-testid="contentContainer"]'),
                 cut_off: texts.filter((t) => !t.classList.contains(EXPANDED) && t.scrollHeight > t.clientHeight).length,
+                scroll_y: window.scrollY,
                 clicked: {CLICKED_TEXTS},
             }};
         }})()"#
@@ -57,6 +60,31 @@ async fn reviews_and_author_are_expanded() -> Result<()> {
                 p.cut_off == 0
                     && p.author_expanded
                     && p.expanded_reviews > 0
+                    && p.clicked.iter().any(|text| text == "Show more")
+            },
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn page_does_not_scroll() -> Result<()> {
+    with_chrome(async |browser| {
+        let tab = open(browser, BOOK).await?;
+        // Goodreads focuses each text that "Show more" expands, which scrolls
+        // the page to the text unless the userscript prevents the focusing.
+        wait_for(
+            &tab,
+            "the userscript to click \"Show more\" on every long review, without the page scrolling down",
+            &page_expression(),
+            Duration::from_secs(30),
+            Duration::from_secs(3),
+            |p: &Page| {
+                p.cut_off == 0
+                    && p.expanded_reviews > 0
+                    && p.scroll_y == 0.0
                     && p.clicked.iter().any(|text| text == "Show more")
             },
         )
