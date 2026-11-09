@@ -579,7 +579,7 @@ if (loc.startsWith("https://www.goodreads.com/book/show/")) {
 	});
 }
 
-// Test page: https://www.goodreads.com/review/list/35831082?utf8=%E2%9C%93&order=d&sort=review&view=reviews&per_page=infinite
+// Test page (logged in): https://www.goodreads.com/review/list/35831082?utf8=%E2%9C%93&order=d&sort=review&view=reviews&per_page=infinite
 // Expected: all the lengthy user book reviews are expanded
 if (loc.startsWith("https://www.goodreads.com/review/list/")) {
 	observe(100, [

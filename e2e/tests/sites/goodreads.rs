@@ -1,7 +1,8 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use expand_everything_e2e::userscript::CLICKED_TEXTS;
-use expand_everything_e2e::{open, wait_for, with_chrome};
+use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
 use serde::Deserialize;
+use std::path::Path;
 use std::time::Duration;
 
 /// A book whose page cuts off the text about its author and many of its
@@ -16,6 +17,11 @@ const DESCRIBED_BOOK: &str = "https://www.goodreads.com/book/show/39736150-the-l
 /// A book whose page hides a few of its reviews because of spoilers, each
 /// above a "Show full review" button.
 const SPOILED_BOOK: &str = "https://www.goodreads.com/book/show/7260188-mockingjay";
+
+/// The list of a user's reviews, which cuts off each long review above a
+/// "...more" link. Goodreads redirects a visitor who isn't logged in to its
+/// sign-in page.
+const REVIEW_LIST: &str = "https://www.goodreads.com/review/list/35831082?utf8=%E2%9C%93&order=d&sort=review&view=reviews&per_page=infinite";
 
 /// What a test waits for.
 #[derive(Debug, Deserialize)]
@@ -151,5 +157,52 @@ async fn spoiler_reviews_are_shown_and_expanded() -> Result<()> {
                 && p.clicked_on("Show more")
         },
     )
+    .await
+}
+
+#[tokio::test]
+#[ignore = "needs E2E_GOODREADS_COOKIES, the path of a cookies.txt file of a logged-in Goodreads session"]
+async fn review_list_reviews_are_expanded_when_logged_in() -> Result<()> {
+    #[derive(Debug, Deserialize)]
+    struct List {
+        /// How many "...more" links the page has.
+        links: usize,
+        /// How many reviews the page still cuts off.
+        cut_off: usize,
+        clicked: Vec<String>,
+    }
+    let cookies = std::env::var_os("E2E_GOODREADS_COOKIES").context(
+        "E2E_GOODREADS_COOKIES must be the path of a cookies.txt file of a logged-in Goodreads session",
+    )?;
+    with_chrome(async |browser| {
+        add_cookies(browser, Path::new(&cookies)).await?;
+        let tab = open(browser, REVIEW_LIST)
+            .await
+            .context("do the cookies in E2E_GOODREADS_COOKIES log in to Goodreads?")?;
+        // Each review has its text twice: cut off in `freeTextContainer{id}`,
+        // and in full in `freeText{id}`, which "...more" shows instead.
+        let expression = format!(
+            r#"(() => {{
+                const links = [...document.querySelectorAll('a[data-text-id^="review"]')];
+                return {{
+                    links: links.length,
+                    cut_off: links.filter((a) => !document.getElementById(`freeText${{a.dataset.textId}}`)?.checkVisibility()).length,
+                    clicked: {CLICKED_TEXTS},
+                }};
+            }})()"#
+        );
+        wait_for(
+            &tab,
+            "the userscript to click \"...more\" on every long review",
+            &expression,
+            Duration::from_secs(30),
+            Duration::from_secs(3),
+            |l: &List| {
+                l.links > 0 && l.cut_off == 0 && l.clicked.iter().any(|text| text == "...more")
+            },
+        )
+        .await?;
+        Ok(())
+    })
     .await
 }
