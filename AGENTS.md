@@ -132,7 +132,7 @@ Expand Everything is a userscript, `expand.user.js`, that clicks the "show more"
 `e2e/` is a Rust crate that tests `expand.user.js` against the live sites, in Chrome driven by `zendriver`. Run its commands in `e2e/`. `zendriver` is a git dependency on the `prime` branch of the user's fork, https://github.com/ludios/zendriver-rs. `e2e/Cargo.lock` pins which commit of the fork gets built; `cargo update -p zendriver` moves that pin to the current tip of `prime`. The user's clone of the fork is at `~/code/crawling/zendriver-rs`. When `zendriver` lacks something or gets something wrong, fixing the fork can be better than working around it here: say so, and ask the user. To run the tests with the clone's `zendriver` (including the clone's uncommitted changes), make a `git clone --shared` copy of this repository; in the copy, change the `zendriver` line of `e2e/Cargo.toml` to `zendriver = { path = "/home/at/code/crawling/zendriver-rs/crates/zendriver" }`, and leave `--locked` out of the `cargo` commands, which will rewrite `e2e/Cargo.lock`. Code here that needs a change to the fork can be committed only after the user has pushed that change to `prime` and `cargo update -p zendriver` has moved the pin to it.
 
 - `e2e/src/userscript.rs` turns `expand.user.js` into the scripts that Chrome injects into every document, imitating what Violentmonkey does: it runs the userscript in the page's main world, once the DOM has been parsed (`document-end`), in documents whose URL a `@match` line allows. It refuses any metadata key or `@match` pattern whose handling it doesn't imitate, so a userscript change that adds one (e.g. `@run-at`) must teach `e2e/src/userscript.rs` about it. It doesn't imitate Violentmonkey's fallback to an isolated world on pages whose Content Security Policy blocks the main world.
-- `e2e/src/userscript.rs` also makes the harness script that Chrome injects before the userscript. It records each `click()` that the userscript makes, and whether the userscript's `MutationObserver` is observing. A test's condition includes `CLICKED_TEXTS`, so that it can't pass just because a site stopped hiding things.
+- `e2e/src/userscript.rs` also makes, from `e2e/src/harness.js`, the harness script that Chrome injects before the userscript. It records each `click()` that the userscript makes, and whether the userscript's `MutationObserver` is observing. A test's condition includes `CLICKED_TEXTS`, so that it can't pass just because a site stopped hiding things.
 - `e2e/src/lib.rs` has `with_chrome`, `open`, and `wait_for`, which the tests use.
 - `e2e/tests/sites/` has one module per site. Each test checks one `// Expected:` of a `// Test page:` in `expand.user.js`, and must fail against a userscript without the fix or block that it tests: check that with `E2E_USERSCRIPT=/path/to/older.user.js cargo test`.
 - `e2e/examples/probe.rs` shows a page as the userscript leaves it, for writing or fixing a test: `cargo run --example probe -- URL [--wait SECONDS] [--html FILE] [EXPRESSION...]`. Set `E2E_HEADFUL=1` to watch Chrome.
@@ -150,6 +150,7 @@ Good: https://store.steampowered.com/ (expand review text, game info)
 # Before committing
 
 	node --check expand.user.js
+	node --check e2e/src/harness.js
 
 and in `e2e/`:
 

@@ -39,6 +39,11 @@ pub const CLICKED_TEXTS: &str = concat!("window.", harness_global!(), ".clicks.m
 /// dispatched).
 const USERSCRIPT_SOURCE_URL: &str = "expand.user.js";
 
+/// The harness script, as a JavaScript function of the name of the global
+/// to create, the regexes of the `@match` lines, and the `sourceURL` of the
+/// injected userscript. See [`Userscript::harness_script`].
+const HARNESS_JS: &str = include_str!("harness.js");
+
 /// A JavaScript expression for whether the userscript is watching the page
 /// for elements to click (see `observing` in [`Userscript::harness_script`]).
 pub const OBSERVING: &str = concat!("window.", harness_global!(), ".observing");
@@ -237,111 +242,31 @@ impl Userscript {
     ///   which CDP's JSON can carry), and `time` is `performance.now()`.
     /// - `observing`: whether the userscript's last direct call of a
     ///   `MutationObserver`'s `observe` or `disconnect` was to `observe`.
+    /// - `start`: a function that runs its argument (the userscript, as a
+    ///   function) if `matched` is true, once the DOM has been parsed
+    ///   (Violentmonkey's default `@run-at document-end`). Like
+    ///   Violentmonkey, it waits for `DOMContentLoaded` on `window`, so that
+    ///   the page's listeners on `document` run first.
     pub fn harness_script(&self) -> String {
+        let global = serde_json::to_string(HARNESS_GLOBAL).expect("strings serialize");
         let regexes = serde_json::to_string(&self.match_regexes).expect("strings serialize");
+        let source_url = serde_json::to_string(USERSCRIPT_SOURCE_URL).expect("strings serialize");
         format!(
-            r##"(() => {{
-	if (window.{HARNESS_GLOBAL}) {{
-		window.{HARNESS_GLOBAL}.injections++;
-		return;
-	}}
-	const url = location.href.split("#")[0];
-	const harness = {{
-		injections: 1,
-		matched: {regexes}.some((re) => new RegExp(re).test(url)),
-		ran: false,
-		error: null,
-		clicks: [],
-		observing: false,
-	}};
-	window.{HARNESS_GLOBAL} = harness;
-	if (!harness.matched) {{
-		return;
-	}}
-	// Whether the caller of the method that calls this is in the userscript.
-	// (Frame 0 is this function, frame 1 the method.)
-	const called_by_userscript = () => {{
-		const limit = Error.stackTraceLimit;
-		Error.stackTraceLimit = 3;
-		const frames = new Error().stack.split("\n").slice(1);
-		Error.stackTraceLimit = limit;
-		return frames.length === 3 && frames[2].includes("{USERSCRIPT_SOURCE_URL}:");
-	}};
-	const native_click = HTMLElement.prototype.click;
-	HTMLElement.prototype.click = function click() {{
-		if (called_by_userscript()) {{
-			const labelled_by = (this.getAttribute("aria-labelledby") ?? "")
-				.split(/\s+/)
-				.map((id) => document.getElementById(id)?.textContent ?? "")
-				.join(" ");
-			const label = this.getAttribute("aria-label") || labelled_by;
-			const text = ((this.innerText || "").trim() || label.trim()).slice(0, 200).toWellFormed();
-			harness.clicks.push({{ element: this, text, time: performance.now() }});
-		}}
-		return native_click.call(this);
-	}};
-	const native_observe = MutationObserver.prototype.observe;
-	MutationObserver.prototype.observe = function observe(...args) {{
-		if (called_by_userscript()) {{
-			harness.observing = true;
-		}}
-		return native_observe.apply(this, args);
-	}};
-	const native_disconnect = MutationObserver.prototype.disconnect;
-	MutationObserver.prototype.disconnect = function disconnect() {{
-		if (called_by_userscript()) {{
-			harness.observing = false;
-		}}
-		return native_disconnect.call(this);
-	}};
-}})();
-//# sourceURL=e2e-harness.js
-"##
+            "({HARNESS_JS})({global}, {regexes}, {source_url});\n//# sourceURL=e2e-harness.js\n"
         )
     }
 
-    /// The userscript, wrapped so that it runs only where
-    /// [`Userscript::harness_script`] found a matching `@match` line, and only
-    /// once the DOM has been parsed (Violentmonkey's default
-    /// `@run-at document-end`). Like Violentmonkey, it waits for
-    /// `DOMContentLoaded` on `window`, so that the page's listeners on
-    /// `document` run first.
+    /// The userscript, wrapped in a function that the harness's `start` (see
+    /// [`Userscript::harness_script`]) runs.
     ///
-    /// The userscript is the whole body of a function, so that its top-level
-    /// names can't clash with the wrapper's, and a `"use strict"` at its top
-    /// would apply. The wrapper's opening goes on the userscript's first line,
-    /// so that line numbers in stack traces are the line numbers in
-    /// `expand.user.js`.
+    /// The userscript is the whole body of that function, so that its
+    /// top-level names stay out of the page's global scope, and a
+    /// `"use strict"` at its top would apply. The wrapper's opening goes on
+    /// the userscript's first line, so that line numbers in stack traces are
+    /// the line numbers in `expand.user.js`.
     pub fn wrapped_script(&self) -> String {
-        let open = format!(
-            "(() => {{ const harness = window.{HARNESS_GLOBAL}; if (!harness.matched) {{ return; }} const run = () => {{ "
-        );
-        let close = r#"
-};
-const start = () => {
-	harness.ran = true;
-	try {
-		run();
-	} catch (error) {
-		harness.error = "an exception that can't be shown as text";
-		try {
-			harness.error = String(error?.stack ?? error);
-		} catch {}
-		throw error;
-	}
-};
-if (document.readyState === "loading") {
-	window.addEventListener("DOMContentLoaded", async () => {
-		await 0;
-		start();
-	}, { once: true });
-} else {
-	start();
-}
-})();
-"#;
         format!(
-            "{open}{}{close}//# sourceURL={USERSCRIPT_SOURCE_URL}\n",
+            "window.{HARNESS_GLOBAL}.start(() => {{ {}\n}});\n//# sourceURL={USERSCRIPT_SOURCE_URL}\n",
             self.source
         )
     }
