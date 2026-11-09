@@ -13,6 +13,10 @@ const BOOK: &str =
 /// and some of its reviews, each above a "Show more" button.
 const DESCRIBED_BOOK: &str = "https://www.goodreads.com/book/show/39736150-the-little-typer";
 
+/// A book whose page hides a few of its reviews because of spoilers, each
+/// above a "Show full review" button.
+const SPOILED_BOOK: &str = "https://www.goodreads.com/book/show/7260188-mockingjay";
+
 /// What a test waits for.
 #[derive(Debug, Deserialize)]
 struct Page {
@@ -24,6 +28,8 @@ struct Page {
     description_expanded: bool,
     /// How many texts the page still cuts off.
     cut_off: usize,
+    /// How many reviews the page hides because of spoilers.
+    hidden_reviews: usize,
     /// How far the page is scrolled down, in CSS pixels.
     scroll_y: f64,
     /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
@@ -54,6 +60,7 @@ fn page_expression() -> String {
                 author_expanded: expanded('.AuthorPreview ~ .TruncatedContent > [data-testid="contentContainer"]'),
                 description_expanded: expanded('[data-testid="description"] [data-testid="contentContainer"]'),
                 cut_off: texts.filter((t) => !t.classList.contains(EXPANDED) && t.scrollHeight > t.clientHeight).length,
+                hidden_reviews: document.querySelectorAll(".ReviewText--hideContent").length,
                 scroll_y: window.scrollY,
                 clicked: {CLICKED_TEXTS},
             }};
@@ -123,6 +130,24 @@ async fn page_does_not_scroll() -> Result<()> {
                 && p.author_expanded
                 && p.expanded_reviews > 0
                 && p.scroll_y == 0.0
+                && p.clicked_on("Show more")
+        },
+    )
+    .await
+}
+
+#[tokio::test]
+async fn spoiler_reviews_are_shown_and_expanded() -> Result<()> {
+    // Goodreads hides a review whose text is marked as having spoilers with
+    // `display: none`, so `cut_off` doesn't count it until it is shown.
+    expect(
+        SPOILED_BOOK,
+        "the userscript to click \"Show full review\" on every review hidden because of spoilers, \
+         and \"Show more\" on every long review",
+        |p| {
+            p.hidden_reviews == 0
+                && p.cut_off == 0
+                && p.clicked_on("Show full review")
                 && p.clicked_on("Show more")
         },
     )

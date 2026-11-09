@@ -557,12 +557,20 @@ function react_hydrated(el) {
 // Test page: https://www.goodreads.com/book/show/39736150-the-little-typer
 // Expected: the book description and all the lengthy user book reviews are expanded
 // Expected: the page doesn't scroll down to the expanded texts
+//
+// Test page: https://www.goodreads.com/book/show/7260188-mockingjay
+// Expected: all the reviews hidden because of spoilers are shown, and the lengthy ones are expanded
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
 	observe(1000, [
 		'button[aria-label="Tap to show more review"]',
 		'button[aria-label="Tap to show more about the author"]',
 		'button[aria-label="Tap to show more book description"]',
+		// "Show full review" on a review hidden because of spoilers
+		'button[aria-label="Activate this button to show the hidden review."]',
 	], el => {
+		if (!look_again_unless(react_hydrated(el))) {
+			return;
+		}
 		// Goodreads focuses each text that it expands, which scrolls the page to the text.
 		// Without a tabindex, the text can't be focused.
 		const text = el.closest(".TruncatedContent")?.querySelector(':scope > [data-testid="contentContainer"]');
