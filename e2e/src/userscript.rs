@@ -39,9 +39,8 @@ pub const CLICKED_TEXTS: &str = concat!("window.", harness_global!(), ".clicks.m
 /// dispatched).
 const USERSCRIPT_SOURCE_URL: &str = "expand.user.js";
 
-/// The harness script, as a JavaScript function of the name of the global
-/// to create, the regexes of the `@match` lines, and the `sourceURL` of the
-/// injected userscript. See [`Userscript::harness_script`].
+/// The JavaScript source of `install_harness`, which the harness script calls
+/// (see [`Userscript::harness_script`]).
 const HARNESS_JS: &str = include_str!("harness.js");
 
 /// A JavaScript expression for whether the userscript is watching the page
@@ -252,7 +251,7 @@ impl Userscript {
         let regexes = serde_json::to_string(&self.match_regexes).expect("strings serialize");
         let source_url = serde_json::to_string(USERSCRIPT_SOURCE_URL).expect("strings serialize");
         format!(
-            "({HARNESS_JS})({global}, {regexes}, {source_url});\n//# sourceURL=e2e-harness.js\n"
+            "(() => {{\n{HARNESS_JS}\ninstall_harness({global}, {regexes}, {source_url});\n}})();\n//# sourceURL=e2e-harness.js\n"
         )
     }
 

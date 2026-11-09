@@ -1,5 +1,5 @@
-// The harness script, as a function that `Userscript::harness_script` (in
-// userscript.rs) calls with:
+// The function that the harness script (made by `Userscript::harness_script`
+// in userscript.rs) calls once in each document, with:
 //
 // - `harness_global`: the name of the global through which the harness
 //   reports to the tests.
@@ -7,7 +7,7 @@
 //   lines become.
 // - `userscript_source_url`: the `sourceURL` of the injected userscript, which
 //   names the userscript's frames in stack traces.
-(harness_global, match_regexes, userscript_source_url) => {
+function install_harness(harness_global, match_regexes, userscript_source_url) {
 	if (window[harness_global]) {
 		window[harness_global].injections++;
 		return;
