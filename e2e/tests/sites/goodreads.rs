@@ -102,7 +102,12 @@ async fn reviews_and_author_are_expanded() -> Result<()> {
     expect(
         BOOK,
         "the userscript to click \"Show more\" on the text about the author and on every long review",
-        |p| p.cut_off == 0 && p.author_expanded && p.expanded_reviews > 0 && p.clicked_on("Show more"),
+        |p| {
+            p.cut_off == 0
+                && p.author_expanded
+                && p.expanded_reviews > 0
+                && p.clicked_on("Show more")
+        },
     )
     .await
 }
