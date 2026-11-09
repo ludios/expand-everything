@@ -14,8 +14,9 @@ const BOOK: &str =
 /// and some of its reviews, each above a "Show more" button.
 const DESCRIBED_BOOK: &str = "https://www.goodreads.com/book/show/39736150-the-little-typer";
 
-/// A book whose page hides a few of its reviews because of spoilers, each
-/// above a "Show full review" button.
+/// A book whose page cuts off its description, the text about its author,
+/// and many of its reviews, each above a "Show more" button, and hides a few
+/// reviews because of spoilers, each above a "Show full review" button.
 const SPOILED_BOOK: &str = "https://www.goodreads.com/book/show/7260188-mockingjay";
 
 /// The list of a user's reviews, which cuts off each long review above a
@@ -34,7 +35,8 @@ struct Page {
     description_expanded: bool,
     /// How many texts the page still cuts off.
     cut_off: usize,
-    /// How many reviews the page hides because of spoilers.
+    /// How many reviews the page doesn't show the text of (as for a review
+    /// hidden because of spoilers).
     hidden_reviews: usize,
     /// How far the page is scrolled down, in CSS pixels.
     scroll_y: f64,
@@ -66,7 +68,7 @@ fn page_expression() -> String {
                 author_expanded: expanded('.AuthorPreview ~ .TruncatedContent > [data-testid="contentContainer"]'),
                 description_expanded: expanded('[data-testid="description"] [data-testid="contentContainer"]'),
                 cut_off: texts.filter((t) => !t.classList.contains(EXPANDED) && t.scrollHeight > t.clientHeight).length,
-                hidden_reviews: document.querySelectorAll(".ReviewText--hideContent").length,
+                hidden_reviews: [...document.querySelectorAll(".ReviewCard")].filter((c) => !c.querySelector(".ReviewText__content")?.checkVisibility()).length,
                 scroll_y: window.scrollY,
                 clicked: {CLICKED_TEXTS},
             }};
@@ -132,15 +134,18 @@ async fn page_does_not_scroll() -> Result<()> {
     // Goodreads focuses each text that "Show more" expands, which scrolls
     // the page to the text unless the userscript prevents the focusing.
     expect(
-        DESCRIBED_BOOK,
-        "the userscript to click \"Show more\" on the book description, the text about the author, \
-         and every long review, without the page scrolling down",
+        SPOILED_BOOK,
+        "the userscript to show every review hidden because of spoilers, and to click \"Show more\" \
+         on the book description, the text about the author, and every long review, without the \
+         page scrolling down",
         |p| {
             p.cut_off == 0
+                && p.hidden_reviews == 0
                 && p.description_expanded
                 && p.author_expanded
                 && p.expanded_reviews > 0
                 && p.scroll_y == 0.0
+                && p.clicked_on("Show full review")
                 && p.clicked_on("Show more")
         },
     )
@@ -158,6 +163,7 @@ async fn spoiler_reviews_are_shown_and_expanded() -> Result<()> {
         |p| {
             p.hidden_reviews == 0
                 && p.cut_off == 0
+                && p.expanded_reviews > 0
                 && p.clicked_on("Show full review")
                 && p.clicked_on("Show more")
         },
@@ -170,7 +176,8 @@ async fn spoiler_reviews_are_shown_and_expanded() -> Result<()> {
 async fn review_list_reviews_are_expanded_when_logged_in() -> Result<()> {
     #[derive(Debug, Deserialize)]
     struct List {
-        /// How many "...more" links the page has.
+        /// How many reviews the page has with a "...more" link (which says
+        /// "(less)" once clicked).
         links: usize,
         /// How many reviews the page still cuts off.
         cut_off: usize,
@@ -183,7 +190,11 @@ async fn review_list_reviews_are_expanded_when_logged_in() -> Result<()> {
         add_cookies(browser, Path::new(&cookies)).await?;
         let tab = open(browser, REVIEW_LIST)
             .await
-            .context("do the cookies in E2E_GOODREADS_COOKIES log in to Goodreads?")?;
+            .context(
+                "opening the review list (if no @match line allows the page, Goodreads has \
+                 redirected to its sign-in page, because the cookies in E2E_GOODREADS_COOKIES \
+                 don't log in)",
+            )?;
         // Each review has its text twice: cut off in `freeTextContainer{id}`,
         // and in full in `freeText{id}`, which "...more" shows instead.
         let expression = format!(
