@@ -561,14 +561,16 @@ function react_hydrated(el) {
 // Test page: https://www.goodreads.com/book/show/7260188-mockingjay
 // Expected: all the reviews hidden because of spoilers are shown, and the lengthy ones are expanded
 if (loc.startsWith("https://www.goodreads.com/book/show/")) {
+	// "Show full review" on a review hidden because of spoilers. The server
+	// renders it, so React may not have hydrated it yet.
+	const show_full_review = 'button[aria-label="Activate this button to show the hidden review."]';
 	observe(1000, [
 		'button[aria-label="Tap to show more review"]',
 		'button[aria-label="Tap to show more about the author"]',
 		'button[aria-label="Tap to show more book description"]',
-		// "Show full review" on a review hidden because of spoilers
-		'button[aria-label="Activate this button to show the hidden review."]',
+		show_full_review,
 	], el => {
-		if (!look_again_unless(react_hydrated(el))) {
+		if (el.matches(show_full_review) && !look_again_unless(react_hydrated(el))) {
 			return;
 		}
 		// Goodreads focuses each text that it expands, which scrolls the page to the text.
