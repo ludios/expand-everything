@@ -552,7 +552,7 @@ function react_hydrated(el) {
 }
 
 // Test page: https://www.goodreads.com/book/show/931984.The_Presentation_of_Self_in_Everyday_Life
-// Expected: all the lengthy user book reviews are expanded
+// Expected: the text about the author and all the lengthy user book reviews are expanded
 //
 // Test page: https://www.goodreads.com/book/show/39736150-the-little-typer
 // Expected: all the lengthy user book reviews are expanded

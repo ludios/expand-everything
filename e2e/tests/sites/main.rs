@@ -8,6 +8,7 @@
 //! click it.
 
 mod github;
+mod goodreads;
 mod lesswrong;
 mod steam;
 mod substack;
