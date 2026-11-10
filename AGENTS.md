@@ -215,7 +215,7 @@ Automatically commit your changes with this commit template:
 
 	A longer description or explanation of why/what is changing, when it is genuinely helpful.
 
-	Model-output: model name e.g. Claude Mythos 5.1
+	Model-output: model name e.g. Claude Mythos 5.2
 
 	Session-file: ~/.claude/projects/[...]/[...].jsonl
 
