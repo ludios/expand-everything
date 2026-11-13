@@ -1127,6 +1127,9 @@ if (loc.startsWith("https://www.nytimes.com/")) {
 //
 // Test page: https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk?post-id=cmweh3n9k003027nubrwoaxfe
 // Expected: the linked update is expanded; the hidden "Load more Live Updates" is never clicked
+//
+// Test page: https://www.cnn.com/2026/11/11/business/live-news/nvidia-jensen-huang-investigation-fallout
+// Expected: all updates are shown in full, including the graphics that render after "Read more" is clicked
 if (loc.startsWith("https://www.cnn.com/") || loc.startsWith("https://edition.cnn.com/")) {
 	const load_more = 'button.live-story__load-more-updates';
 	observe(1000, [
@@ -1146,6 +1149,9 @@ if (loc.startsWith("https://www.cnn.com/") || loc.startsWith("https://edition.cn
 			}
 		} else {
 			click_if_unclicked(el);
+			// CNN expands an update by fixing its max-height to its height at the
+			// time of the click, which would cut off anything that renders later.
+			el.closest("article.live-story-post--collapsible").style.maxHeight = "none";
 		}
 	});
 }

@@ -13,6 +13,11 @@ const LIVE_NEWS: &str =
 /// the pinned update and the linked one, and hides "Load more Live Updates".
 const LIVE_NEWS_OLDEST_UPDATE: &str = "https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk?post-id=cmweh3n9k003027nubrwoaxfe";
 
+/// A live news page with 95 updates. Some of its long updates have graphics
+/// that render only after CNN has cut the update off above "Read more".
+const LONG_LIVE_NEWS: &str =
+    "https://www.cnn.com/2026/11/11/business/live-news/nvidia-jensen-huang-investigation-fallout";
+
 /// What a test waits for.
 #[derive(Debug, Deserialize)]
 struct Page {
@@ -104,6 +109,36 @@ async fn hidden_load_more_is_not_clicked() -> Result<()> {
                     && p.clicked.iter().any(|text| text == "Read more")
                     && !p.clicked.iter().any(|text| text == "Load more Live Updates")
             },
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn expanded_updates_are_not_cut_off() -> Result<()> {
+    with_chrome(async |browser| {
+        let tab = open(browser, LONG_LIVE_NEWS).await?;
+        // An update that is cut off overflows its box, which CNN gives
+        // `overflow: hidden` (and 2 pixels that never show content).
+        let expression = page_expression(
+            r##"(() => {
+                const updates = [...document.querySelectorAll("article.liveStoryPost")];
+                const long = updates.filter((u) => u.classList.contains("live-story-post--collapsible"));
+                return updates.every((u) => u.checkVisibility() && !u.classList.contains("live-story-post_placeholder"))
+                    && long.length > 0
+                    && long.every((u) => u.scrollHeight - u.clientHeight <= 2);
+            })()"##,
+        );
+        // The graphics render several seconds after the updates are shown.
+        wait_for(
+            &tab,
+            "every update to be shown in full, after the userscript clicked \"Read more\"",
+            &expression,
+            Duration::from_secs(60),
+            Duration::from_secs(10),
+            |p: &Page| p.expanded && p.clicked.iter().any(|text| text == "Read more"),
         )
         .await?;
         Ok(())
