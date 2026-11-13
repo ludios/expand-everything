@@ -27,6 +27,8 @@
 // @match       https://x.com/*
 // @match       https://www.google.com/search?*
 // @match       https://www.nytimes.com/*
+// @match       https://www.cnn.com/*
+// @match       https://edition.cnn.com/*
 // @match       https://www.bloomberg.com/*
 // @match       https://www.criticker.com/*
 // @match       https://claude.ai/chat/*
@@ -1112,6 +1114,17 @@ if (loc.startsWith("https://www.nytimes.com/")) {
 	observe(20, [
 		// "Show more"
 		'button[class][data-testid="Show-More"][type="button"][aria-hidden="true"]',
+	], el => {
+		click_if_unclicked(el);
+	});
+}
+
+// Test page: https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk
+// Expected: all long updates that are shown are expanded; "Read more" is not visible
+if (loc.startsWith("https://www.cnn.com/") || loc.startsWith("https://edition.cnn.com/")) {
+	observe(1000, [
+		// "Read more" below a long update on a live news page
+		'article.live-story-post--collapsed button.live-story-post__collapse-button[aria-expanded="false"]',
 	], el => {
 		click_if_unclicked(el);
 	});

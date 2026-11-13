@@ -7,6 +7,7 @@
 //! alone checks instead that the userscript observes the page but doesn't
 //! click it.
 
+mod cnn;
 mod github;
 mod goodreads;
 mod lesswrong;
