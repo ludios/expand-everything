@@ -52,7 +52,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://news.ycombinator.com/ (expand collapsed comments)
 - https://www.quora.com/ (expand answer text)
 - https://www.nytimes.com/ (expand mini articles on live coverage pages)
-- https://www.cnn.com/ & https://edition.cnn.com/ (expand updates on live news pages)
+- https://www.cnn.com/ & https://edition.cnn.com/ (on live news pages, load all updates and expand them)
 - https://www.bloomberg.com/ (on author pages, load all story headlines)
 - https://www.imdb.com/ (expand film review text, load more reviews)
 - https://www.criticker.com/ (expand minireview text)

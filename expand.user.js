@@ -1121,12 +1121,27 @@ if (loc.startsWith("https://www.nytimes.com/")) {
 
 // Test page: https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk
 // Expected: all long updates that are shown are expanded; "Read more" is not visible
+//
+// Test page: https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk
+// Expected: all updates are shown; "Load more Live Updates" is not visible
 if (loc.startsWith("https://www.cnn.com/") || loc.startsWith("https://edition.cnn.com/")) {
+	const load_more = 'button.live-story__load-more-updates';
 	observe(1000, [
+		// "Load more Live Updates" below the updates on a live news page
+		load_more,
 		// "Read more" below a long update on a live news page
 		'article.live-story-post--collapsed button.live-story-post__collapse-button[aria-expanded="false"]',
 	], el => {
-		click_if_unclicked(el);
+		if (el.matches(load_more)) {
+			// Each click shows the next batch of hidden updates, by changing only
+			// their classes (which the MutationObserver doesn't report), so look
+			// again until no update is hidden.
+			if (!look_again_unless(document.querySelector("article.live-story-post--hidden-for-button") === null)) {
+				el.click();
+			}
+		} else {
+			click_if_unclicked(el);
+		}
 	});
 }
 

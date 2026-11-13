@@ -4,7 +4,8 @@ use expand_everything_e2e::{open, wait_for, with_chrome};
 use serde::Deserialize;
 use std::time::Duration;
 
-/// A live news page that cuts off each long update above a "Read more".
+/// A live news page that cuts off each long update above a "Read more", and
+/// that hides its older updates until "Load more Live Updates" is clicked.
 const LIVE_NEWS: &str =
     "https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk";
 
@@ -45,6 +46,31 @@ async fn long_updates_are_expanded() -> Result<()> {
             Duration::from_secs(30),
             Duration::from_secs(2),
             |p: &Page| p.expanded && p.clicked.iter().any(|text| text == "Read more"),
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn all_updates_are_shown() -> Result<()> {
+    with_chrome(async |browser| {
+        let tab = open(browser, LIVE_NEWS).await?;
+        // CNN gives the class "live-story-post--hidden-for-button" to each
+        // update that it hides until "Load more Live Updates" is clicked, and
+        // hides the button once no update is hidden.
+        let expression = page_expression(
+            r##"document.querySelector("article.live-story-post--hidden-for-button") === null
+                && document.querySelector("button.live-story__load-more-updates")?.checkVisibility() === false"##,
+        );
+        wait_for(
+            &tab,
+            "the userscript to click \"Load more Live Updates\" until every update is shown",
+            &expression,
+            Duration::from_secs(30),
+            Duration::from_secs(2),
+            |p: &Page| p.expanded && p.clicked.iter().any(|text| text == "Load more Live Updates"),
         )
         .await?;
         Ok(())
