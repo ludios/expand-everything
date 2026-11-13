@@ -1124,6 +1124,9 @@ if (loc.startsWith("https://www.nytimes.com/")) {
 //
 // Test page: https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk
 // Expected: all updates are shown; "Load more Live Updates" is not visible
+//
+// Test page: https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk?post-id=cmweh3n9k003027nubrwoaxfe
+// Expected: the linked update is expanded; the hidden "Load more Live Updates" is never clicked
 if (loc.startsWith("https://www.cnn.com/") || loc.startsWith("https://edition.cnn.com/")) {
 	const load_more = 'button.live-story__load-more-updates';
 	observe(1000, [
@@ -1133,10 +1136,12 @@ if (loc.startsWith("https://www.cnn.com/") || loc.startsWith("https://edition.cn
 		'article.live-story-post--collapsed button.live-story-post__collapse-button[aria-expanded="false"]',
 	], el => {
 		if (el.matches(load_more)) {
-			// Each click shows the next batch of hidden updates, by changing only
+			// CNN hides the button once it has shown every update that the button
+			// can show. A click may show the next batch of updates by changing only
 			// their classes (which the MutationObserver doesn't report), so look
-			// again until no update is hidden.
-			if (!look_again_unless(document.querySelector("article.live-story-post--hidden-for-button") === null)) {
+			// again while the button is shown.
+			const all_shown = !el.checkVisibility();
+			if (!look_again_unless(all_shown)) {
 				el.click();
 			}
 		} else {

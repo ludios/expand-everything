@@ -9,6 +9,10 @@ use std::time::Duration;
 const LIVE_NEWS: &str =
     "https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk";
 
+/// [`LIVE_NEWS`], linked to its oldest update, which is long. CNN shows only
+/// the pinned update and the linked one, and hides "Load more Live Updates".
+const LIVE_NEWS_OLDEST_UPDATE: &str = "https://www.cnn.com/2026/11/12/business/live-news/microsoft-global-outage-intl-hnk?post-id=cmweh3n9k003027nubrwoaxfe";
+
 /// What a test waits for.
 #[derive(Debug, Deserialize)]
 struct Page {
@@ -71,6 +75,35 @@ async fn all_updates_are_shown() -> Result<()> {
             Duration::from_secs(30),
             Duration::from_secs(2),
             |p: &Page| p.expanded && p.clicked.iter().any(|text| text == "Load more Live Updates"),
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn hidden_load_more_is_not_clicked() -> Result<()> {
+    with_chrome(async |browser| {
+        let tab = open(browser, LIVE_NEWS_OLDEST_UPDATE).await?;
+        let expression = page_expression(
+            r##"(() => {
+                const updates = [...document.querySelectorAll("article.liveStoryPost")].filter((u) => u.checkVisibility());
+                return updates.some((u) => u.classList.contains("live-story-post--collapsible"))
+                    && !updates.some((u) => u.classList.contains("live-story-post--collapsed"));
+            })()"##,
+        );
+        wait_for(
+            &tab,
+            "the userscript to click \"Read more\" on the linked update, and not to click \"Load more Live Updates\"",
+            &expression,
+            Duration::from_secs(30),
+            Duration::from_secs(3),
+            |p: &Page| {
+                p.expanded
+                    && p.clicked.iter().any(|text| text == "Read more")
+                    && !p.clicked.iter().any(|text| text == "Load more Live Updates")
+            },
         )
         .await?;
         Ok(())
