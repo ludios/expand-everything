@@ -371,6 +371,8 @@ mod tests {
         assert!(script.matches("https://github.com/rust-lang/rust/issues/57640"));
         assert!(script.matches("https://www.goodreads.com/book/show/1-x"));
         assert!(script.matches("https://www.cnn.com/2026/11/12/business/live-news/x"));
+        assert!(script.matches("https://edition.cnn.com/2026/11/12/business/live-news/x"));
+        assert!(!script.matches("https://www.cnn.com/2026/11/12/business/x"));
         assert!(!script.matches("https://example.com/"));
     }
 

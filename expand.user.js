@@ -27,8 +27,8 @@
 // @match       https://x.com/*
 // @match       https://www.google.com/search?*
 // @match       https://www.nytimes.com/*
-// @match       https://www.cnn.com/*
-// @match       https://edition.cnn.com/*
+// @match       https://www.cnn.com/*/live-news/*
+// @match       https://edition.cnn.com/*/live-news/*
 // @match       https://www.bloomberg.com/*
 // @match       https://www.criticker.com/*
 // @match       https://claude.ai/chat/*
