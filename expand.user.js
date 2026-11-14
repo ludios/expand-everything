@@ -275,7 +275,7 @@
 // XenForo sites
 // @match       https://www.hwinfo.com/forum/*
 //
-// StackExchange sites and their metas (e.g. meta.superuser.com)
+// Stack Exchange sites, their metas (e.g. meta.superuser.com), and their other subdomains (e.g. chat.stackexchange.com)
 // @match       https://*.askubuntu.com/*
 // @match       https://*.mathoverflow.net/*
 // @match       https://*.serverfault.com/*

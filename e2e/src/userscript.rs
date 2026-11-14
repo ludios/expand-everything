@@ -395,6 +395,11 @@ mod tests {
         assert!(!script.matches("https://www.cnn.com/2026/11/12/business/x"));
         assert!(script.matches("https://www.nytimes.com/live/2024/07/07/world/x"));
         assert!(script.matches("https://tvtropes.org/pmwiki/pmwiki.php/X/Y"));
+        assert!(script.matches("https://stackoverflow.com/questions/1/x"));
+        assert!(script.matches("https://meta.superuser.com/questions/1/x"));
+        assert!(script.matches("https://academia.meta.stackexchange.com/questions/1/x"));
+        assert!(script.matches("https://stackapps.com/questions/1/x"));
+        assert!(!script.matches("https://notstackexchange.com/questions/1/x"));
         assert!(!script.matches("https://example.com/"));
     }
 
