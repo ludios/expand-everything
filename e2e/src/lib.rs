@@ -18,7 +18,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::Instant;
 use userscript::{HARNESS_GLOBAL, Start, Userscript};
-use zendriver::{Browser, Cookie, ObserverError, PausedSession, Tab, TargetObserver};
+use zendriver::{Browser, Cookie, ObserverError, PausedSession, Persona, Tab, TargetObserver};
 
 /// How long to wait between two evaluations in [`wait_for`].
 const POLL_INTERVAL: Duration = Duration::from_millis(250);
@@ -67,7 +67,9 @@ impl TargetObserver for InjectUserscript {
 ///
 /// Chrome is headless unless the environment variable `E2E_HEADFUL` is set.
 /// It asks sites for English (US), because the userscript and the tests look
-/// for some buttons by their English text.
+/// for some buttons by their English text. It reports the timezone of the
+/// machine's public IP address, which zendriver looks up at ip-api.com, so
+/// that a site doesn't see the timezone contradict the IP address.
 ///
 /// Returns what `work` returns, or the error from loading the userscript or
 /// launching Chrome. An error from closing Chrome is only printed, because it
@@ -87,6 +89,10 @@ pub async fn with_chrome_starting<T>(
     let browser = Browser::builder()
         .headless(std::env::var_os("E2E_HEADFUL").is_none())
         .lang("en-US")
+        // Without a locale here, `geo_auto` would also set the language of
+        // the IP address's country.
+        .persona_overlay(Persona::builder().locale("en-US").build())
+        .geo_auto()
         .observer(Arc::new(observer))
         .launch()
         .await
