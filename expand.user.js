@@ -172,7 +172,105 @@
 // @match       https://zeteo.com/*
 //
 // Mastodon sites
+// @match       https://akademienl.social/*
+// @match       https://archaeo.social/*
+// @match       https://aus.social/*
+// @match       https://bildung.social/*
+// @match       https://c.im/*
+// @match       https://chaos.social/*
+// @match       https://cyberplace.social/*
+// @match       https://dair-community.social/*
+// @match       https://datasci.social/*
+// @match       https://defcon.social/*
+// @match       https://dice.camp/*
+// @match       https://discuss.systems/*
+// @match       https://ecoevo.social/*
+// @match       https://econtwitter.net/*
+// @match       https://en.osm.town/*
+// @match       https://fediscience.org/*
+// @match       https://floss.social/*
+// @match       https://fosstodon.org/*
+// @match       https://front-end.social/*
+// @match       https://functional.cafe/*
+// @match       https://gamedev.lgbt/*
+// @match       https://genomic.social/*
+// @match       https://graphics.social/*
+// @match       https://h-net.social/*
+// @match       https://hachyderm.io/*
+// @match       https://hcommons.social/*
+// @match       https://indieweb.social/*
+// @match       https://infosec.exchange/*
+// @match       https://ioc.exchange/*
+// @match       https://kde.social/*
+// @match       https://linuxrocks.online/*
+// @match       https://mapstodon.space/*
+// @match       https://mas.to/*
+// @match       https://masto.ai/*
+// @match       https://mastodon.acm.org/*
+// @match       https://mastodon.archive.org/*
+// @match       https://mastodon.art/*
+// @match       https://mastodon.bsd.cafe/*
+// @match       https://mastodon.design/*
+// @match       https://mastodon.energy/*
+// @match       https://mastodon.gamedev.place/*
+// @match       https://mastodon.green/*
+// @match       https://mastodon.mit.edu/*
+// @match       https://mastodon.online/*
+// @match       https://mastodon.radio/*
+// @match       https://mastodon.scot/*
+// @match       https://mastodon.sdf.org/*
 // @match       https://mastodon.social/*
+// @match       https://mastodon.world/*
+// @match       https://mastodonapp.uk/*
+// @match       https://mathstodon.xyz/*
+// @match       https://merveilles.town/*
+// @match       https://mograph.social/*
+// @match       https://mstdn.ca/*
+// @match       https://mstdn.party/*
+// @match       https://mstdn.science/*
+// @match       https://mstdn.social/*
+// @match       https://musician.social/*
+// @match       https://nerdculture.de/*
+// @match       https://neuromatch.social/*
+// @match       https://ohai.social/*
+// @match       https://oldbytes.space/*
+// @match       https://openbiblio.social/*
+// @match       https://peoplemaking.games/*
+// @match       https://photog.social/*
+// @match       https://phpc.social/*
+// @match       https://post.lurk.org/*
+// @match       https://ravenation.club/*
+// @match       https://ruby.social/*
+// @match       https://sauropods.win/*
+// @match       https://scholar.social/*
+// @match       https://scicomm.xyz/*
+// @match       https://sciences.social/*
+// @match       https://sfba.social/*
+// @match       https://sigmoid.social/*
+// @match       https://social.coop/*
+// @match       https://social.edu.nl/*
+// @match       https://social.linux.pizza/*
+// @match       https://social.sciences.re/*
+// @match       https://social.tchncs.de/*
+// @match       https://social.treehouse.systems/*
+// @match       https://social.vivaldi.net/*
+// @match       https://spore.social/*
+// @match       https://sunny.garden/*
+// @match       https://tech.lgbt/*
+// @match       https://techhub.social/*
+// @match       https://tilde.zone/*
+// @match       https://toot.cafe/*
+// @match       https://types.pl/*
+// @match       https://typo.social/*
+// @match       https://ubuntu.social/*
+// @match       https://universeodon.com/*
+// @match       https://urbanists.social/*
+// @match       https://vis.social/*
+// @match       https://w3c.social/*
+// @match       https://wandering.shop/*
+// @match       https://wikimedia.social/*
+// @match       https://writing.exchange/*
+// @match       https://zirk.us/*
 //
 // XenForo sites
 // @match       https://www.hwinfo.com/forum/*
@@ -1054,10 +1152,17 @@ if (loc.startsWith("https://www.patreon.com/")) {
 	});
 }
 
-// Test page: https://mastodon.social/@spacerog/112974029330927616
+// Test page: https://mastodon.social/@spacerog/112974029330927616 (Mastodon 5.0)
 // Expected: all posts are expanded; "Show post" is not visible
 // Expected: the image is shown; "Media hidden" is not visible
-if (loc.startsWith("https://mastodon.social/")) {
+//
+// Test page: https://mathstodon.xyz/@j_bertolotti/110436005325555159 (Mastodon before 5.0)
+// Expected: all posts are expanded; "Show more" is not visible
+// Expected: all animations are shown; "Sensitive content" is not visible
+//
+// Test page: https://infosec.exchange/@plasticbiker/112974302351350325 (glitch-soc)
+// Expected: both posts are expanded; "Show more" is not visible
+if (document.getElementById("mastodon")) {
 	// Whether a click on `button` would show what the button hides (a click
 	// on the button of a content warning hides the post if it is shown)
 	function hides_something(button) {
@@ -1066,19 +1171,32 @@ if (loc.startsWith("https://mastodon.social/")) {
 			return false;
 		}
 		if (parent.hasAttribute("aria-controls")) {
-			// Mastodon makes a hidden post inert, and doesn't display a post
+			// Mastodon 5.0 makes a hidden post inert, and doesn't display a post
 			// that one of the user's filters hides
 			const post = document.getElementById(parent.getAttribute("aria-controls"));
 			return post !== null && post.inert && post.checkVisibility();
+		}
+		if (parent.matches(".content-warning")) {
+			// Before 5.0, a hidden post is absent, so the post's footer follows
+			// the warning (in glitch-soc, after the post's mentions)
+			let next = parent.nextElementSibling;
+			if (next?.matches(".status__content:not(:has(> :not(.mention)))")) {
+				next = next.nextElementSibling;
+			}
+			return next === null || next.matches(".status__action-bar, .detailed-status__meta");
 		}
 		return true;
 	}
 
 	observe(1000, [
-		// "Show post"
+		// "Show post" (Mastodon 5.0)
 		'article div[aria-controls] > button',
-		// "Show media"
+		// "Show media" (Mastodon 5.0)
 		'[class*="contentWarningBlurActive"] > button[class*="gallerySpoiler"]',
+		// "Show more" (before 5.0)
+		'.content-warning:not(.content-warning--filter) > button',
+		// "Click to show" on media (before 5.0) that none of the user's filters hides
+		'.spoiler-button:not(.spoiler-button--hidden) > .spoiler-button__overlay:enabled:not(:has(.filter-name))',
 	], el => {
 		if (already_clicked.get(el)) {
 			return;
