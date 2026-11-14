@@ -797,7 +797,7 @@ if (loc.startsWith("https://gist.github.com/")) {
 }
 
 // Test page: https://stackoverflow.com/questions/59156473/what-is-the-difference-between-async-move-and-async-move
-// Expected: the answer with "14 Comments" shows all 14 of them
+// Expected: the accepted answer shows as many comments as its "N Comments" heading says
 //
 // Test page: https://meta.stackexchange.com/questions/333965/firing-mods-and-forced-relicensing-is-stack-exchange-still-interested-in-cooper?rq=1
 // Expected: all comments are loaded; "Show N more comments" is not visible
