@@ -134,8 +134,9 @@ Expand Everything is a userscript, `expand.user.js`, that clicks the "show more"
 - `e2e/src/userscript.rs` turns `expand.user.js` into the scripts that Chrome injects into every document, imitating what Violentmonkey does: they run the userscript in the page's main world, once the DOM has been parsed (`document-end`), in documents whose URL a `@match` line allows. It refuses any metadata key or `@match` pattern whose handling it doesn't imitate, so a userscript change that adds one (e.g. `@run-at`) must teach `e2e/src/userscript.rs` (and, for when the userscript runs, `e2e/src/harness.js`) about it. It doesn't imitate Violentmonkey's fallback to an isolated world on pages whose Content Security Policy blocks the main world.
 - `e2e/src/userscript.rs` also makes, from `e2e/src/harness.js`, the harness script that Chrome injects before the userscript. It records each `click()` that the userscript makes, and whether the userscript's `MutationObserver` is observing. A test's condition includes `CLICKED_TEXTS`, so that it can't pass just because a site stopped hiding things.
 - `e2e/src/lib.rs` has `with_chrome`, `open`, and `wait_for`, which the tests use. A test of what the userscript does if it starts only after the page's `load` event (instead of at `document-end`) uses `with_chrome_starting(Start::AfterLoad, ...)` in place of `with_chrome`.
+- A test of a page that a site shows only to a visitor who is logged in is `#[ignore]`d, and uses `with_login(SITE, ...)` in place of `with_chrome` and `open`. `with_login` finds the cookies to log in with by itself: the one file `SITE/ACCOUNT/cookies.txt` (or `SITE/cookies.txt`) in `~/.cache/cookies`, or in the directory that the environment variable `E2E_COOKIES_DIR` names. `cargo test ... -- --include-ignored` runs these tests too. If one fails because its cookies no longer log in, ask the user for new cookies.
 - `e2e/tests/sites/` has one module per site. Each test checks one `// Expected:` of a `// Test page:` in `expand.user.js`, and must fail against a userscript without the fix or block that it tests: check that with `E2E_USERSCRIPT=/path/to/older.user.js cargo test`.
-- `e2e/examples/probe.rs` shows a page as the userscript leaves it, for writing or fixing a test: `cargo run --example probe -- URL [--cookies COOKIES_TXT] [--wait SECONDS] [--html FILE] [EXPRESSION...]`. Set `E2E_HEADFUL=1` to watch Chrome.
+- `e2e/examples/probe.rs` shows a page as the userscript leaves it, for writing or fixing a test: `cargo run --example probe -- URL [--login SITE | --cookies COOKIES_TXT] [--wait SECONDS] [--html FILE] [EXPRESSION...]`. `--login SITE` loads URL with the cookies that `with_login(SITE, ...)` uses. Set `E2E_HEADFUL=1` to watch Chrome.
 
 The sites change without notice, so a failing test may mean that the site changed rather than that the last commit broke something. Keep live runs few, and never run them in a loop: to study a page, save its DOM once (`probe --html`) and work from the saved copy.
 
@@ -158,9 +159,9 @@ and in `e2e/`:
 	cargo clippy --all-targets --locked -- -D warnings
 	cargo test --locked --lib
 
-and, against the live sites, the tests of each site whose block you changed (or all of them, if you changed the harness or the shared code at the top of `expand.user.js`):
+and, against the live sites, the tests of each site whose block you changed (or all of them, if you changed the harness or the shared code at the top of `expand.user.js`), including the tests that need a login:
 
-	cargo test --locked --test sites SITE
+	cargo test --locked --test sites SITE -- --include-ignored
 
 # Using git safely
 
