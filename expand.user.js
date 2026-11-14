@@ -514,6 +514,10 @@ if (loc.startsWith("https://www.goodreads.com/review/list/")) {
 	});
 }
 
+// Test page: https://www.imdb.com/title/tt0809535/reviews/?featured=rw2027839
+// Expected: the review is expanded
+// Expected: after making the window much narrower, the review is still not cut off
+//
 // Test page (logged in): https://www.imdb.com/title/tt0809535/reviews/
 // Expected: all the lengthy user film reviews are expanded
 // Expected: all the reviews hidden because of spoilers are shown
@@ -527,13 +531,21 @@ if (loc.startsWith("https://www.goodreads.com/review/list/")) {
 if (loc.startsWith("https://www.imdb.com/title/")) {
 	// "25 more" below the reviews
 	const more_reviews = '[data-testid="tturv-pagination"] .single-page-see-more-button > button';
+	// A review's text that IMDb has measured or expanded, and has limited to the height that
+	// it had then, which cuts the text off once it gets taller (as it does in a narrower window)
+	const height_limited = '[data-testid="review-overflow"][style*="max-height"]';
 	observe(1000, [
 		// "Spoiler" in place of a review with spoilers
 		'button.review-spoiler-button',
 		// "See more" over the end of a lengthy review
 		'[data-testid="review-overflow"] > button.ipc-overflowText-overlay',
 		more_reviews,
+		height_limited,
 	], el => {
+		if (el.matches(height_limited)) {
+			el.style.maxHeight = "none";
+			return;
+		}
 		// React may not have hydrated a button that the server rendered, and
 		// IMDb disables "25 more" while reviews are loading.
 		if (!look_again_unless(react_hydrated(el) && !el.disabled)) {

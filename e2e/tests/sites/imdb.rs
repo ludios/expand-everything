@@ -1,6 +1,7 @@
-//! IMDb shows a visitor who isn't logged in only a few "Featured reviews" and
-//! a "Sign in to see all reviews" card, so every test here loads its page as
-//! a user who is logged in.
+//! In place of a film's reviews, IMDb shows a visitor who isn't logged in
+//! only a few "Featured reviews" and a "Sign in to see all reviews" card,
+//! plus the one review that the page's address names (if it names one). So
+//! the tests of a film's reviews load their page as a user who is logged in.
 
 use anyhow::{Context, Result};
 use expand_everything_e2e::userscript::CLICKED_TEXTS;
@@ -8,6 +9,11 @@ use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
 use serde::Deserialize;
 use std::path::Path;
 use std::time::Duration;
+use zendriver::Tab;
+
+/// A lengthy review, on the page of its film's reviews. The page cuts the
+/// review off under a "See more" button.
+const FEATURED_REVIEW: &str = "https://www.imdb.com/title/tt0809535/reviews/?featured=rw2027839";
 
 /// The reviews of a film that has only 8 of them. The page hides some
 /// because of spoilers, each behind a "Spoiler" button, and cuts off the
@@ -17,6 +23,15 @@ const FEW_REVIEWS: &str = "https://www.imdb.com/title/tt0809535/reviews/";
 /// The reviews of a film that has thousands of them. The page shows the first
 /// 25 above a "25 more" button, which adds the next 25 to the page.
 const MANY_REVIEWS: &str = "https://www.imdb.com/title/tt6710474/reviews/";
+
+/// Who a test loads its page as.
+enum Visitor {
+    /// Someone who isn't logged in to IMDb.
+    LoggedOut,
+    /// The user whose cookies.txt file the environment variable
+    /// `E2E_IMDB_COOKIES` names.
+    LoggedIn,
+}
 
 /// What a test waits for.
 #[derive(Debug, Deserialize)]
@@ -28,6 +43,9 @@ struct Page {
     hidden_reviews: usize,
     /// How many reviews the page cuts off.
     cut_off: usize,
+    /// The sum of the heights of the texts of the reviews that the page
+    /// doesn't hide, in CSS pixels, including the parts that it cuts off.
+    text_height: f64,
     /// Whether the page has a "25 more" button that can be clicked (it can't
     /// be while reviews are loading).
     more_offered: bool,
@@ -59,6 +77,7 @@ fn page_expression() -> String {
                 reviews: reviews.length,
                 hidden_reviews: reviews.filter((r) => !r.querySelector(".ipc-html-content-inner-div")?.checkVisibility()).length,
                 cut_off: texts.filter((t) => t.querySelector(".ipc-overflowText-overlay") !== null || t.scrollHeight > t.clientHeight).length,
+                text_height: texts.reduce((sum, t) => sum + t.scrollHeight, 0),
                 more_offered: more !== null && !more.disabled,
                 clicked: {CLICKED_TEXTS},
             }};
@@ -66,41 +85,98 @@ fn page_expression() -> String {
     )
 }
 
-/// Open `url` as the user whose cookies.txt file the environment variable
-/// `E2E_IMDB_COOKIES` names, and wait until `done` has been true of the
-/// [`Page`] for 3 seconds in a row.
+/// Open `url` as `visitor`, and run `work` with the tab that shows the page.
+///
+/// Returns what `work` returns, or an error if [`Visitor::LoggedIn`]'s
+/// cookies haven't logged in to IMDb within 30 seconds of the page opening.
+async fn with_page(
+    url: &str,
+    visitor: Visitor,
+    work: impl AsyncFnOnce(&Tab) -> Result<()>,
+) -> Result<()> {
+    let mut cookies = None;
+    if let Visitor::LoggedIn = visitor {
+        cookies = Some(std::env::var_os("E2E_IMDB_COOKIES").context(
+            "E2E_IMDB_COOKIES must be the path of a cookies.txt file of a logged-in IMDb session",
+        )?);
+    }
+    with_chrome(async |browser| {
+        if let Some(cookies) = &cookies {
+            add_cookies(browser, Path::new(cookies)).await?;
+        }
+        let tab = open(browser, url).await?;
+        if cookies.is_some() {
+            // IMDb may first serve a challenge page, which then loads the
+            // page itself, so the header may take a while to appear.
+            wait_for(
+                &tab,
+                "IMDb's header to show that the visitor is logged in (if it never does, the \
+                 cookies in E2E_IMDB_COOKIES don't log in to IMDb)",
+                r#"document.querySelector(".imdb-header__account-toggle--logged-in") !== null"#,
+                Duration::from_secs(30),
+                Duration::ZERO,
+                |logged_in: &bool| *logged_in,
+            )
+            .await?;
+        }
+        work(&tab).await
+    })
+    .await
+}
+
+/// Wait until `done` has been true of the [`Page`] in `tab` for 3 seconds in
+/// a row.
 ///
 /// `what` describes what `done` waits for, for the error message.
 ///
-/// Returns an error if the cookies haven't logged in to IMDb within 30
-/// seconds of the page opening, or if `done` hasn't been true for 3 seconds
-/// in a row within 30 seconds after that.
-async fn expect(url: &str, what: &str, done: impl Fn(&Page) -> bool) -> Result<()> {
-    let cookies = std::env::var_os("E2E_IMDB_COOKIES").context(
-        "E2E_IMDB_COOKIES must be the path of a cookies.txt file of a logged-in IMDb session",
-    )?;
-    with_chrome(async |browser| {
-        add_cookies(browser, Path::new(&cookies)).await?;
-        let tab = open(browser, url).await?;
-        // IMDb may first serve a challenge page, which then loads the page
-        // itself, so the header may take a while to appear.
-        wait_for(
-            &tab,
-            "IMDb's header to show that the visitor is logged in (if it never does, the cookies \
-             in E2E_IMDB_COOKIES don't log in to IMDb)",
-            r#"document.querySelector(".imdb-header__account-toggle--logged-in") !== null"#,
-            Duration::from_secs(30),
-            Duration::ZERO,
-            |logged_in: &bool| *logged_in,
+/// Returns the last [`Page`], or an error if 30 seconds elapse first.
+async fn expect(tab: &Tab, what: &str, done: impl Fn(&Page) -> bool) -> Result<Page> {
+    wait_for(
+        tab,
+        what,
+        &page_expression(),
+        Duration::from_secs(30),
+        Duration::from_secs(3),
+        done,
+    )
+    .await
+}
+
+#[tokio::test]
+async fn featured_review_is_expanded() -> Result<()> {
+    with_page(FEATURED_REVIEW, Visitor::LoggedOut, async |tab| {
+        expect(
+            tab,
+            "the userscript to click \"See more\" on the review",
+            |p| p.reviews == 1 && p.cut_off == 0 && p.clicks_on("See more") > 0,
         )
         .await?;
-        wait_for(
-            &tab,
-            what,
-            &page_expression(),
-            Duration::from_secs(30),
-            Duration::from_secs(3),
-            done,
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn expanded_review_is_not_cut_off_once_narrower() -> Result<()> {
+    // IMDb limits the height of an expanded text to the height that the text
+    // had when it was expanded, so the userscript must remove the limit.
+    with_page(FEATURED_REVIEW, Visitor::LoggedOut, async |tab| {
+        let expanded = expect(
+            tab,
+            "the userscript to click \"See more\" on the review",
+            |p| p.reviews == 1 && p.cut_off == 0 && p.clicks_on("See more") > 0,
+        )
+        .await?;
+        // The text of a narrower review has more lines, as it has in a
+        // narrower window.
+        tab.evaluate_main::<String>(
+            r#"document.querySelector("article.user-review-item").style.width = "300px""#,
+        )
+        .await?;
+        expect(
+            tab,
+            "the review to get taller than it was when it was expanded, without being cut off",
+            |p| p.reviews == 1 && p.cut_off == 0 && p.text_height > expanded.text_height,
         )
         .await?;
         Ok(())
@@ -111,41 +187,54 @@ async fn expect(url: &str, what: &str, done: impl Fn(&Page) -> bool) -> Result<(
 #[tokio::test]
 #[ignore = "needs E2E_IMDB_COOKIES, the path of a cookies.txt file of a logged-in IMDb session"]
 async fn lengthy_reviews_are_expanded() -> Result<()> {
-    expect(
-        FEW_REVIEWS,
-        "the userscript to click \"See more\" on every lengthy review",
-        |p| p.reviews > 0 && p.cut_off == 0 && p.clicks_on("See more") > 0,
-    )
+    with_page(FEW_REVIEWS, Visitor::LoggedIn, async |tab| {
+        expect(
+            tab,
+            "the userscript to click \"See more\" on every lengthy review",
+            |p| p.reviews > 0 && p.cut_off == 0 && p.clicks_on("See more") > 0,
+        )
+        .await?;
+        Ok(())
+    })
     .await
 }
 
 #[tokio::test]
 #[ignore = "needs E2E_IMDB_COOKIES, the path of a cookies.txt file of a logged-in IMDb session"]
 async fn spoiler_reviews_are_shown() -> Result<()> {
-    expect(
-        FEW_REVIEWS,
-        "the userscript to click \"Spoiler\" on every review hidden because of spoilers",
-        |p| p.reviews > 0 && p.hidden_reviews == 0 && p.clicks_on("Spoiler") > 0,
-    )
+    with_page(FEW_REVIEWS, Visitor::LoggedIn, async |tab| {
+        expect(
+            tab,
+            "the userscript to click \"Spoiler\" on every review hidden because of spoilers",
+            |p| p.reviews > 0 && p.hidden_reviews == 0 && p.clicks_on("Spoiler") > 0,
+        )
+        .await?;
+        Ok(())
+    })
     .await
 }
 
 #[tokio::test]
 #[ignore = "needs E2E_IMDB_COOKIES, the path of a cookies.txt file of a logged-in IMDb session"]
 async fn more_reviews_are_loaded_until_150() -> Result<()> {
-    // The userscript must click "25 more" just once for each 25 reviews,
-    // although IMDb may disable the button only some time after a click.
-    expect(
-        MANY_REVIEWS,
-        "the userscript to click \"25 more\" 5 times, which makes 150 reviews, and then leave \
-         it alone, and to show and expand every review",
-        |p| {
-            p.reviews == 150
-                && p.more_offered
-                && p.clicks_on("25 more") == 5
-                && p.hidden_reviews == 0
-                && p.cut_off == 0
-        },
-    )
+    // The userscript must click "25 more" just once for each 25 reviews that
+    // it loads, although IMDb may disable the button only some time after a
+    // click.
+    with_page(MANY_REVIEWS, Visitor::LoggedIn, async |tab| {
+        expect(
+            tab,
+            "the userscript to click \"25 more\" 5 times, which makes 150 reviews, and then leave \
+             it alone, and to leave no review hidden or cut off",
+            |p| {
+                p.reviews == 150
+                    && p.more_offered
+                    && p.clicks_on("25 more") == 5
+                    && p.hidden_reviews == 0
+                    && p.cut_off == 0
+            },
+        )
+        .await?;
+        Ok(())
+    })
     .await
 }
