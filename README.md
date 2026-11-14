@@ -63,7 +63,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://store.steampowered.com/ (expand review text, game info)
 - https://www.patreon.com/ (expand post bodies)
 - https://www.hwinfo.com/forum/ (expand quote blocks)
-- https://mastodon.social/ and https://social.pixie.town/ (expand toots hidden behind a spoiler)
+- https://mastodon.social/ (expand posts with content warnings)
 
 For test pages, see the "Test page:" comments in expand.user.js. The
 end-to-end tests in [e2e/](e2e/) load some of these pages in Chrome with the

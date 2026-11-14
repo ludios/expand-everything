@@ -173,7 +173,6 @@
 //
 // Mastodon sites
 // @match       https://mastodon.social/*
-// @match       https://social.pixie.town/*
 //
 // XenForo sites
 // @match       https://www.hwinfo.com/forum/*
@@ -1057,10 +1056,7 @@ if (loc.startsWith("https://www.patreon.com/")) {
 
 // Test page: https://mastodon.social/@Gargron/117588712201630497
 // Expected: all posts that have a content warning are expanded; "Show post" is not visible
-if (
-	window.location.host === "mastodon.social" ||
-	window.location.host === "social.pixie.town"
-) {
+if (loc.startsWith("https://mastodon.social/")) {
 	observe(20, [
 		// "Show post"
 		'article div[aria-controls]:has(+ div[inert]) > button',
