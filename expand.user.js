@@ -273,7 +273,8 @@
 // @match       https://writing.exchange/*
 // @match       https://zirk.us/*
 //
-// XenForo sites
+// XenForo 2 sites: technical, artistic, and scientific forums, chosen in
+// November 2026
 // @match       https://68kmla.org/bb/*
 // @match       https://absolutewrite.com/forums/*
 // @match       https://arstechnica.com/civis/*
@@ -1120,15 +1121,12 @@ if (loc.startsWith("https://store.steampowered.com/")) {
 // Test page: https://forum.allaboutcircuits.com/threads/the-case-against-quantum-computing.154610/page-2 (XenForo before 2.2)
 // Expected: all quotes are expanded; "Click to expand..." is not visible
 if (document.documentElement.id === "XF") {
-	// A quote that XenForo hasn't expanded
-	const collapsed_quote = '.bbCodeBlock--expandable:not(.is-expanded)';
 	observe(100, [
-		// "Click to expand..."
-		`${collapsed_quote} .bbCodeBlock-expandLink > a`,
+		// A quote that isn't expanded
+		'.bbCodeBlock--expandable:not(.is-expanded)',
 	], el => {
-		el.click();
-		// XenForo ignores a click until its scripts have set up the page
-		look_again_unless(!el.matches(`${collapsed_quote} *`));
+		// What XenForo does when "Click to expand..." is clicked
+		el.classList.add("is-expanded");
 	});
 }
 
