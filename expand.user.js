@@ -1051,15 +1051,15 @@ if (loc.startsWith("https://www.patreon.com/")) {
 	});
 }
 
-// Test page: https://social.pixie.town/@joepie91/110978280642849045
-// Expected: all toots expanded; "SHOW MORE" is not visible
+// Test page: https://mastodon.social/@Gargron/117588712201630497
+// Expected: all posts that have a content warning are expanded; "Show post" is not visible
 if (
 	window.location.host === "mastodon.social" ||
 	window.location.host === "social.pixie.town"
 ) {
 	observe(20, [
-		// "SHOW MORE"
-		'div[data-spoiler="folded"] button.status__content__spoiler-link',
+		// "Show post"
+		'article div[aria-controls]:has(+ div[inert]) > button',
 	], el => {
 		click_if_unclicked(el);
 	});
