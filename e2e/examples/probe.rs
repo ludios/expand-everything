@@ -1,21 +1,25 @@
 //! Look at a page as the userscript leaves it, to write or fix a test.
 //!
-//!     cargo run --example probe -- URL [--wait SECONDS] [--html FILE] [EXPRESSION...]
+//!     cargo run --example probe -- URL [--cookies FILE] [--wait SECONDS] [--html FILE] [EXPRESSION...]
 //!
 //! Opens URL in Chrome with the userscript injected, waits SECONDS (default
 //! 10), and then prints each click that the userscript made and the JSON value
 //! of each JavaScript EXPRESSION (evaluated in the page's main world). With
-//! `--html`, first saves the page's DOM to FILE, to study it without loading
-//! the page again.
+//! `--cookies`, first gives Chrome the cookies in the cookies.txt FILE, such
+//! as to load URL as a user who is logged in. With `--html`, saves the page's
+//! DOM to FILE before printing anything, to study it without loading the
+//! page again.
 
 use anyhow::{Context, Result, bail};
 use expand_everything_e2e::userscript::HARNESS_GLOBAL;
-use expand_everything_e2e::{open, with_chrome};
+use expand_everything_e2e::{add_cookies, open, with_chrome};
+use std::path::Path;
 use std::time::Duration;
 
 /// What the command line asks for.
 struct Args {
     url: String,
+    cookies: Option<String>,
     wait: Duration,
     html: Option<String>,
     expressions: Vec<String>,
@@ -25,6 +29,7 @@ struct Args {
 fn parse_args() -> Result<Args> {
     let mut args = std::env::args().skip(1);
     let mut url = None;
+    let mut cookies = None;
     let mut wait = Duration::from_secs(10);
     let mut html = None;
     let mut expressions = Vec::new();
@@ -35,6 +40,7 @@ fn parse_args() -> Result<Args> {
                 wait = Duration::try_from_secs_f64(seconds.parse().context("parsing --wait")?)
                     .context("--wait needs a number of seconds")?;
             }
+            "--cookies" => cookies = Some(args.next().context("--cookies needs a value")?),
             "--html" => html = Some(args.next().context("--html needs a value")?),
             _ if arg.starts_with("--") => bail!("unknown option {arg}"),
             _ if url.is_none() => url = Some(arg),
@@ -42,10 +48,11 @@ fn parse_args() -> Result<Args> {
         }
     }
     let Some(url) = url else {
-        bail!("usage: probe URL [--wait SECONDS] [--html FILE] [EXPRESSION...]");
+        bail!("usage: probe URL [--cookies FILE] [--wait SECONDS] [--html FILE] [EXPRESSION...]");
     };
     Ok(Args {
         url,
+        cookies,
         wait,
         html,
         expressions,
@@ -56,6 +63,9 @@ fn parse_args() -> Result<Args> {
 async fn main() -> Result<()> {
     let args = parse_args()?;
     with_chrome(async |browser| {
+        if let Some(path) = &args.cookies {
+            add_cookies(browser, Path::new(path)).await?;
+        }
         let tab = open(browser, &args.url).await?;
         tokio::time::sleep(args.wait).await;
         if let Some(path) = &args.html {
