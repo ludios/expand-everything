@@ -1222,37 +1222,50 @@ if (loc.startsWith("https://www.cnn.com/") || loc.startsWith("https://edition.cn
 }
 
 // Test page: https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine
-// Expected: "Load more" is clicked once for each 20 more stories, until it adds no more (Bloomberg lists at most about 400 stories)
+// Expected: 400 stories are listed, which is the most that Bloomberg lists for an author
+// Expected: "Load more" is clicked 21 times (19 clicks that each add 20 stories, then 2 clicks that add none), and stays visible
+//
+// Test page: https://www.bloomberg.com/latest
+// Expected: about 500 stories are listed, which is the most that Bloomberg lists there
 if (loc.startsWith("https://www.bloomberg.com/")) {
-	// Whether the page has fetched stories since "Load more" was last clicked.
-	// The page shows "Load more" only after the first such fetch.
-	let fetched = true;
-	// How many stories the page listed when it was last looked at
-	let stories = 0;
-	// How many times "Load more" has been clicked since the number of stories last changed
+	// When "Load more" was last clicked, as a performance.now() time
+	let clicked_at = -Infinity;
+	// The performance.now() time from which "Load more" may be clicked again,
+	// or Infinity while the request that the last click caused hasn't finished
+	let ready_at = 0;
+	// How many stories the page listed just before the last click
+	let stories_at_click = 0;
+	// How many clicks have been made since that number last changed
 	let clicks_since_change = 0;
 	observe(1000, [
-		// "Load more", which adds the stories that the page has fetched, and
-		// then fetches the next ones
+		// "Load more" below a list of stories
 		'button[type="button"][data-component="outlined-button"][aria-label="more stories"]',
 	], el => {
-		const stories_now = document.querySelectorAll('[data-component="headline"]').length;
-		if (stories_now !== stories) {
-			stories = stories_now;
+		// The page gives "Load more" the stories of a finished request a
+		// moment later; a click before that adds nothing.
+		if (ready_at === Infinity || !look_again_unless(performance.now() >= ready_at)) {
+			return;
+		}
+		const stories = document.querySelectorAll('[data-component="headline"]').length;
+		if (stories !== stories_at_click) {
+			stories_at_click = stories;
 			clicks_since_change = 0;
 		}
-		// After 2 clicks that added nothing, the page has no more stories.
-		if (fetched && clicks_since_change < 2) {
-			fetched = false;
-			clicks_since_change++;
-			el.click();
+		ready_at = Infinity;
+		// 2 clicks in a row that added no stories are taken to mean that there are no more.
+		if (clicks_since_change === 2) {
+			console.log(`${log_prefix}the last 2 clicks of "Load more" added no stories; not clicking it again`);
+			return;
 		}
+		clicks_since_change++;
+		clicked_at = performance.now();
+		el.click();
 	});
 	new PerformanceObserver(list => {
-		if (list.getEntries().some(entry => entry.name.includes("/lineup-next/api/author/"))) {
-			fetched = true;
-			// Look again once React has rendered "Load more" with the fetched stories.
-			look_again_unless(false);
+		// Whether a request for stories that started after the last click has finished
+		if (list.getEntries().some(entry => entry.startTime >= clicked_at && /\/lineup-next\/api\/.*[?&]pageNumber=/.test(entry.name))) {
+			ready_at = performance.now() + 200;
+			look_at_all();
 		}
 	}).observe({type: "resource"});
 }

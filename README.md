@@ -53,7 +53,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://www.quora.com/ (expand answer text)
 - https://www.nytimes.com/ (expand mini articles on live coverage pages)
 - https://www.cnn.com/ & https://edition.cnn.com/ (on live news pages, load all updates and expand them)
-- https://www.bloomberg.com/ (on author pages, load more story headlines)
+- https://www.bloomberg.com/ (load more story headlines)
 - https://www.imdb.com/ (expand film review text, load more reviews)
 - https://www.criticker.com/ (expand minireview text)
 - https://\*.linkedin.com/ (expand text in profiles, comments on posts)

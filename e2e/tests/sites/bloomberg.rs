@@ -1,55 +1,83 @@
+//! Each page here lists stories above a "Load more" button, which adds the
+//! next ones to the page. Bloomberg stops at the 20th batch: after that, the
+//! button stays but adds nothing.
+
 use anyhow::Result;
-use expand_everything_e2e::userscript::CLICKED_TEXTS;
+use expand_everything_e2e::userscript::HARNESS_GLOBAL;
 use expand_everything_e2e::{open, wait_for, with_chrome};
 use serde::Deserialize;
 use std::time::Duration;
 
-/// The page of an author who has thousands of stories. It lists the latest 20
-/// above a "Load more" button, which adds the next 20 to the page. Bloomberg
-/// lists at most 400 stories there: after that, the button stays but adds
-/// nothing.
+/// The page of an author who has thousands of stories, in batches of 20.
 const PROLIFIC_AUTHOR: &str =
     "https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine";
 
-/// What the test waits for.
+/// The latest stories of all authors, in batches of 25. The page requests
+/// them from another API than an author's page does. Stories published while
+/// the batches load shift the later batches, so the page ends up with a few
+/// more or fewer stories than 500.
+const LATEST: &str = "https://www.bloomberg.com/latest";
+
+/// What a test waits for.
 #[derive(Debug, Deserialize)]
 struct Page {
     /// How many stories the page lists.
     stories: usize,
-    /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
-    clicked: Vec<String>,
+    /// How many times the userscript clicked "Load more".
+    clicks: usize,
+    /// How many milliseconds ago the userscript last clicked anything, or
+    /// `None` if it hasn't clicked.
+    idle_ms: Option<f64>,
 }
 
-#[tokio::test]
-async fn load_more_is_clicked_until_it_adds_no_more_stories() -> Result<()> {
+/// Open `url`, and wait until the page lists at least `min_stories` stories
+/// (more than 19 batches have) and the userscript has stopped clicking
+/// "Load more".
+///
+/// Returns an error if 120 seconds elapse first.
+async fn expect_all_batches(url: &str, min_stories: usize) -> Result<()> {
     with_chrome(async |browser| {
-        let tab = open(browser, PROLIFIC_AUTHOR).await?;
+        let tab = open(browser, url).await?;
         // Each story on the page has one headline.
         let expression = format!(
-            r#"({{
-                stories: document.querySelectorAll('[data-component="headline"]').length,
-                clicked: {CLICKED_TEXTS},
-            }})"#
+            r#"(() => {{
+                const clicks = window.{HARNESS_GLOBAL}.clicks;
+                return {{
+                    stories: document.querySelectorAll('[data-component="headline"]').length,
+                    clicks: clicks.filter((c) => c.text === "Load more").length,
+                    idle_ms: clicks.length > 0 ? performance.now() - clicks.at(-1).time : null,
+                }};
+            }})()"#
         );
-        // 19 clicks add 380 stories to the first 20, and the userscript stops
-        // after 2 more clicks that add nothing. A click made before the page
-        // has fetched the next stories adds nothing either, and makes the
-        // page fetch them again; 25 allows for a few of those. Had the
-        // userscript not stopped, it would exceed 25 clicks within the 10
-        // seconds.
+        // 19 clicks add the other 19 batches, and the userscript stops after
+        // 2 more clicks that add nothing. A few clicks more are allowed,
+        // because a click that comes before the page is ready adds nothing
+        // either. While the userscript hasn't stopped, it clicks again within
+        // about 2 seconds.
         wait_for(
             &tab,
-            "the userscript to click \"Load more\" until the page lists about 400 stories, and then to stop",
+            &format!("the userscript to click \"Load more\" until the page lists at least {min_stories} stories, and then to stop"),
             &expression,
             Duration::from_secs(120),
-            Duration::from_secs(10),
+            Duration::ZERO,
             |p: &Page| {
-                let clicks = p.clicked.iter().filter(|text| *text == "Load more").count();
-                p.stories >= 380 && (19..=25).contains(&clicks)
+                p.stories >= min_stories
+                    && (19..=30).contains(&p.clicks)
+                    && p.idle_ms.is_some_and(|ms| ms >= 10_000.0)
             },
         )
         .await?;
         Ok(())
     })
     .await
+}
+
+#[tokio::test]
+async fn all_batches_of_an_author_are_listed() -> Result<()> {
+    expect_all_batches(PROLIFIC_AUTHOR, 400).await
+}
+
+#[tokio::test]
+async fn all_batches_of_the_latest_stories_are_listed() -> Result<()> {
+    expect_all_batches(LATEST, 490).await
 }
