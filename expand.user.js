@@ -797,7 +797,7 @@ if (loc.startsWith("https://gist.github.com/")) {
 }
 
 // Test page: https://stackoverflow.com/questions/59156473/what-is-the-difference-between-async-move-and-async-move
-// Expected: all comments are loaded; "Show N more comments" is not visible
+// Expected: the answer with "14 Comments" shows all 14 of them
 //
 // Test page: https://meta.stackexchange.com/questions/333965/firing-mods-and-forced-relicensing-is-stack-exchange-still-interested-in-cooper?rq=1
 // Expected: all comments are loaded; "Show N more comments" is not visible
@@ -812,18 +812,12 @@ if (loc.startsWith("https://gist.github.com/")) {
 // Expected: all comments are loaded; the page / Firefox does not hang.
 if (window.StackExchange) {
 	observe(100, [
-		// "Show N more comments" on superuser.com
+		// "Show N more comments"
 		'a.js-show-link:not(.dno)',
-		// "Show N more comments" on stackoverflow.com
-		'div.d-flex > button.comments-link',
+		// The button beside "N Comments" on stackoverflow.com, while it shows only the top comments
+		'[id^="follow-ups-container-"] button[aria-label="Show all comments"]',
 	], el => {
-		if (el.tagName === "BUTTON") {
-			if (el.innerText.includes("more comment")) {
-				el.click();
-			}
-		} else {
-			el.click();
-		}
+		el.click();
 	});
 }
 
