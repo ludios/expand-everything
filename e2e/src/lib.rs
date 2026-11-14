@@ -67,9 +67,11 @@ impl TargetObserver for InjectUserscript {
 ///
 /// Chrome is headless unless the environment variable `E2E_HEADFUL` is set.
 /// It asks sites for English (US), because the userscript and the tests look
-/// for some buttons by their English text. It reports the timezone of the
-/// machine's public IP address, which zendriver looks up at ip-api.com, so
-/// that a site doesn't see the timezone contradict the IP address.
+/// for some buttons by their English text. So that a site doesn't see the
+/// timezone contradict the IP address, zendriver asks ip-api.com for the
+/// timezone of the IP address that connects to ip-api.com, and Chrome reports
+/// that timezone; if that request fails, zendriver only logs a warning, and
+/// Chrome reports the machine's timezone.
 ///
 /// Returns what `work` returns, or the error from loading the userscript or
 /// launching Chrome. An error from closing Chrome is only printed, because it
