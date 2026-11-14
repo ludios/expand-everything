@@ -17,7 +17,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::Instant;
-use userscript::{HARNESS_GLOBAL, Userscript};
+use userscript::{HARNESS_GLOBAL, Start, Userscript};
 use zendriver::{Browser, Cookie, ObserverError, PausedSession, Tab, TargetObserver};
 
 /// How long to wait between two evaluations in [`wait_for`].
@@ -61,8 +61,9 @@ impl TargetObserver for InjectUserscript {
     }
 }
 
-/// Launch Chrome with `expand.user.js` injected into every document, run
-/// `work` with it, and then close Chrome, even if `work` returned an error.
+/// Launch Chrome with `expand.user.js` injected into every document (where
+/// the userscript starts when `start` says), run `work` with it, and then
+/// close Chrome, even if `work` returned an error.
 ///
 /// Chrome is headless unless the environment variable `E2E_HEADFUL` is set.
 /// It asks sites for English (US), because the userscript and the tests look
@@ -72,10 +73,16 @@ impl TargetObserver for InjectUserscript {
 /// launching Chrome. An error from closing Chrome is only printed, because it
 /// doesn't make `work`'s result wrong, and because zendriver kills Chrome's
 /// process once the `Browser` is dropped.
-pub async fn with_chrome<T>(work: impl AsyncFnOnce(&Browser) -> Result<T>) -> Result<T> {
+pub async fn with_chrome_starting<T>(
+    start: Start,
+    work: impl AsyncFnOnce(&Browser) -> Result<T>,
+) -> Result<T> {
     let userscript = Userscript::load()?;
     let observer = InjectUserscript {
-        scripts: [userscript.harness_script(), userscript.wrapped_script()],
+        scripts: [
+            userscript.harness_script(start),
+            userscript.wrapped_script(),
+        ],
     };
     let browser = Browser::builder()
         .headless(std::env::var_os("E2E_HEADFUL").is_none())
@@ -89,6 +96,12 @@ pub async fn with_chrome<T>(work: impl AsyncFnOnce(&Browser) -> Result<T>) -> Re
         eprintln!("closing Chrome failed: {error}");
     }
     result
+}
+
+/// [`with_chrome_starting`], with the userscript starting once the DOM has
+/// been parsed, as it does in Violentmonkey.
+pub async fn with_chrome<T>(work: impl AsyncFnOnce(&Browser) -> Result<T>) -> Result<T> {
+    with_chrome_starting(Start::DocumentEnd, work).await
 }
 
 /// The cookies in `text`, the contents of a cookies.txt file in the Netscape

@@ -7,7 +7,9 @@
 //   lines become.
 // - `userscript_source_url`: the `sourceURL` of the injected userscript, which
 //   names the userscript's frames in stack traces.
-function install_harness(harness_global, match_regexes, userscript_source_url) {
+// - `start_after_load`: whether the userscript starts only after the
+//   document's `load` event, instead of once the DOM has been parsed.
+function install_harness(harness_global, match_regexes, userscript_source_url, start_after_load) {
 	if (window[harness_global]) {
 		window[harness_global].injections++;
 		return;
@@ -21,7 +23,8 @@ function install_harness(harness_global, match_regexes, userscript_source_url) {
 		clicks: [],
 		observing: false,
 		// Run `run` (the whole userscript, as a function) if `matched` is
-		// true, once the DOM has been parsed.
+		// true, once the DOM has been parsed (or, if `start_after_load` is
+		// true, after the `load` event).
 		start: (run) => {
 			if (!harness.matched) {
 				return;
@@ -38,7 +41,15 @@ function install_harness(harness_global, match_regexes, userscript_source_url) {
 					throw error;
 				}
 			};
-			if (document.readyState === "loading") {
+			if (start_after_load) {
+				// The timeout ends after the listeners of `load` have run.
+				const run_after_load = () => setTimeout(run_and_record, 0);
+				if (document.readyState === "complete") {
+					run_after_load();
+				} else {
+					window.addEventListener("load", run_after_load, { once: true });
+				}
+			} else if (document.readyState === "loading") {
 				window.addEventListener("DOMContentLoaded", async () => {
 					await 0; // as Violentmonkey does
 					run_and_record();

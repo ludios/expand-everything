@@ -1,6 +1,6 @@
 use anyhow::Result;
-use expand_everything_e2e::userscript::CLICKED_TEXTS;
-use expand_everything_e2e::{open, wait_for, with_chrome};
+use expand_everything_e2e::userscript::{CLICKED_TEXTS, Start};
+use expand_everything_e2e::{open, wait_for, with_chrome_starting};
 use serde::Deserialize;
 use std::time::Duration;
 
@@ -30,9 +30,10 @@ struct Page {
     clicked: Vec<String>,
 }
 
-#[tokio::test]
-async fn comments_are_all_loaded() -> Result<()> {
-    with_chrome(async |browser| {
+/// Open [`GIST`] in a Chrome whose userscript starts when `start` says, and
+/// wait for the userscript to load every comment.
+async fn expect_all_comments(start: Start) -> Result<()> {
+    with_chrome_starting(start, async |browser| {
         let tab = open(browser, GIST).await?;
         // GitHub replaces the button with a new one each time it has loaded
         // more comments, so a second click shows that the userscript also
@@ -53,7 +54,10 @@ async fn comments_are_all_loaded() -> Result<()> {
             Duration::from_secs(120),
             Duration::from_secs(2),
             |p: &Page| {
-                let load_clicks = p.clicked.iter().filter(|t| *t == "Load earlier comments...");
+                let load_clicks = p
+                    .clicked
+                    .iter()
+                    .filter(|t| *t == "Load earlier comments...");
                 p.url == GIST && !p.cut_off && p.oldest_comment_shown && load_clicks.count() >= 2
             },
         )
@@ -61,4 +65,14 @@ async fn comments_are_all_loaded() -> Result<()> {
         Ok(())
     })
     .await
+}
+
+#[tokio::test]
+async fn comments_are_all_loaded() -> Result<()> {
+    expect_all_comments(Start::DocumentEnd).await
+}
+
+#[tokio::test]
+async fn comments_are_all_loaded_by_a_userscript_that_starts_after_the_load_event() -> Result<()> {
+    expect_all_comments(Start::AfterLoad).await
 }

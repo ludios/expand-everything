@@ -3,8 +3,9 @@
 //!
 //! Violentmonkey runs a script at `document-end` (unless `@run-at` says
 //! otherwise), in each document whose URL a `@match` line allows. The injected
-//! scripts do the same, and [`Userscript::parse`] refuses a metadata key or a
-//! `@match` pattern that they don't imitate.
+//! scripts do the same (unless a test asks for [`Start::AfterLoad`]), and
+//! [`Userscript::parse`] refuses a metadata key or a `@match` pattern that
+//! they don't imitate.
 //!
 //! The injected scripts always run the userscript in the page's main world.
 //! Violentmonkey does that by default too, but if a page's Content Security
@@ -46,6 +47,17 @@ const HARNESS_JS: &str = include_str!("harness.js");
 /// A JavaScript expression for whether the userscript is watching the page
 /// for elements to click (see `observing` in [`Userscript::harness_script`]).
 pub const OBSERVING: &str = concat!("window.", harness_global!(), ".observing");
+
+/// When the injected scripts start the userscript in a document.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Start {
+    /// Once the DOM has been parsed (Violentmonkey's default `@run-at
+    /// document-end`).
+    DocumentEnd,
+    /// After the document's `load` event, as when a userscript manager gets
+    /// to a document only after the document has loaded.
+    AfterLoad,
+}
 
 /// The metadata keys whose meaning the injected scripts imitate.
 const SUPPORTED_KEYS: &[&str] = &[
@@ -242,16 +254,17 @@ impl Userscript {
     /// - `observing`: whether the userscript's last direct call of a
     ///   `MutationObserver`'s `observe` or `disconnect` was to `observe`.
     /// - `start`: a function that runs its argument (the userscript, as a
-    ///   function) if `matched` is true, once the DOM has been parsed
-    ///   (Violentmonkey's default `@run-at document-end`). Like
-    ///   Violentmonkey, it waits for `DOMContentLoaded` on `window`, so that
-    ///   the page's listeners on `document` run first.
-    pub fn harness_script(&self) -> String {
+    ///   function) if `matched` is true, when `start` says. For
+    ///   [`Start::DocumentEnd`], like Violentmonkey, it waits for
+    ///   `DOMContentLoaded` on `window`, so that the page's listeners on
+    ///   `document` run first.
+    pub fn harness_script(&self, start: Start) -> String {
         let global = serde_json::to_string(HARNESS_GLOBAL).expect("strings serialize");
         let regexes = serde_json::to_string(&self.match_regexes).expect("strings serialize");
         let source_url = serde_json::to_string(USERSCRIPT_SOURCE_URL).expect("strings serialize");
+        let after_load = start == Start::AfterLoad;
         format!(
-            "(() => {{\n{HARNESS_JS}\ninstall_harness({global}, {regexes}, {source_url});\n}})();\n//# sourceURL=e2e-harness.js\n"
+            "(() => {{\n{HARNESS_JS}\ninstall_harness({global}, {regexes}, {source_url}, {after_load});\n}})();\n//# sourceURL=e2e-harness.js\n"
         )
     }
 
