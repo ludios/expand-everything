@@ -691,12 +691,21 @@ if (loc.startsWith("https://substack.com/")) {
 
 // Test page: https://tvtropes.org/pmwiki/pmwiki.php/OvershadowedByControversy/WebOriginal
 // Expected: all folders are opened
+//
+// Test page: https://tvtropes.org/pmwiki/pmwiki.php/Franchise/Godzilla (which has two "open/close all folders")
+// Expected: all folders are opened
+//
+// Test page: https://tvtropes.org/pmwiki/pmwiki.php/Creator/AgathaChristie (which has no "open/close all folders")
+// Expected: all folders are opened
 if (loc.startsWith("https://tvtropes.org/")) {
 	observe(10, [
-		// "open/close all folders"
-		'.folderlabel[onclick*="toggleAllFolders"]:not(.is-open)',
+		// "open/close all folders" and the label of each folder
+		'.folderlabel:not(.is-open)',
 	], el => {
-		click_if_unclicked(el);
+		// An earlier click on "open/close all folders" may have opened this one
+		if (!el.classList.contains("is-open")) {
+			click_if_unclicked(el);
+		}
 	});
 }
 

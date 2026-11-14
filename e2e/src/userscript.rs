@@ -376,6 +376,7 @@ mod tests {
         assert!(script.matches("https://edition.cnn.com/2026/11/12/business/live-news/x"));
         assert!(!script.matches("https://www.cnn.com/2026/11/12/business/x"));
         assert!(script.matches("https://www.nytimes.com/live/2024/07/07/world/x"));
+        assert!(script.matches("https://tvtropes.org/pmwiki/pmwiki.php/X/Y"));
         assert!(!script.matches("https://example.com/"));
     }
 
