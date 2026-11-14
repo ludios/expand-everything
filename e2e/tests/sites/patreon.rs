@@ -326,9 +326,9 @@ async fn member_posts_are_expanded_and_loaded_when_logged_in() -> Result<()> {
         load_more_comments: usize,
         clicked: Vec<String>,
     }
-    // Patreon redirects anyone who isn't a member of the creator to the
-    // creator's page.
-    let logged_in = r#"location.pathname.endsWith("/posts")"#;
+    // The list of posts that only a member of the creator gets (Patreon
+    // redirects anyone else to the creator's page)
+    let logged_in = r#"document.querySelector('div[data-tag="post-stream-container"]')"#;
     with_login("patreon", MEMBER_POSTS_PAGE, logged_in, async |tab| {
         let expression = format!(
             r#"(() => {{

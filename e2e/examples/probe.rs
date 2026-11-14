@@ -21,7 +21,7 @@ use std::time::Duration;
 /// What the command line asks for.
 struct Args {
     url: String,
-    /// The cookies.txt file that `--login` or `--cookies` asks for.
+    /// The cookies.txt file that `--login` finds or `--cookies` names.
     cookies: Option<PathBuf>,
     wait: Duration,
     html: Option<String>,
@@ -37,6 +37,9 @@ fn parse_args() -> Result<Args> {
     let mut html = None;
     let mut expressions = Vec::new();
     while let Some(arg) = args.next() {
+        if matches!(arg.as_str(), "--login" | "--cookies") && cookies.is_some() {
+            bail!("give --login or --cookies, and only once");
+        }
         match arg.as_str() {
             "--wait" => {
                 let seconds = args.next().context("--wait needs a value")?;

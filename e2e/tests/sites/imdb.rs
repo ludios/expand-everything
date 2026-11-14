@@ -91,7 +91,7 @@ fn page_expression() -> String {
 /// Open `url` as `visitor`, and run `work` with the tab that shows the page.
 ///
 /// Returns what `work` returns, or an error if [`Visitor::LoggedIn`]'s
-/// cookies haven't logged in to IMDb within 30 seconds of the page opening.
+/// cookies don't log in to IMDb (see [`with_login`]).
 async fn with_page(
     url: &str,
     visitor: Visitor,
