@@ -254,15 +254,17 @@ impl Userscript {
     /// - `observing`: whether the userscript's last direct call of a
     ///   `MutationObserver`'s `observe` or `disconnect` was to `observe`.
     /// - `start`: a function that runs its argument (the userscript, as a
-    ///   function) if `matched` is true, when `start` says. For
-    ///   [`Start::DocumentEnd`], like Violentmonkey, it waits for
-    ///   `DOMContentLoaded` on `window`, so that the page's listeners on
-    ///   `document` run first.
-    pub fn harness_script(&self, start: Start) -> String {
+    ///   function) if `matched` is true, at the time that `when` (the
+    ///   argument of this Rust method) names. For [`Start::DocumentEnd`],
+    ///   like Violentmonkey, it waits for `DOMContentLoaded` on `window`, so
+    ///   that the page's listeners on `document` run first. For
+    ///   [`Start::AfterLoad`], it waits until every listener of the `load`
+    ///   event has run.
+    pub fn harness_script(&self, when: Start) -> String {
         let global = serde_json::to_string(HARNESS_GLOBAL).expect("strings serialize");
         let regexes = serde_json::to_string(&self.match_regexes).expect("strings serialize");
         let source_url = serde_json::to_string(USERSCRIPT_SOURCE_URL).expect("strings serialize");
-        let after_load = start == Start::AfterLoad;
+        let after_load = when == Start::AfterLoad;
         format!(
             "(() => {{\n{HARNESS_JS}\ninstall_harness({global}, {regexes}, {source_url}, {after_load});\n}})();\n//# sourceURL=e2e-harness.js\n"
         )

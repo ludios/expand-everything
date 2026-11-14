@@ -61,9 +61,9 @@ impl TargetObserver for InjectUserscript {
     }
 }
 
-/// Launch Chrome with `expand.user.js` injected into every document (where
-/// the userscript starts when `start` says), run `work` with it, and then
-/// close Chrome, even if `work` returned an error.
+/// Launch Chrome with `expand.user.js` injected into every document, run
+/// `work` with it, and then close Chrome, even if `work` returned an error.
+/// In each document, the userscript starts at the time that `start` names.
 ///
 /// Chrome is headless unless the environment variable `E2E_HEADFUL` is set.
 /// It asks sites for English (US), because the userscript and the tests look

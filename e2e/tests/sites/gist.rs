@@ -12,7 +12,7 @@ const GIST: &str = "https://gist.github.com/ivan/5095670735ba941a6090a69fce4183d
 /// The `id` of the element of the oldest comment on [`GIST`].
 const OLDEST_COMMENT_ID: &str = "gistcomment-4423762";
 
-/// What the test waits for.
+/// What both tests wait for.
 #[derive(Debug, Deserialize)]
 struct Page {
     /// The URL of the page. (A click on the button that GitHub's JavaScript
