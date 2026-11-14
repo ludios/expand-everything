@@ -997,9 +997,7 @@ if (loc.startsWith("https://www.hwinfo.com/forum/")) {
 // Expected: "See more posts" is clicked 4 times; the page shows 100 posts
 //
 // Test page (logged in as a member of the creator): https://www.patreon.com/c/amandapalmer/posts
-// Expected: all long posts and long comments are expanded; "Show more" is not visible
-// Expected: "Load more" is clicked 4 times; the page shows 100 posts
-// Expected: "Load more comments" below each post is not clicked
+// Expected: "Load more" is clicked 4 times, and the page shows 100 posts; all long posts and long comments are expanded, and "Show more" is not visible; no "Load more comments" button or button like "View 3 replies" is clicked
 //
 // Test page: https://www.patreon.com/posts/beautiful-to-2746322
 // Expected: all 19 comments are shown, and the 3 long ones are expanded; "Show more" is not visible
@@ -1014,28 +1012,89 @@ if (loc.startsWith("https://www.patreon.com/")) {
 	const show_more = `div:has(> ${text_box}) > div > button[aria-expanded="false"]`;
 	// The box around a public post on a creator's page, which the page shows above "View post"
 	const text_box_above_link = `div:has(> div > div > a[aria-expanded="false"]) > ${text_box}`;
+
 	const comment = 'div[data-tag="comment-row"]';
+	// All the comments on one post
+	const comments = 'div[data-tag="content-card-comment-thread-container"]';
 	const load_more_comments = 'button[data-tag="loadMoreCommentsCta"]';
 	// A comment together with the replies to it
 	const thread = `div:only-child:has(> ${comment})`;
-	// In the comments, a button that can be disabled and isn't: one that loads replies
-	// (such as "View 3 replies") while it isn't loading any, and possibly others
-	const maybe_view_replies = 'div[data-tag="content-card-comment-thread-container"] button[aria-disabled="false"]:not([data-tag])';
+	// A button among the comments that may be one that loads replies, such as
+	// "View 3 replies" (which is disabled while it loads them)
+	const maybe_view_replies = `${comments} button:not([data-tag], [aria-expanded], [aria-disabled="true"])`;
 	// For each thread: the most comments that it has shown
 	const most_shown = new WeakMap();
-	// For each thread, and for the document: how many comments it showed when the
-	// userscript last clicked a button to load more of them
-	const shown_at_click = new WeakMap();
+
 	const post = 'div[data-tag="post-card"]';
-	// The posts on a creator's page, as anyone sees them, or as a member sees them on the "Posts" tab
-	const post_lists = 'div:is([data-tag="all-posts-layout"], [data-tag="post-stream-container"])';
-	// "See more posts" below the former, or "Load more" below the latter
-	const see_more_posts = [
-		'div[data-tag="all-posts-layout"] + div > button',
-		`div[data-tag="post-stream-container"] div:has(> div > div > ${post}) ~ div > div > button[aria-disabled="false"]`,
-	].join(", ");
-	// The last post of the list when "See more posts" was last clicked
+	// The list of posts on a creator's page, as everyone sees it
+	const public_posts = 'div[data-tag="all-posts-layout"]';
+	const see_more_posts = `${public_posts} + div > button`;
+	// The list of posts on a creator's "Posts" tab, which only members of the creator see
+	const member_posts = 'div[data-tag="post-stream-container"]';
+	// A button below that list that may be "Load more"
+	const maybe_load_more_posts = `${member_posts} div:has(> div > div > ${post}) ~ div > div > button`;
+	// The last post of the page when the userscript last clicked "See more posts" or "Load more"
 	let last_post_at_click = null;
+
+	// Handle `el`, which matches `thread`, `load_more_comments`, or `maybe_view_replies`.
+	function look_at_comments(el) {
+		// A list of posts shows some comments below each post. Loading the other
+		// comments and the replies of every post could take thousands of requests,
+		// so load them only on the page of one post.
+		if (!/\/posts\/[^/]+\/?$/.test(location.pathname)) {
+			return;
+		}
+		if (el.matches(thread)) {
+			most_shown.set(el, Math.max(most_shown.get(el) ?? 0, el.querySelectorAll(comment).length));
+			return;
+		}
+		// Other buttons among the comments include "Collapse replies"; "View more
+		// replies" and "View previous replies" load replies too.
+		if (!el.matches(load_more_comments) && !/^View .*repl/.test(el.textContent)) {
+			return;
+		}
+		if (!look_again_unless(react_hydrated(el))) {
+			return;
+		}
+		// What the button loads comments into
+		const scope = el.closest(el.matches(load_more_comments) ? comments : thread);
+		if (scope === null) {
+			return;
+		}
+		const shown = scope.querySelectorAll(comment).length;
+		// A thread that shows fewer comments than it has shown was collapsed by the
+		// user, so leave it. Patreon keeps the button to load the next batch, so
+		// click it again, but only once more comments are shown than at the last
+		// click: a batch that fails to load must not be requested over and over.
+		if (shown >= (most_shown.get(scope) ?? 0) && shown > (already_clicked.get(scope) ?? -1)) {
+			already_clicked.set(scope, shown);
+			el.click();
+		}
+	}
+
+	// Handle `el`, which matches `see_more_posts` or `maybe_load_more_posts`.
+	function look_at_more_posts(el) {
+		if (el.matches(maybe_load_more_posts)) {
+			// Another button there shows the posts of other tiers
+			if (el.textContent !== "Load more") {
+				return;
+			}
+			// It is disabled while posts load, and nothing else may change once it is enabled again
+			if (!look_again_unless(el.getAttribute("aria-disabled") !== "true")) {
+				return;
+			}
+		}
+		const posts = document.querySelectorAll(`:is(${public_posts}, ${member_posts}) ${post}`);
+		const last_post = posts[posts.length - 1];
+		// Each click loads another batch of posts, even while an earlier batch is
+		// loading, so click at most once while the same post is the last one. A
+		// creator may have thousands of posts, so stop once the page shows 100.
+		if (last_post && posts.length < 100 && last_post !== last_post_at_click) {
+			last_post_at_click = last_post;
+			el.click();
+		}
+	}
+
 	observe(1000, [
 		show_more,
 		text_box_above_link,
@@ -1043,6 +1102,7 @@ if (loc.startsWith("https://www.patreon.com/")) {
 		load_more_comments,
 		maybe_view_replies,
 		see_more_posts,
+		maybe_load_more_posts,
 	], el => {
 		if (el.matches(text_box_above_link)) {
 			// "View post" leads to another page, but this page has the whole text
@@ -1050,49 +1110,13 @@ if (loc.startsWith("https://www.patreon.com/")) {
 			for (const fade of el.querySelectorAll(':scope > [class*="_fade"]')) {
 				fade.style.display = "none";
 			}
-			return;
-		}
-		if (el.matches(thread)) {
-			most_shown.set(el, Math.max(most_shown.get(el) ?? 0, el.querySelectorAll(comment).length));
-			return;
-		}
-		if (!look_again_unless(react_hydrated(el))) {
-			return;
-		}
-		if (el.matches(show_more)) {
-			click_if_unclicked(el);
-		} else if (el.matches(see_more_posts)) {
-			const posts = document.querySelectorAll(`${post_lists} ${post}`);
-			const last_post = posts[posts.length - 1];
-			// Each click loads another batch of posts, even while an earlier batch is
-			// loading, so click at most once while the same post is the last one. A
-			// creator may have thousands of posts, so stop once the page shows 100.
-			if (last_post && posts.length < 100 && last_post !== last_post_at_click) {
-				last_post_at_click = last_post;
-				el.click();
-			}
-		} else if (el.matches(load_more_comments) || /^View .*repl/.test(el.innerText)) {
-			// A list of posts shows some comments below each post. Loading the
-			// rest of them all could take thousands of requests, so load
-			// comments only on the page of one post.
-			if (!/\/posts\/[^/]+$/.test(location.pathname)) {
-				return;
-			}
-			// "Load more comments" loads comments into the document; a button like
-			// "View 3 replies", "View more replies", or "View previous replies" loads
-			// them into its thread.
-			const scope = el.matches(load_more_comments) ? document : el.closest(thread);
-			if (scope === null) {
-				return;
-			}
-			const shown = scope.querySelectorAll(comment).length;
-			// A thread that shows fewer comments than it has shown was collapsed by the
-			// user, so leave it. Patreon keeps the button to load the next batch, so
-			// click it again, but only once more comments are shown: a batch that
-			// fails to load must not be requested over and over.
-			if (shown >= (most_shown.get(scope) ?? 0) && shown > (shown_at_click.get(scope) ?? -1)) {
-				shown_at_click.set(scope, shown);
-				el.click();
+		} else if (el.matches(`${thread}, ${load_more_comments}, ${maybe_view_replies}`)) {
+			look_at_comments(el);
+		} else if (look_again_unless(react_hydrated(el))) {
+			if (el.matches(show_more)) {
+				click_if_unclicked(el);
+			} else {
+				look_at_more_posts(el);
 			}
 		}
 	});

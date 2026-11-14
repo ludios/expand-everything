@@ -317,8 +317,11 @@ async fn member_posts_are_expanded_and_loaded_when_logged_in() -> Result<()> {
         /// How many posts the page shows.
         shown: usize,
         /// How many posts the page has in a box that can cut the post off.
-        long: usize,
-        /// How many of those posts the page cuts off.
+        long_posts: usize,
+        /// How many comments the page has in a box that can cut the comment
+        /// off.
+        long_comments: usize,
+        /// How many of those posts and comments the page cuts off.
         cut_off: usize,
         /// How many "Load more comments" buttons the page has.
         load_more_comments: usize,
@@ -339,11 +342,13 @@ async fn member_posts_are_expanded_and_loaded_when_logged_in() -> Result<()> {
         );
         let expression = format!(
             r#"(() => {{
-                const boxes = [...document.querySelectorAll('div[data-tag="post-content"]')];
+                const posts = [...document.querySelectorAll('div[data-tag="post-content"]')];
+                const comments = [...document.querySelectorAll('div[data-tag="comment-body-collapsible"]')];
                 return {{
                     shown: document.querySelectorAll('div[data-tag="post-card"]').length,
-                    long: boxes.length,
-                    cut_off: boxes.filter({IS_CUT_OFF}).length,
+                    long_posts: posts.length,
+                    long_comments: comments.length,
+                    cut_off: [...posts, ...comments].filter({IS_CUT_OFF}).length,
                     load_more_comments: document.querySelectorAll('button[data-tag="loadMoreCommentsCta"]').length,
                     clicked: {CLICKED_TEXTS},
                 }};
@@ -351,8 +356,10 @@ async fn member_posts_are_expanded_and_loaded_when_logged_in() -> Result<()> {
         );
         // As in `posts_are_loaded_until_there_are_100`, more than 20 posts
         // per click on "Load more" means that every click has added its
-        // posts. The "Load more comments" buttons that are left show that
-        // the page had some for the userscript to leave alone.
+        // posts. One click on "Show more" per long post and long comment
+        // means that the userscript expanded them all. The "Load more
+        // comments" buttons that are left show that the page had some for
+        // the userscript to leave alone.
         wait_for(
             &tab,
             "the userscript to load 100 posts and expand the long ones, without loading comments",
@@ -360,15 +367,17 @@ async fn member_posts_are_expanded_and_loaded_when_logged_in() -> Result<()> {
             Duration::from_secs(90),
             Duration::from_secs(5),
             |p: &Posts| {
-                let expected = ["Show more", "Load more"];
-                let load_more = p.clicked.iter().filter(|text| *text == "Load more").count();
+                let count = |wanted: &str| p.clicked.iter().filter(|text| *text == wanted).count();
+                let load_more = count("Load more");
+                let show_more = count("Show more");
                 (100..120).contains(&p.shown)
+                    && load_more > 0
                     && p.shown > 20 * load_more
-                    && p.long > 0
+                    && p.long_posts > 0
                     && p.cut_off == 0
+                    && show_more == p.long_posts + p.long_comments
                     && p.load_more_comments > 0
-                    && p.clicked.iter().any(|text| text == "Show more")
-                    && p.clicked.iter().all(|text| expected.contains(&text.as_str()))
+                    && p.clicked.len() == load_more + show_more
             },
         )
         .await?;
