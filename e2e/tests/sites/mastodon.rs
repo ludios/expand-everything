@@ -5,7 +5,8 @@ use serde::Deserialize;
 use std::time::Duration;
 
 /// A thread on a site that runs Mastodon 5.0. Each of its [`V5_POSTS`] posts
-/// has a content warning.
+/// has a content warning, and its first post has an image that is marked as
+/// sensitive.
 const V5_THREAD: &str = "https://mastodon.social/@spacerog/112974029330927616";
 
 /// How many posts [`V5_THREAD`] has.
@@ -15,12 +16,14 @@ const V5_POSTS: usize = 14;
 ///
 /// A content warning names, in `aria-controls`, the element that holds the
 /// text of its post. While the post is collapsed, that element is `inert`, and
-/// its `::after` covers it.
+/// its `::after` covers it. The parent of a media gallery is covered in the
+/// same way until the media is shown.
 const V5_STATE: &str = r#"(() => {
     const uncovered = (e) => !e.inert
         && e.checkVisibility()
         && getComputedStyle(e, "::after").visibility === "hidden";
     const warnings = [...document.querySelectorAll("article div[aria-controls]")];
+    const media = [...document.querySelectorAll("article .media-gallery")];
     const buttons = (text) => [...document.querySelectorAll("button")]
         .filter((b) => b.checkVisibility() && text.test(b.innerText.trim())).length;
     return {
@@ -29,7 +32,11 @@ const V5_STATE: &str = r#"(() => {
             const post = document.getElementById(w.getAttribute("aria-controls"));
             return post !== null && uncovered(post);
         }).length,
+        media: media.length,
+        shown_media: media.filter((m) => uncovered(m.parentElement)
+            && m.querySelector("img, video")?.checkVisibility()).length,
         show_post_buttons: buttons(/^Show post$/),
+        show_media_buttons: buttons(/^Show media$|Click to show$/),
     };
 })()"#;
 
@@ -40,8 +47,14 @@ struct Page {
     warnings: usize,
     /// How many of those posts show their text.
     shown_posts: usize,
+    /// How many media galleries the posts have.
+    media: usize,
+    /// How many of those galleries show their media.
+    shown_media: usize,
     /// How many buttons that would show a post are displayed.
     show_post_buttons: usize,
+    /// How many buttons that would show media are displayed.
+    show_media_buttons: usize,
     /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
     clicked: Vec<String>,
 }
@@ -84,12 +97,32 @@ fn posts_are_expanded(p: &Page, posts: usize, button: &str) -> bool {
         && p.clicks(button) == posts
 }
 
+/// Whether `p` shows the media of each of its `galleries` media galleries,
+/// after exactly one click by the userscript per gallery, on a button whose
+/// text ends with `button`.
+fn media_is_shown(p: &Page, galleries: usize, button: &str) -> bool {
+    p.media == galleries
+        && p.shown_media == galleries
+        && p.show_media_buttons == 0
+        && p.clicks(button) == galleries
+}
+
 #[tokio::test]
 async fn posts_are_expanded_on_mastodon_5() -> Result<()> {
     check(
         V5_THREAD,
         "the userscript to expand every post by clicking each \"Show post\" once",
         |p| posts_are_expanded(p, V5_POSTS, "Show post"),
+    )
+    .await
+}
+
+#[tokio::test]
+async fn sensitive_media_is_shown_on_mastodon_5() -> Result<()> {
+    check(
+        V5_THREAD,
+        "the userscript to show the image by clicking \"Show media\" once",
+        |p| media_is_shown(p, 1, "Show media"),
     )
     .await
 }

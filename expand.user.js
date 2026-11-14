@@ -1056,19 +1056,29 @@ if (loc.startsWith("https://www.patreon.com/")) {
 
 // Test page: https://mastodon.social/@spacerog/112974029330927616
 // Expected: all posts are expanded; "Show post" is not visible
+// Expected: the image is shown; "Media hidden" is not visible
 if (loc.startsWith("https://mastodon.social/")) {
-	// Whether a click on `button`, the button of a content warning, would show
-	// the warning's post (a click hides the post if it is shown)
-	function hides_post(button) {
-		// Mastodon makes a hidden post inert, and doesn't display a post that
-		// one of the user's filters hides
-		const post = document.getElementById(button.parentElement.getAttribute("aria-controls"));
-		return button.isConnected && post !== null && post.inert && post.checkVisibility();
+	// Whether a click on `button` would show what the button hides (a click
+	// on the button of a content warning hides the post if it is shown)
+	function hides_something(button) {
+		const parent = button.parentElement;
+		if (!button.isConnected) {
+			return false;
+		}
+		if (parent.hasAttribute("aria-controls")) {
+			// Mastodon makes a hidden post inert, and doesn't display a post
+			// that one of the user's filters hides
+			const post = document.getElementById(parent.getAttribute("aria-controls"));
+			return post !== null && post.inert && post.checkVisibility();
+		}
+		return true;
 	}
 
 	observe(1000, [
 		// "Show post"
 		'article div[aria-controls] > button',
+		// "Show media"
+		'[class*="contentWarningBlurActive"] > button[class*="gallerySpoiler"]',
 	], el => {
 		if (already_clicked.get(el)) {
 			return;
@@ -1078,7 +1088,7 @@ if (loc.startsWith("https://mastodon.social/")) {
 		// the page shows only after the task of the click, so click each button
 		// in a task of its own
 		setTimeout(() => {
-			if (hides_post(el)) {
+			if (hides_something(el)) {
 				el.click();
 			}
 		});
