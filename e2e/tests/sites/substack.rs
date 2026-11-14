@@ -20,6 +20,10 @@ const COMMENTS_PAGE: &str =
 /// are long, so the page cuts each of them off, above a "See more" button.
 const LONG_COMMENTS_PAGE: &str = "https://mrgirl.substack.com/p/the-destiny-report/comments";
 
+/// A note with comments, a few of which are long, so the page cuts each of
+/// them off, above a "See more" link.
+const NOTE_PAGE: &str = "https://substack.com/@meaningness/note/c-59538921";
+
 #[tokio::test]
 async fn subscribe_overlay_is_dismissed() -> Result<()> {
     #[derive(Debug, Deserialize)]
@@ -123,6 +127,36 @@ async fn long_comments_are_expanded() -> Result<()> {
                     && s.expanded > 0
                     && s.clicked.iter().any(|text| text == "See more")
             },
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn long_comments_on_a_note_are_expanded() -> Result<()> {
+    #[derive(Debug, Deserialize)]
+    struct State {
+        /// How many comments the page cuts off.
+        cut_off: usize,
+        clicked: Vec<String>,
+    }
+    with_chrome(async |browser| {
+        let tab = open(browser, NOTE_PAGE).await?;
+        let expression = format!(
+            r#"({{
+                cut_off: document.querySelectorAll("div[class*=seeMoreText-]").length,
+                clicked: {CLICKED_TEXTS},
+            }})"#
+        );
+        wait_for(
+            &tab,
+            "the userscript to click \"See more\" below every long comment",
+            &expression,
+            Duration::from_secs(30),
+            Duration::from_secs(2),
+            |s: &State| s.cut_off == 0 && s.clicked.iter().any(|text| text == "See more"),
         )
         .await?;
         Ok(())
