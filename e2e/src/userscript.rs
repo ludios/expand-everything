@@ -406,6 +406,7 @@ mod tests {
         assert!(script.matches("https://academia.meta.stackexchange.com/questions/1/x"));
         assert!(script.matches("https://stackapps.com/questions/1/x"));
         assert!(!script.matches("https://notstackexchange.com/questions/1/x"));
+        assert!(script.matches("https://www.hwinfo.com/forum/threads/x.1/page-2"));
         assert!(!script.matches("https://example.com/"));
     }
 

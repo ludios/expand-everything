@@ -24,4 +24,5 @@ mod stackexchange;
 mod steam;
 mod substack;
 mod tvtropes;
+mod xenforo;
 mod youtube;
