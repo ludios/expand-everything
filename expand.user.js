@@ -988,11 +988,15 @@ if (loc.startsWith("https://store.steampowered.com/")) {
 // Test page: https://www.hwinfo.com/forum/threads/prometheus-adapter-for-hwinfo-grafana-dashboard.6281/page-5
 // Expected: "Rohirm said:" quote at the bottom is expanded; "Click to expand..." is not visible
 if (loc.startsWith("https://www.hwinfo.com/forum/")) {
-	observe(10, [
+	// A quote that XenForo hasn't expanded
+	const collapsed_quote = '.bbCodeBlock--expandable:not(.is-expanded)';
+	observe(100, [
 		// "Click to expand..."
-		'div.js-expandLink > a[role="button"]',
+		`${collapsed_quote} div.js-expandLink > a[role="button"]`,
 	], el => {
 		el.click();
+		// XenForo ignores a click until its scripts have set up the page
+		look_again_unless(!el.matches(`${collapsed_quote} *`));
 	});
 }
 
