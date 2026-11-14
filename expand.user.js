@@ -1171,14 +1171,39 @@ if (loc.startsWith("https://www.cnn.com/") || loc.startsWith("https://edition.cn
 }
 
 // Test page: https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine
-// Expected: All articles are listed; "Load More Stories" button is not visible
+// Expected: "Load more" is clicked once for each 20 more stories, until it adds no more (Bloomberg lists at most about 400 stories)
 if (loc.startsWith("https://www.bloomberg.com/")) {
+	// Whether the page has fetched stories since "Load more" was last clicked.
+	// The page shows "Load more" only after the first such fetch.
+	let fetched = true;
+	// How many stories the page listed when it was last looked at
+	let stories = 0;
+	// How many times "Load more" has been clicked since the number of stories last changed
+	let clicks_since_change = 0;
 	observe(1000, [
-		// "Load More Stories"
+		// "Load more", which adds the stories that the page has fetched, and
+		// then fetches the next ones
 		'button[type="button"][data-component="outlined-button"][aria-label="more stories"]',
 	], el => {
-		el.click();
+		const stories_now = document.querySelectorAll('[data-component="headline"]').length;
+		if (stories_now !== stories) {
+			stories = stories_now;
+			clicks_since_change = 0;
+		}
+		// After 2 clicks that added nothing, the page has no more stories.
+		if (fetched && clicks_since_change < 2) {
+			fetched = false;
+			clicks_since_change++;
+			el.click();
+		}
 	});
+	new PerformanceObserver(list => {
+		if (list.getEntries().some(entry => entry.name.includes("/lineup-next/api/author/"))) {
+			fetched = true;
+			// Look again once React has rendered "Load more" with the fetched stories.
+			look_again_unless(false);
+		}
+	}).observe({type: "resource"});
 }
 
 // Test page (logged in): https://www.criticker.com/film/Come-and-See/

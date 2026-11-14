@@ -7,6 +7,7 @@
 //! alone checks instead that the userscript observes the page but doesn't
 //! click it.
 
+mod bloomberg;
 mod cnn;
 mod criticker;
 mod gist;
