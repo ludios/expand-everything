@@ -8,6 +8,7 @@
 //! click it.
 
 mod cnn;
+mod criticker;
 mod gist;
 mod github;
 mod goodreads;

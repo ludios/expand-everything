@@ -1155,19 +1155,24 @@ if (loc.startsWith("https://www.bloomberg.com/")) {
 	});
 }
 
-// Test page: https://www.criticker.com/film/Cow-2021/
-// Expected: All minireviews are expanded; "More" is not visible
-//
-// Test page: https://www.criticker.com/film/Eyes-Wide-Shut/
-// Expected: All minireviews are expanded; "More" is not visible
+// Test page (logged in): https://www.criticker.com/film/Come-and-See/
+// Expected: under "Ratings & Reviews", all minireviews are shown in full; "More" is not visible
+// Expected: the address doesn't gain a "#"
+// Expected: after searching the ratings for "the", all minireviews are shown in full
 if (loc.startsWith("https://www.criticker.com/")) {
-	observe(20, [
-		// "More"
-		'div.ratingcard_compact_more.tiny > a.textlink[href="#"]',
+	observe(1000, [
+		// "More" on a minireview that the compact view cuts off (each has one for wide windows and one for narrow windows)
+		'.rating_card.compact.review:not(.expanded) .ratingcard_compact_more > a',
 	], el => {
-		if (el.innerText === "More") {
-			click_if_unclicked(el);
+		const card = el.closest(".rating_card");
+		// The card's other "More" may have just expanded it.
+		if (card.classList.contains("expanded")) {
+			return;
 		}
+		// Until the site's script handles clicks, a click would only navigate to "#".
+		el.addEventListener("click", ev => ev.preventDefault(), {once: true});
+		el.click();
+		look_again_unless(card.classList.contains("expanded"));
 	});
 }
 
