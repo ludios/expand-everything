@@ -690,7 +690,7 @@ if (loc.startsWith("https://substack.com/")) {
 }
 
 // Test page: https://tvtropes.org/pmwiki/pmwiki.php/OvershadowedByControversy/WebOriginal
-// Expected: all folders are opened
+// Expected: all folders are opened; the text of every note is shown
 //
 // Test page: https://tvtropes.org/pmwiki/pmwiki.php/Franchise/Godzilla (which has two "open/close all folders")
 // Expected: all folders are opened
@@ -701,9 +701,14 @@ if (loc.startsWith("https://tvtropes.org/")) {
 	observe(10, [
 		// "open/close all folders" and the label of each folder
 		'.folderlabel:not(.is-open)',
+		// The label of each note (usually "note"), which the text of the note follows
+		'.notelabel',
 	], el => {
-		// An earlier click on "open/close all folders" may have opened this one
-		if (!el.classList.contains("is-open")) {
+		// An earlier click on "open/close all folders" may have opened a folder
+		const hidden = el.matches('.notelabel')
+			? el.nextElementSibling?.style.display === "none"
+			: !el.classList.contains("is-open");
+		if (hidden) {
 			click_if_unclicked(el);
 		}
 	});
