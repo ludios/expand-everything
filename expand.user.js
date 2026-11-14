@@ -690,7 +690,10 @@ if (loc.startsWith("https://substack.com/")) {
 }
 
 // Test page: https://tvtropes.org/pmwiki/pmwiki.php/OvershadowedByControversy/WebOriginal
-// Expected: all folders are opened; the text of every note is shown
+// Expected: all folders are opened
+//
+// Test page: https://tvtropes.org/pmwiki/pmwiki.php/OvershadowedByControversy/WebOriginal
+// Expected: the text of every note is shown
 //
 // Test page: https://tvtropes.org/pmwiki/pmwiki.php/Franchise/Godzilla (which has two "open/close all folders")
 // Expected: all folders are opened
@@ -698,17 +701,18 @@ if (loc.startsWith("https://substack.com/")) {
 // Test page: https://tvtropes.org/pmwiki/pmwiki.php/Creator/AgathaChristie (which has no "open/close all folders")
 // Expected: all folders are opened
 if (loc.startsWith("https://tvtropes.org/")) {
+	const note = 'span.inlinefolder[isnote="true"]';
 	observe(10, [
 		// "open/close all folders" and the label of each folder
 		'.folderlabel:not(.is-open)',
-		// The label of each note (usually "note"), which the text of the note follows
-		'.notelabel',
+		// The text of each note
+		note,
 	], el => {
-		// An earlier click on "open/close all folders" may have opened a folder
-		const hidden = el.matches('.notelabel')
-			? el.nextElementSibling?.style.display === "none"
-			: !el.classList.contains("is-open");
-		if (hidden) {
+		if (el.matches(note)) {
+			// A click on the note's label would also toggle a spoiler that the label is in
+			el.style.display = "inline";
+		} else if (!el.classList.contains("is-open")) {
+			// An earlier click on "open/close all folders" may have opened this folder
 			click_if_unclicked(el);
 		}
 	});

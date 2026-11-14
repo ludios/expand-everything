@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::time::Duration;
 
 /// A page that has two folders below one "open/close all folders" label, and
-/// 15 notes, some of them in the folders.
+/// 15 notes, all of them in the folders.
 const ONE_TOGGLE_PAGE: &str =
     "https://tvtropes.org/pmwiki/pmwiki.php/OvershadowedByControversy/WebOriginal";
 
@@ -81,8 +81,9 @@ struct Notes {
     notes: usize,
     /// How many notes the article shows the text of.
     shown_notes: usize,
-    /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
-    clicked: Vec<String>,
+    /// Whether TV Tropes itself shows the text of every note, as it does for
+    /// a visitor who has turned that preference on.
+    shown_by_site: bool,
 }
 
 #[tokio::test]
@@ -90,26 +91,25 @@ async fn notes_are_shown() -> Result<()> {
     with_chrome(async |browser| {
         let tab = open(browser, ONE_TOGGLE_PAGE).await?;
         // The text of a note is in an `.inlinefolder`, which the page hides
-        // until the label before it (usually "note") is clicked. A second
-        // click on that label hides the text again.
-        let expression = format!(
-            r##"(() => {{
-                const notes = [...document.querySelectorAll("#main-article .inlinefolder[isnote]")];
-                return {{
-                    notes: notes.length,
-                    shown_notes: notes.filter((n) => n.checkVisibility()).length,
-                    clicked: {CLICKED_TEXTS},
-                }};
-            }})()"##
-        );
+        // until the label before it (usually "note") is clicked. The
+        // userscript shows the text without a click, so the test checks
+        // instead that TV Tropes didn't show it: the page's script does that
+        // only if `<html>` has the class "notes-open".
+        let expression = r##"(() => {
+            const notes = [...document.querySelectorAll("#main-article .inlinefolder[isnote]")];
+            return {
+                notes: notes.length,
+                shown_notes: notes.filter((n) => n.checkVisibility()).length,
+                shown_by_site: document.documentElement.classList.contains("notes-open"),
+            };
+        })()"##;
         wait_for(
             &tab,
-            "the userscript to show the text of every note by clicking the label of each note once",
-            &expression,
+            "the userscript to show the text of every note",
+            expression,
             Duration::from_secs(30),
             Duration::from_secs(2),
-            // One more click opens the folders, which some notes are in.
-            |p: &Notes| p.notes > 0 && p.shown_notes == p.notes && p.clicked.len() == p.notes + 1,
+            |p: &Notes| p.notes > 0 && p.shown_notes == p.notes && !p.shown_by_site,
         )
         .await?;
         Ok(())
