@@ -1054,14 +1054,34 @@ if (loc.startsWith("https://www.patreon.com/")) {
 	});
 }
 
-// Test page: https://mastodon.social/@Gargron/117588712201630497
-// Expected: all posts that have a content warning are expanded; "Show post" is not visible
+// Test page: https://mastodon.social/@spacerog/112974029330927616
+// Expected: all posts are expanded; "Show post" is not visible
 if (loc.startsWith("https://mastodon.social/")) {
-	observe(20, [
+	// Whether a click on `button`, the button of a content warning, would show
+	// the warning's post (a click hides the post if it is shown)
+	function hides_post(button) {
+		// Mastodon makes a hidden post inert, and doesn't display a post that
+		// one of the user's filters hides
+		const post = document.getElementById(button.parentElement.getAttribute("aria-controls"));
+		return button.isConnected && post !== null && post.inert && post.checkVisibility();
+	}
+
+	observe(1000, [
 		// "Show post"
-		'article div[aria-controls]:has(+ div[inert]) > button',
+		'article div[aria-controls] > button',
 	], el => {
-		click_if_unclicked(el);
+		if (already_clicked.get(el)) {
+			return;
+		}
+		already_clicked.set(el, true);
+		// A click on the button of one copy of a post toggles every copy, which
+		// the page shows only after the task of the click, so click each button
+		// in a task of its own
+		setTimeout(() => {
+			if (hides_post(el)) {
+				el.click();
+			}
+		});
 	});
 }
 

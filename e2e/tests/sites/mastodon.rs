@@ -4,67 +4,92 @@ use expand_everything_e2e::{open, wait_for, with_chrome};
 use serde::Deserialize;
 use std::time::Duration;
 
-/// A post that has a content warning, and whose replies mostly have one too.
-/// Mastodon covers the text of such a post until the "Show post" button of
-/// the post's content warning is clicked.
-const THREAD: &str = "https://mastodon.social/@Gargron/117588712201630497";
+/// A thread on a site that runs Mastodon 5.0. Each of its [`V5_POSTS`] posts
+/// has a content warning.
+const V5_THREAD: &str = "https://mastodon.social/@spacerog/112974029330927616";
 
-/// A lower bound on how many posts on the page of [`THREAD`] have a content
-/// warning. The page had 26 of them when the test was written; replies can
-/// still be added and deleted.
-const MIN_WARNED_POSTS: usize = 20;
+/// How many posts [`V5_THREAD`] has.
+const V5_POSTS: usize = 14;
 
-/// What the test waits for.
+/// A JavaScript expression for a [`Page`] (without `clicked`) of Mastodon 5.0.
+///
+/// A content warning names, in `aria-controls`, the element that holds the
+/// text of its post. While the post is collapsed, that element is `inert`, and
+/// its `::after` covers it.
+const V5_STATE: &str = r#"(() => {
+    const uncovered = (e) => !e.inert
+        && e.checkVisibility()
+        && getComputedStyle(e, "::after").visibility === "hidden";
+    const warnings = [...document.querySelectorAll("article div[aria-controls]")];
+    const buttons = (text) => [...document.querySelectorAll("button")]
+        .filter((b) => b.checkVisibility() && text.test(b.innerText.trim())).length;
+    return {
+        warnings: warnings.length,
+        shown_posts: warnings.filter((w) => {
+            const post = document.getElementById(w.getAttribute("aria-controls"));
+            return post !== null && uncovered(post);
+        }).length,
+        show_post_buttons: buttons(/^Show post$/),
+    };
+})()"#;
+
+/// What a test waits for.
 #[derive(Debug, Deserialize)]
 struct Page {
     /// How many posts have a content warning.
-    warned_posts: usize,
+    warnings: usize,
     /// How many of those posts show their text.
     shown_posts: usize,
+    /// How many buttons that would show a post are displayed.
+    show_post_buttons: usize,
     /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
     clicked: Vec<String>,
 }
 
-#[tokio::test]
-async fn posts_with_a_content_warning_are_expanded() -> Result<()> {
+impl Page {
+    /// How many of the userscript's clicks were on an element whose text
+    /// ends with `text`.
+    fn clicks(&self, text: &str) -> usize {
+        self.clicked.iter().filter(|t| t.ends_with(text)).count()
+    }
+}
+
+/// Load `url` and wait until `done` holds for its [`Page`].
+///
+/// `what` describes what is awaited, for the error message.
+async fn check(url: &str, what: &str, done: impl Fn(&Page) -> bool) -> Result<()> {
     with_chrome(async |browser| {
-        let tab = open(browser, THREAD).await?;
-        // A content warning names, in `aria-controls`, the element that holds
-        // the text of its post. While the post is collapsed, that element is
-        // `inert`, and its `::after` covers it.
-        let expression = format!(
-            r#"(() => {{
-                const warnings = [...document.querySelectorAll("article div[aria-controls]")];
-                const shown = (w) => {{
-                    const text = document.getElementById(w.getAttribute("aria-controls"));
-                    return text !== null
-                        && !text.inert
-                        && getComputedStyle(text, "::after").visibility === "hidden";
-                }};
-                return {{
-                    warned_posts: warnings.length,
-                    shown_posts: warnings.filter(shown).length,
-                    clicked: {CLICKED_TEXTS},
-                }};
-            }})()"#
-        );
-        // A second click on a button would collapse its post again, so the
-        // userscript must click each button exactly once.
+        let tab = open(browser, url).await?;
         wait_for(
             &tab,
-            "the userscript to expand every post that has a content warning by clicking each \"Show post\" once",
-            &expression,
+            what,
+            &format!("({{ ...{V5_STATE}, clicked: {CLICKED_TEXTS} }})"),
             Duration::from_secs(30),
             Duration::from_secs(2),
-            |p: &Page| {
-                p.warned_posts >= MIN_WARNED_POSTS
-                    && p.shown_posts == p.warned_posts
-                    && p.clicked.len() == p.warned_posts
-                    && p.clicked.iter().all(|t| t == "Show post")
-            },
+            done,
         )
         .await?;
         Ok(())
     })
+    .await
+}
+
+/// Whether `p` shows the text of each of its `posts` posts, after exactly one
+/// click by the userscript per post, on a button whose text ends with
+/// `button`. (A second click on a button would collapse its post again.)
+fn posts_are_expanded(p: &Page, posts: usize, button: &str) -> bool {
+    p.warnings == posts
+        && p.shown_posts == posts
+        && p.show_post_buttons == 0
+        && p.clicks(button) == posts
+}
+
+#[tokio::test]
+async fn posts_are_expanded_on_mastodon_5() -> Result<()> {
+    check(
+        V5_THREAD,
+        "the userscript to expand every post by clicking each \"Show post\" once",
+        |p| posts_are_expanded(p, V5_POSTS, "Show post"),
+    )
     .await
 }
