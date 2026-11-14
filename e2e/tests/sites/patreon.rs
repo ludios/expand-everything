@@ -20,9 +20,9 @@ const BUSY_CREATOR_PAGE: &str = "https://www.patreon.com/amandapalmer";
 const POST_PAGE: &str = "https://www.patreon.com/posts/beautiful-to-2746322";
 
 /// The page of a public post from 2015 with about 150 comments, of which the
-/// page shows about 10 more for each click on "Load more comments". The page
-/// then shows about 145 comments: the rest are replies that only "View
-/// replies" buttons show.
+/// page shows about 10 more for each click on "Load more comments". A few of
+/// them are replies that the page shows only after a click on a button like
+/// "View 3 replies" below the comment that they reply to.
 const MANY_COMMENTS_PAGE: &str = "https://www.patreon.com/posts/new-statesman-is-2440676";
 
 /// A JavaScript function that takes a box that Patreon cuts text off with (a
@@ -155,6 +155,8 @@ async fn all_comments_are_loaded() -> Result<()> {
     struct Comments {
         /// How many "Load more comments" buttons the page has.
         load_more: usize,
+        /// How many buttons like "View 3 replies" the page has.
+        view_replies: usize,
         /// How many comments (including replies) the page shows.
         shown: usize,
         clicked: Vec<String>,
@@ -164,6 +166,7 @@ async fn all_comments_are_loaded() -> Result<()> {
         let expression = format!(
             r#"({{
                 load_more: document.querySelectorAll('button[data-tag="loadMoreCommentsCta"]').length,
+                view_replies: [...document.querySelectorAll('div[data-tag="content-card-comment-thread-container"] button')].filter((b) => /^View .*repl/.test(b.innerText)).length,
                 shown: document.querySelectorAll('div[data-tag="comment-row"]').length,
                 clicked: {CLICKED_TEXTS},
             }})"#
@@ -171,14 +174,16 @@ async fn all_comments_are_loaded() -> Result<()> {
         // More than 100 comments are shown only after many clicks.
         wait_for(
             &tab,
-            "the userscript to click \"Load more comments\" until the page has no more to load",
+            "the userscript to load every comment and every reply",
             &expression,
             Duration::from_secs(90),
             Duration::from_secs(3),
             |c: &Comments| {
                 c.load_more == 0
+                    && c.view_replies == 0
                     && c.shown > 100
                     && c.clicked.iter().any(|text| text == "Load more comments")
+                    && c.clicked.iter().any(|text| text.ends_with(" replies"))
             },
         )
         .await?;

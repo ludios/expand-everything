@@ -994,13 +994,17 @@ if (loc.startsWith("https://www.hwinfo.com/forum/")) {
 // Expected: all long comments are expanded; "Show more" is not visible
 //
 // Test page: https://www.patreon.com/posts/new-statesman-is-2440676
-// Expected: about 145 comments are shown; "Load more comments" is not visible
+// Expected: about 150 comments are shown; "Load more comments" and "View 3 replies" are not visible
 if (loc.startsWith("https://www.patreon.com/")) {
 	// A text that is cut off, after its "Show more" button or "View post" link in the DOM
 	const cut_off = 'div[data-is-measured]';
 	// A public post on a creator's page, above "View post"
 	const cut_off_above_link = `div:has(> div > div > a[aria-expanded="false"]) > ${cut_off}`;
 	const load_more_comments = 'button[data-tag="loadMoreCommentsCta"]';
+	// A button below a comment that has replies
+	const below_comment = 'div[data-tag="content-card-comment-thread-container"] button:not([data-tag], [aria-expanded], :disabled)';
+	// For each button below a comment that was clicked: how many comments the page showed then
+	const comments_at_click = new WeakMap();
 	// "See more posts" on a creator's page
 	const see_more_posts = 'div[data-tag="all-posts-layout"] + div > button';
 	observe(1000, [
@@ -1008,6 +1012,7 @@ if (loc.startsWith("https://www.patreon.com/")) {
 		`div:has(> ${cut_off}) > div > button[aria-expanded="false"]`,
 		cut_off_above_link,
 		load_more_comments,
+		below_comment,
 		see_more_posts,
 	], el => {
 		if (el.matches(cut_off_above_link)) {
@@ -1021,6 +1026,15 @@ if (loc.startsWith("https://www.patreon.com/")) {
 		} else if (el.matches(load_more_comments)) {
 			// Patreon reuses the button for each batch of comments, and ignores a click while it loads one
 			el.click();
+		} else if (el.matches(below_comment)) {
+			const comments = document.querySelectorAll('div[data-tag="comment-row"]').length;
+			// "View 3 replies", "View more replies", or "View previous replies", but not
+			// "Collapse replies". The button stays while its replies load, and may
+			// stay to load more, so click it again only after the page shows more comments.
+			if (/^View .*repl/.test(el.innerText) && comments_at_click.get(el) !== comments) {
+				comments_at_click.set(el, comments);
+				el.click();
+			}
 		} else if (el.matches(see_more_posts)) {
 			const posts = document.querySelectorAll('div[data-tag="post-card"]');
 			const last_post = posts[posts.length - 1];
