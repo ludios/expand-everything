@@ -382,6 +382,7 @@ mod tests {
         assert!(script.matches("https://www.youtube.com/watch?v=x"));
         assert!(script.matches("https://store.steampowered.com/app/1/X/"));
         assert!(script.matches("https://www.lesswrong.com/users/x"));
+        assert!(script.matches("https://mastodon.social/@x/1"));
         assert!(script.matches("https://github.com/rust-lang/rust/issues/57640"));
         assert!(script.matches("https://gist.github.com/x/5095670735ba941a6090a69fce4183df"));
         assert!(script.matches("https://www.goodreads.com/book/show/1-x"));

@@ -12,6 +12,7 @@ mod gist;
 mod github;
 mod goodreads;
 mod lesswrong;
+mod mastodon;
 mod nytimes;
 mod steam;
 mod substack;
