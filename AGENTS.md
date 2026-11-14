@@ -228,7 +228,7 @@ After each commit made, get it reviewed by Codex and by Claude, all at xhigh rea
 
 If you made several commits, ensure reviews cover them all: either run `review-commits <sha>` once for each commit, or review the whole batch at once with `review-commits <sha before your first commit>..<sha of your last commit>`.
 
-`review-commits` runs the reviewers in a `git clone --shared` of the repository, saves each review to ~/.ai-code-reviews/{model}/{full sha, or full range}, and prints every review. Once every reviewer has exited, it deletes the clone, and exits with status 1 if any reviewer failed.
+`review-commits` runs the reviewers in a `git clone --shared` of the repository, saves each review in ~/.ai-code-reviews, and prints every review, each under a line with the path of its file. Once every reviewer has exited, it deletes the clone, and exits with status 1 if any reviewer failed.
 
 Notes:
 
