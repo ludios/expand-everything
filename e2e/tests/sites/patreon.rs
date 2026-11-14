@@ -14,6 +14,12 @@ const CREATOR_PAGE: &str = "https://www.patreon.com/gwern";
 /// first 12), so the page cuts each of them off, above a "Show more" button.
 const POST_PAGE: &str = "https://www.patreon.com/posts/beautiful-to-2746322";
 
+/// The page of a public post from 2015 with about 150 comments, of which the
+/// page shows about 10 more for each click on "Load more comments". The page
+/// then shows about 145 comments: the rest are replies that only "View
+/// replies" buttons show.
+const MANY_COMMENTS_PAGE: &str = "https://www.patreon.com/posts/new-statesman-is-2440676";
+
 /// A JavaScript function that takes a box that Patreon cuts text off with (a
 /// `div[data-is-measured]`), and returns whether the box is shorter than the
 /// text in it, by more than what rounding explains.
@@ -96,6 +102,44 @@ async fn long_comments_are_expanded() -> Result<()> {
             Duration::from_secs(3),
             |c: &Comments| {
                 c.long > 0 && c.cut_off == 0 && c.clicked.iter().any(|text| text == "Show more")
+            },
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn all_comments_are_loaded() -> Result<()> {
+    #[derive(Debug, Deserialize)]
+    struct Comments {
+        /// How many "Load more comments" buttons the page has.
+        load_more: usize,
+        /// How many comments (including replies) the page shows.
+        shown: usize,
+        clicked: Vec<String>,
+    }
+    with_chrome(async |browser| {
+        let tab = open(browser, MANY_COMMENTS_PAGE).await?;
+        let expression = format!(
+            r#"({{
+                load_more: document.querySelectorAll('button[data-tag="loadMoreCommentsCta"]').length,
+                shown: document.querySelectorAll('div[data-tag="comment-row"]').length,
+                clicked: {CLICKED_TEXTS},
+            }})"#
+        );
+        // More than 100 comments are shown only after many clicks.
+        wait_for(
+            &tab,
+            "the userscript to click \"Load more comments\" until the page has no more to load",
+            &expression,
+            Duration::from_secs(90),
+            Duration::from_secs(3),
+            |c: &Comments| {
+                c.load_more == 0
+                    && c.shown > 100
+                    && c.clicked.iter().any(|text| text == "Load more comments")
             },
         )
         .await?;

@@ -974,15 +974,20 @@ if (loc.startsWith("https://www.hwinfo.com/forum/")) {
 //
 // Test page: https://www.patreon.com/posts/beautiful-to-2746322
 // Expected: all long comments are expanded; "Show more" is not visible
+//
+// Test page: https://www.patreon.com/posts/new-statesman-is-2440676
+// Expected: about 145 comments are shown; "Load more comments" is not visible
 if (loc.startsWith("https://www.patreon.com/")) {
 	// A text that is cut off, after its "Show more" button or "View post" link in the DOM
 	const cut_off = 'div[data-is-measured]';
 	// A public post on a creator's page, above "View post"
 	const cut_off_above_link = `div:has(> div > div > a[aria-expanded="false"]) > ${cut_off}`;
+	const load_more_comments = 'button[data-tag="loadMoreCommentsCta"]';
 	observe(1000, [
 		// "Show more"
 		`div:has(> ${cut_off}) > div > button[aria-expanded="false"]`,
 		cut_off_above_link,
+		load_more_comments,
 	], el => {
 		if (el.matches(cut_off_above_link)) {
 			// "View post" leads to another page, but this page has the whole text
@@ -990,7 +995,12 @@ if (loc.startsWith("https://www.patreon.com/")) {
 			for (const fade of el.querySelectorAll(':scope > [class*="_fade"]')) {
 				fade.style.display = "none";
 			}
-		} else if (look_again_unless(react_hydrated(el))) {
+		} else if (!look_again_unless(react_hydrated(el))) {
+			return;
+		} else if (el.matches(load_more_comments)) {
+			// Patreon reuses the button for each batch of comments, and ignores a click while it loads one
+			el.click();
+		} else {
 			click_if_unclicked(el);
 		}
 	});
