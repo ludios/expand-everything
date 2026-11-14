@@ -71,8 +71,9 @@ async fn all_comments_are_shown_where_stack_overflow_shows_only_the_top_ones() -
 /// A Super User question that cuts off the comments of two posts: it has
 /// "Show 7 more comments" below the question, and "Show 2 more comments" below
 /// an answer. Each is a link to "#". A script that the page loads only after
-/// the DOM has been parsed handles a click on one, by requesting the post's
-/// comments. Until that script is ready, a click only navigates to "#".
+/// the DOM has been parsed handles a click on one, by requesting
+/// `/posts/POST_ID/comments`, and hides the link once the comments have
+/// loaded. Until that script is ready, a click only navigates to "#".
 const LINKS_PAGE: &str = "https://superuser.com/questions/681575/any-way-to-get-list-of-functions-defined-in-zsh-like-alias-command-for-aliases";
 
 /// The `id`s of the elements of the last comment on each of the two posts.
@@ -87,48 +88,59 @@ struct Links {
     title: String,
     /// The URL of the page.
     url: String,
-    /// How many "Show N more comments" links the page shows.
+    /// How many "Show N more comments" links are visible.
     cut_off: usize,
     /// How many of the comments whose `id`s are [`LOADED_COMMENT_IDS`] the
     /// page has.
     loaded_comments: usize,
-    /// How many clicks the userscript made.
-    clicks: usize,
-    /// How many elements the userscript clicked.
+    /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
+    clicked: Vec<String>,
+    /// How many different elements the userscript clicked.
     clicked_elements: usize,
+    /// How many requests for a post's comments the page made. (Chrome
+    /// records only the page's first 250 requests; these are made early.)
+    comment_requests: usize,
 }
 
 /// Open [`LINKS_PAGE`] in a Chrome whose userscript starts when `start` says,
-/// and wait for the userscript to load the comments of both posts without
-/// navigating to "#", and for `also` to be true.
-async fn expect_loaded_comments(start: Start, also: fn(&Links) -> bool) -> Result<()> {
+/// and wait until the userscript has loaded the comments of both posts, with
+/// one click on each link, one request for each click, and no navigation to
+/// "#".
+async fn expect_loaded_comments(start: Start) -> Result<()> {
     with_chrome_starting(start, async |browser| {
         let tab = open(browser, LINKS_PAGE).await?;
         let expression = format!(
             r#"(() => {{
-                const clicks = window.{HARNESS_GLOBAL}.clicks;
+                const requests = performance.getEntriesByType("resource");
                 return {{
                     title: document.title,
                     url: location.href,
                     cut_off: [...document.querySelectorAll("a.js-show-link")].filter((a) => a.checkVisibility()).length,
                     loaded_comments: {LOADED_COMMENT_IDS:?}.filter((id) => document.getElementById(id) !== null).length,
-                    clicks: clicks.length,
-                    clicked_elements: new Set(clicks.map((c) => c.element)).size,
+                    clicked: {CLICKED_TEXTS},
+                    clicked_elements: new Set(window.{HARNESS_GLOBAL}.clicks.map((c) => c.element)).size,
+                    comment_requests: requests.filter((r) => /\/posts\/\d+\/comments/.test(r.name)).length,
                 }};
             }})()"#
         );
         wait_for(
             &tab,
-            "the userscript to load the comments of both posts",
+            "the userscript to load the comments of both posts, with one click and one request for each",
             &expression,
             Duration::from_secs(30),
             Duration::from_secs(2),
             |p: &Links| {
-                p.url == LINKS_PAGE
+                let texts_are_right = p
+                    .clicked
+                    .iter()
+                    .all(|t| t.starts_with("Show ") && t.contains(" more comment"));
+                !p.url.contains('#')
                     && p.cut_off == 0
                     && p.loaded_comments == LOADED_COMMENT_IDS.len()
-                    && p.clicked_elements == 2
-                    && also(p)
+                    && p.clicked.len() >= LOADED_COMMENT_IDS.len()
+                    && texts_are_right
+                    && p.clicked_elements == p.clicked.len()
+                    && p.comment_requests == p.clicked.len()
             },
         )
         .await?;
@@ -138,15 +150,11 @@ async fn expect_loaded_comments(start: Start, also: fn(&Links) -> bool) -> Resul
 }
 
 #[tokio::test]
-async fn comments_are_all_loaded_without_navigating() -> Result<()> {
-    expect_loaded_comments(Start::DocumentEnd, |_| true).await
+async fn comments_are_all_loaded_with_one_request_for_each_post() -> Result<()> {
+    expect_loaded_comments(Start::DocumentEnd).await
 }
 
-/// By the `load` event, the page's script handles a click, so the userscript
-/// must not click a link a second time (the page would request the comments
-/// again).
 #[tokio::test]
-async fn each_link_is_clicked_once_by_a_userscript_that_starts_after_the_load_event() -> Result<()>
-{
-    expect_loaded_comments(Start::AfterLoad, |p| p.clicks == p.clicked_elements).await
+async fn comments_are_all_loaded_by_a_userscript_that_starts_after_the_load_event() -> Result<()> {
+    expect_loaded_comments(Start::AfterLoad).await
 }

@@ -811,36 +811,25 @@ if (loc.startsWith("https://gist.github.com/")) {
 // Test page: https://superuser.com/questions/681575/any-way-to-get-list-of-functions-defined-in-zsh-like-alias-command-for-aliases
 // Expected: all comments are loaded; the page / Firefox does not hang.
 // Expected: the URL doesn't get a "#" at its end
-// Expected: the page requests /posts/N/comments only once for each "Show N more comments"
-if (window.StackExchange) {
-	observe(100, [
-		// "Show N more comments"
-		'a.js-show-link:not(.dno)',
-		// The button beside "N Comments" on stackoverflow.com, while it shows only the top comments
-		'[id^="follow-ups-container-"] button[aria-label="Show all comments"]',
-	], el => {
-		if (el.tagName === "BUTTON") {
-			el.click();
-			return;
-		}
-		if (already_clicked.get(el)) {
-			return;
-		}
-		// Whether the page handled the click: its script that loads the
-		// comments cancels the click (or may stop it before `window`). Until
-		// that script is ready, cancel the click here, so that it doesn't
-		// navigate to the link's "#".
-		let handled = true;
-		const cancel = ev => {
-			handled = ev.defaultPrevented;
-			ev.preventDefault();
-		};
-		window.addEventListener("click", cancel, { once: true });
-		el.click();
-		window.removeEventListener("click", cancel);
-		if (look_again_unless(handled)) {
-			already_clicked.set(el, true);
-		}
+// Expected: the page requests /posts/POST_ID/comments only once for each "Show N more comments"
+if (window.StackExchange?.ready) {
+	// Until the page's scripts are ready, a click on "Show N more comments" only navigates to "#".
+	StackExchange.ready(() => {
+		observe(100, [
+			// "Show N more comments", which has the class "dno" while the page hides it
+			'a.js-show-link',
+			// The "Show all comments" button beside an answer's "N Comments" heading on stackoverflow.com
+			'[id^="follow-ups-container-"] button[aria-label="Show all comments"]',
+		], el => {
+			if (el.classList.contains("dno")) {
+				// The page shows the same link again if more comments arrive.
+				already_clicked.delete(el);
+			} else {
+				// A second click on the link would request the comments again,
+				// and a second click on the button would hide every comment.
+				click_if_unclicked(el);
+			}
+		});
 	});
 }
 
