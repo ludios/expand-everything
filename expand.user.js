@@ -810,6 +810,8 @@ if (loc.startsWith("https://gist.github.com/")) {
 //
 // Test page: https://superuser.com/questions/681575/any-way-to-get-list-of-functions-defined-in-zsh-like-alias-command-for-aliases
 // Expected: all comments are loaded; the page / Firefox does not hang.
+// Expected: the URL doesn't get a "#" at its end
+// Expected: the page requests /posts/N/comments only once for each "Show N more comments"
 if (window.StackExchange) {
 	observe(100, [
 		// "Show N more comments"
@@ -817,7 +819,28 @@ if (window.StackExchange) {
 		// The button beside "N Comments" on stackoverflow.com, while it shows only the top comments
 		'[id^="follow-ups-container-"] button[aria-label="Show all comments"]',
 	], el => {
+		if (el.tagName === "BUTTON") {
+			el.click();
+			return;
+		}
+		if (already_clicked.get(el)) {
+			return;
+		}
+		// Whether the page handled the click: its script that loads the
+		// comments cancels the click (or may stop it before `window`). Until
+		// that script is ready, cancel the click here, so that it doesn't
+		// navigate to the link's "#".
+		let handled = true;
+		const cancel = ev => {
+			handled = ev.defaultPrevented;
+			ev.preventDefault();
+		};
+		window.addEventListener("click", cancel, { once: true });
 		el.click();
+		window.removeEventListener("click", cancel);
+		if (look_again_unless(handled)) {
+			already_clicked.set(el, true);
+		}
 	});
 }
 
