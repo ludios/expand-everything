@@ -12,6 +12,10 @@ const V5_THREAD: &str = "https://mastodon.social/@spacerog/112974029330927616";
 /// How many posts [`V5_THREAD`] has.
 const V5_POSTS: usize = 14;
 
+/// The page that shows only the first post of [`V5_THREAD`], for other sites
+/// to embed.
+const V5_EMBED: &str = "https://mastodon.social/@spacerog/112974029330927616/embed";
+
 /// A thread on a site that runs Mastodon 4.7. Each of its [`V4_POSTS`] posts
 /// has a content warning, and [`V4_MEDIA`] of them have an animation that is
 /// marked as sensitive.
@@ -156,6 +160,17 @@ async fn posts_are_expanded_on_mastodon_5() -> Result<()> {
         V5_STATE,
         "the userscript to expand every post by clicking each \"Show post\" once",
         |p| posts_are_expanded(p, V5_POSTS, "Show post"),
+    )
+    .await
+}
+
+#[tokio::test]
+async fn embedded_post_is_expanded_on_mastodon_5() -> Result<()> {
+    check(
+        V5_EMBED,
+        V5_STATE,
+        "the userscript to expand the post by clicking \"Show post\" once",
+        |p| posts_are_expanded(p, 1, "Show post"),
     )
     .await
 }

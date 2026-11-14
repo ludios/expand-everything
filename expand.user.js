@@ -1154,7 +1154,10 @@ if (loc.startsWith("https://www.patreon.com/")) {
 
 // Test page: https://mastodon.social/@spacerog/112974029330927616 (Mastodon 5.0)
 // Expected: all posts are expanded; "Show post" is not visible
-// Expected: the image is shown; "Media hidden" is not visible
+// Expected: the image is shown, not blurred
+//
+// Test page: https://mastodon.social/@spacerog/112974029330927616/embed (as embedded in other sites)
+// Expected: the post is expanded; "Show post" is not visible
 //
 // Test page: https://mathstodon.xyz/@j_bertolotti/110436005325555159 (Mastodon before 5.0)
 // Expected: all posts are expanded; "Show more" is not visible
@@ -1162,7 +1165,7 @@ if (loc.startsWith("https://www.patreon.com/")) {
 //
 // Test page: https://infosec.exchange/@plasticbiker/112974302351350325 (glitch-soc)
 // Expected: both posts are expanded; "Show more" is not visible
-if (document.getElementById("mastodon")) {
+if (document.querySelector("#mastodon[data-props], #mastodon-status[data-props]")) {
 	// Whether a click on `button` would show what the button hides (a click
 	// on the button of a content warning hides the post if it is shown)
 	function hides_something(button) {
