@@ -1225,13 +1225,13 @@ if (loc.startsWith("https://www.bloomberg.com/")) {
 	}).observe({type: "resource"});
 }
 
-// Test page (logged in): https://www.criticker.com/film/Come-and-See/
+// Test page (logged in, with "Compact view" switched on): https://www.criticker.com/film/Come-and-See/
 // Expected: under "Ratings & Reviews", all minireviews are shown in full; "More" is not visible
 // Expected: the address doesn't gain a "#"
 // Expected: after searching the ratings for "the", all minireviews are shown in full
 if (loc.startsWith("https://www.criticker.com/")) {
 	observe(1000, [
-		// "More" on a minireview that the compact view cuts off (each has one for wide windows and one for narrow windows)
+		// "More" on a minireview that the compact view cuts off (each card has two: one shown in wide windows, one in narrow windows)
 		'.rating_card.compact.review:not(.expanded) .ratingcard_compact_more > a',
 	], el => {
 		const card = el.closest(".rating_card");
