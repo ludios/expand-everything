@@ -19,7 +19,6 @@
 // @match       https://www.quora.com/*
 // @match       https://old.reddit.com/*
 // @match       https://www.lesswrong.com/*
-// @match       https://cohost.org/*
 // @match       https://nextdoor.com/*
 // @match       https://store.steampowered.com/*
 // @match       https://www.patreon.com/*
@@ -678,13 +677,13 @@ if (loc.startsWith("https://www.linkedin.com/")) {
 }
 
 // Test page: https://substack.com/@meaningness/note/c-59538921
-// Expected: all comments are expanded; "See more..." is not visible
+// Expected: all comments are expanded; "See more" is not visible
 if (loc.startsWith("https://substack.com/")) {
 	observe(100, [
-		// "See more..."
-		'div.pencraft[class*=_seeMoreText_] > span.pencraft > a.pencraft',
+		// "See more"
+		'div.pencraft[class*=seeMoreText-] > span.pencraft > a.pencraft',
 	], el => {
-		if (el.innerText === "See more...") {
+		if (el.innerText === "See more") {
 			el.click();
 		}
 	});
@@ -965,16 +964,6 @@ if (loc.startsWith("https://www.lesswrong.com/")) {
 	observe(2000, selectors, expand);
 }
 
-// Test page: https://cohost.org/mcc/post/718898-andi-s-game-of-the-y
-// Expected: the full post is shown; "read more" is not visible
-if (loc.startsWith("https://cohost.org/")) {
-	observe(100, ['div.overflow-hidden[data-testid="post-body"] > div > a.cursor-pointer.font-bold.text-cherry'], el => {
-		if (el.innerText == "read more") {
-			click_if_unclicked(el);
-		}
-	});
-}
-
 // Test page: https://nextdoor.com/p/bSFkfd2Smd5c?view=detail
 // Expected: all comments are shown
 //
@@ -1109,13 +1098,16 @@ if (loc.startsWith("https://www.google.com/search")) {
 }
 
 // Test page: https://www.nytimes.com/live/2024/07/07/world/france-election-2024
-// Expected: All mini articles expanded; "Show more" buttons are not visible
+// Expected: all long posts are expanded; each "Show more" below a post has become "Show less"
 if (loc.startsWith("https://www.nytimes.com/")) {
 	observe(20, [
-		// "Show more"
-		'button[class][data-testid="Show-More"][type="button"][aria-hidden="true"]',
+		// "Show more" below a long post on a live coverage page. The server
+		// renders it, so React may not have hydrated it yet.
+		'button[data-testid="Show-More"][aria-expanded="false"]',
 	], el => {
-		click_if_unclicked(el);
+		if (look_again_unless(react_hydrated(el))) {
+			click_if_unclicked(el);
+		}
 	});
 }
 
