@@ -8,6 +8,7 @@
 //! click it.
 
 mod cnn;
+mod gist;
 mod github;
 mod goodreads;
 mod lesswrong;
