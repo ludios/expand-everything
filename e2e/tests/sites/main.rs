@@ -15,4 +15,5 @@ mod lesswrong;
 mod nytimes;
 mod steam;
 mod substack;
+mod tvtropes;
 mod youtube;

@@ -694,7 +694,7 @@ if (loc.startsWith("https://substack.com/")) {
 if (loc.startsWith("https://tvtropes.org/")) {
 	observe(10, [
 		// "open/close all folders"
-		'.toggle-all-folders-button:not(.is-open)',
+		'.folderlabel[onclick*="toggleAllFolders"]:not(.is-open)',
 	], el => {
 		click_if_unclicked(el);
 	});
