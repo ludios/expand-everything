@@ -20,9 +20,13 @@ const COMMENTS_PAGE: &str =
 /// are long, so the page cuts each of them off, above a "See more" button.
 const LONG_COMMENTS_PAGE: &str = "https://mrgirl.substack.com/p/the-destiny-report/comments";
 
-/// A note with comments, a few of which are long, so the page cuts each of
-/// them off, above a "See more" link.
+/// A note with a few long comments. The page cuts off each long comment
+/// above a "See more" link.
 const NOTE_PAGE: &str = "https://substack.com/@meaningness/note/c-59538921";
+
+/// The end of one of the long comments on [`NOTE_PAGE`]. The page doesn't
+/// have this text until that comment is expanded.
+const NOTE_COMMENT_END: &str = "Your advice is completely inactionable as stated.";
 
 #[tokio::test]
 async fn subscribe_overlay_is_dismissed() -> Result<()> {
@@ -138,8 +142,10 @@ async fn long_comments_are_expanded() -> Result<()> {
 async fn long_comments_on_a_note_are_expanded() -> Result<()> {
     #[derive(Debug, Deserialize)]
     struct State {
-        /// How many comments the page cuts off.
+        /// How many "See more" links the page has.
         cut_off: usize,
+        /// Whether the page shows [`NOTE_COMMENT_END`].
+        end_shown: bool,
         clicked: Vec<String>,
     }
     with_chrome(async |browser| {
@@ -147,6 +153,7 @@ async fn long_comments_on_a_note_are_expanded() -> Result<()> {
         let expression = format!(
             r#"({{
                 cut_off: document.querySelectorAll("div[class*=seeMoreText-]").length,
+                end_shown: document.body.innerText.includes("{NOTE_COMMENT_END}"),
                 clicked: {CLICKED_TEXTS},
             }})"#
         );
@@ -156,7 +163,9 @@ async fn long_comments_on_a_note_are_expanded() -> Result<()> {
             &expression,
             Duration::from_secs(30),
             Duration::from_secs(2),
-            |s: &State| s.cut_off == 0 && s.clicked.iter().any(|text| text == "See more"),
+            |s: &State| {
+                s.cut_off == 0 && s.end_shown && s.clicked.iter().any(|text| text == "See more")
+            },
         )
         .await?;
         Ok(())

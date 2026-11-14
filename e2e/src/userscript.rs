@@ -365,6 +365,7 @@ mod tests {
     fn expand_user_js_parses_and_matches_the_tested_sites() {
         let script = Userscript::load().unwrap();
         assert!(script.matches("https://dispatchesfromtheautismwars.substack.com/p/x/comments"));
+        assert!(script.matches("https://substack.com/@x/note/c-1"));
         assert!(script.matches("https://www.youtube.com/watch?v=x"));
         assert!(script.matches("https://store.steampowered.com/app/1/X/"));
         assert!(script.matches("https://www.lesswrong.com/users/x"));
