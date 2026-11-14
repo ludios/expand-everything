@@ -972,6 +972,9 @@ if (loc.startsWith("https://www.hwinfo.com/forum/")) {
 // Test page: https://www.patreon.com/gwern
 // Expected: the post "New reward tier: Evernotes firehose" is shown whole, without a fade over its last lines
 //
+// Test page: https://www.patreon.com/amandapalmer
+// Expected: "See more posts" is clicked until the page shows 100 posts
+//
 // Test page: https://www.patreon.com/posts/beautiful-to-2746322
 // Expected: all long comments are expanded; "Show more" is not visible
 //
@@ -983,11 +986,14 @@ if (loc.startsWith("https://www.patreon.com/")) {
 	// A public post on a creator's page, above "View post"
 	const cut_off_above_link = `div:has(> div > div > a[aria-expanded="false"]) > ${cut_off}`;
 	const load_more_comments = 'button[data-tag="loadMoreCommentsCta"]';
+	// "See more posts" on a creator's page
+	const see_more_posts = 'div[data-tag="all-posts-layout"] + div > button';
 	observe(1000, [
 		// "Show more"
 		`div:has(> ${cut_off}) > div > button[aria-expanded="false"]`,
 		cut_off_above_link,
 		load_more_comments,
+		see_more_posts,
 	], el => {
 		if (el.matches(cut_off_above_link)) {
 			// "View post" leads to another page, but this page has the whole text
@@ -1000,6 +1006,16 @@ if (loc.startsWith("https://www.patreon.com/")) {
 		} else if (el.matches(load_more_comments)) {
 			// Patreon reuses the button for each batch of comments, and ignores a click while it loads one
 			el.click();
+		} else if (el.matches(see_more_posts)) {
+			const posts = document.querySelectorAll('div[data-tag="post-card"]');
+			const last_post = posts[posts.length - 1];
+			// Each click loads 20 more posts, even while earlier ones are loading, so
+			// click at most once while the same post is the last one. A creator may
+			// have thousands of posts, so stop at 100.
+			if (last_post && posts.length < 100 && !already_clicked.get(last_post)) {
+				already_clicked.set(last_post, true);
+				el.click();
+			}
 		} else {
 			click_if_unclicked(el);
 		}

@@ -9,6 +9,11 @@ use std::time::Duration;
 /// under a fade, above a "View post" link that leads to the post's own page.
 const CREATOR_PAGE: &str = "https://www.patreon.com/gwern";
 
+/// The page of a creator with thousands of posts, of which the page at
+/// first shows 20, above a "See more posts" button that adds 20 more per
+/// click.
+const BUSY_CREATOR_PAGE: &str = "https://www.patreon.com/amandapalmer";
+
 /// The page of a public post from 2015 with 19 comments, of which the page
 /// at first shows 12. Three of the comments are long (two of them among the
 /// first 12), so the page cuts each of them off, above a "Show more" button.
@@ -64,6 +69,40 @@ async fn long_public_post_on_creator_page_is_shown_whole() -> Result<()> {
             Duration::from_secs(30),
             Duration::from_secs(3),
             |p: &Posts| p.long > 0 && p.cut_off == 0 && p.faded == 0 && p.height_set == p.long,
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn posts_are_loaded_until_there_are_100() -> Result<()> {
+    #[derive(Debug, Deserialize)]
+    struct Posts {
+        /// How many posts the page shows.
+        shown: usize,
+        clicked: Vec<String>,
+    }
+    with_chrome(async |browser| {
+        let tab = open(browser, BUSY_CREATOR_PAGE).await?;
+        let expression = format!(
+            r#"({{
+                shown: document.querySelectorAll('div[data-tag="post-card"]').length,
+                clicked: {CLICKED_TEXTS},
+            }})"#
+        );
+        // A userscript that didn't stop at 100 posts would load the next 20
+        // within the 5 seconds.
+        wait_for(
+            &tab,
+            "the userscript to click \"See more posts\" until the page shows 100 posts, and no more",
+            &expression,
+            Duration::from_secs(60),
+            Duration::from_secs(5),
+            |p: &Posts| {
+                (100..120).contains(&p.shown) && p.clicked.iter().any(|text| text == "See more posts")
+            },
         )
         .await?;
         Ok(())
