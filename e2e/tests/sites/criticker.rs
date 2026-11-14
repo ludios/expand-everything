@@ -233,3 +233,33 @@ async fn minireviews_are_expanded_after_searching_when_logged_in() -> Result<()>
     })
     .await
 }
+
+#[tokio::test]
+#[ignore = "needs E2E_CRITICKER_COOKIES, the path of a cookies.txt file of a logged-in Criticker session"]
+async fn minireview_cut_off_by_the_user_stays_cut_off_when_logged_in() -> Result<()> {
+    with_film(async |tab| {
+        expect_expanded(tab).await?;
+        // "Show less" is under each expanded minireview (in a wide window,
+        // as headless Chrome's is).
+        let clicked: bool = tab
+            .evaluate_main(
+                r#"(() => {
+                    const less = [...document.querySelectorAll(".rating_card.review.expanded .ratingcard_compact_less > a")].find((a) => a.checkVisibility());
+                    less?.click();
+                    return less !== undefined;
+                })()"#,
+            )
+            .await?;
+        ensure!(clicked, "the page shows no \"Show less\" to click");
+        // The userscript looks at the page again when the page changes.
+        change_page(tab, 1).await?;
+        expect(
+            tab,
+            "the one minireview that \"Show less\" was clicked on to stay cut off",
+            |r| r.cut_off == 1 && r.more_links == 1,
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
