@@ -996,6 +996,11 @@ if (loc.startsWith("https://www.hwinfo.com/forum/")) {
 // Test page: https://www.patreon.com/amandapalmer
 // Expected: "See more posts" is clicked 4 times; the page shows 100 posts
 //
+// Test page (logged in as a member of the creator): https://www.patreon.com/c/amandapalmer/posts
+// Expected: all long posts and long comments are expanded; "Show more" is not visible
+// Expected: "Load more" is clicked 4 times; the page shows 100 posts
+// Expected: "Load more comments" below each post is not clicked
+//
 // Test page: https://www.patreon.com/posts/beautiful-to-2746322
 // Expected: all 19 comments are shown, and the 3 long ones are expanded; "Show more" is not visible
 //
@@ -1021,10 +1026,14 @@ if (loc.startsWith("https://www.patreon.com/")) {
 	// For each thread, and for the document: how many comments it showed when the
 	// userscript last clicked a button to load more of them
 	const shown_at_click = new WeakMap();
-	// The list of posts on a creator's page
-	const post_list = 'div[data-tag="all-posts-layout"]';
-	// "See more posts"
-	const see_more_posts = `${post_list} + div > button`;
+	const post = 'div[data-tag="post-card"]';
+	// The posts on a creator's page, as anyone sees them, or as a member sees them on the "Posts" tab
+	const post_lists = 'div:is([data-tag="all-posts-layout"], [data-tag="post-stream-container"])';
+	// "See more posts" below the former, or "Load more" below the latter
+	const see_more_posts = [
+		'div[data-tag="all-posts-layout"] + div > button',
+		`div[data-tag="post-stream-container"] div:has(> div > div > ${post}) ~ div > div > button[aria-disabled="false"]`,
+	].join(", ");
 	// The last post of the list when "See more posts" was last clicked
 	let last_post_at_click = null;
 	observe(1000, [
@@ -1053,7 +1062,7 @@ if (loc.startsWith("https://www.patreon.com/")) {
 		if (el.matches(show_more)) {
 			click_if_unclicked(el);
 		} else if (el.matches(see_more_posts)) {
-			const posts = document.querySelectorAll(`${post_list} div[data-tag="post-card"]`);
+			const posts = document.querySelectorAll(`${post_lists} ${post}`);
 			const last_post = posts[posts.length - 1];
 			// Each click loads another batch of posts, even while an earlier batch is
 			// loading, so click at most once while the same post is the last one. A
@@ -1063,6 +1072,12 @@ if (loc.startsWith("https://www.patreon.com/")) {
 				el.click();
 			}
 		} else if (el.matches(load_more_comments) || /^View .*repl/.test(el.innerText)) {
+			// A list of posts shows some comments below each post. Loading the
+			// rest of them all could take thousands of requests, so load
+			// comments only on the page of one post.
+			if (!/\/posts\/[^/]+$/.test(location.pathname)) {
+				return;
+			}
 			// "Load more comments" loads comments into the document; a button like
 			// "View 3 replies", "View more replies", or "View previous replies" loads
 			// them into its thread.

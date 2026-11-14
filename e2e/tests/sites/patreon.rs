@@ -1,7 +1,8 @@
-use anyhow::Result;
+use anyhow::{Context, Result, ensure};
 use expand_everything_e2e::userscript::CLICKED_TEXTS;
-use expand_everything_e2e::{open, wait_for, with_chrome};
+use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
 use serde::Deserialize;
+use std::path::Path;
 use std::time::Duration;
 
 /// The page of a creator who last posted in 2019. One of its public posts
@@ -13,6 +14,14 @@ const CREATOR_PAGE: &str = "https://www.patreon.com/gwern";
 /// first shows 20, above a "See more posts" button that adds 20 more per
 /// click.
 const BUSY_CREATOR_PAGE: &str = "https://www.patreon.com/amandapalmer";
+
+/// The "Posts" tab of the creator of [`BUSY_CREATOR_PAGE`], which Patreon
+/// shows only to a member of the creator (a free membership is enough), and
+/// redirects anyone else from. It at first shows 20 posts, above a "Load
+/// more" button that adds 20 more per click. It cuts off each long post
+/// above a "Show more" button. Below each post, it shows up to 10 comments,
+/// above a "Load more comments" button if the post has more.
+const MEMBER_POSTS_PAGE: &str = "https://www.patreon.com/c/amandapalmer/posts";
 
 /// The page of a public post from 2015 with 19 comments, of which the page
 /// at first shows 12. Three of the comments are long (two of them among the
@@ -292,6 +301,74 @@ async fn replies_that_the_user_collapses_stay_collapsed() -> Result<()> {
                     && c.collapse == loaded.collapse - 1
                     && c.shown < loaded.shown
                     && c.clicked == loaded.clicked
+            },
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+#[ignore = "needs E2E_PATREON_COOKIES, the path of a cookies.txt file of a Patreon session of a member of the creator of MEMBER_POSTS_PAGE"]
+async fn member_posts_are_expanded_and_loaded_when_logged_in() -> Result<()> {
+    #[derive(Debug, Deserialize)]
+    struct Posts {
+        /// How many posts the page shows.
+        shown: usize,
+        /// How many posts the page has in a box that can cut the post off.
+        long: usize,
+        /// How many of those posts the page cuts off.
+        cut_off: usize,
+        /// How many "Load more comments" buttons the page has.
+        load_more_comments: usize,
+        clicked: Vec<String>,
+    }
+    let cookies = std::env::var_os("E2E_PATREON_COOKIES").context(
+        "E2E_PATREON_COOKIES must be the path of a cookies.txt file of a Patreon session of a \
+         member of the creator of MEMBER_POSTS_PAGE",
+    )?;
+    with_chrome(async |browser| {
+        add_cookies(browser, Path::new(&cookies)).await?;
+        let tab = open(browser, MEMBER_POSTS_PAGE).await?;
+        let path: String = tab.evaluate_main("location.pathname").await?;
+        ensure!(
+            path.ends_with("/posts"),
+            "Patreon redirected to {path}: are the cookies in E2E_PATREON_COOKIES those of a \
+             member of the creator?"
+        );
+        let expression = format!(
+            r#"(() => {{
+                const boxes = [...document.querySelectorAll('div[data-tag="post-content"]')];
+                return {{
+                    shown: document.querySelectorAll('div[data-tag="post-card"]').length,
+                    long: boxes.length,
+                    cut_off: boxes.filter({IS_CUT_OFF}).length,
+                    load_more_comments: document.querySelectorAll('button[data-tag="loadMoreCommentsCta"]').length,
+                    clicked: {CLICKED_TEXTS},
+                }};
+            }})()"#
+        );
+        // As in `posts_are_loaded_until_there_are_100`, more than 20 posts
+        // per click on "Load more" means that every click has added its
+        // posts. The "Load more comments" buttons that are left show that
+        // the page had some for the userscript to leave alone.
+        wait_for(
+            &tab,
+            "the userscript to load 100 posts and expand the long ones, without loading comments",
+            &expression,
+            Duration::from_secs(90),
+            Duration::from_secs(5),
+            |p: &Posts| {
+                let expected = ["Show more", "Load more"];
+                let load_more = p.clicked.iter().filter(|text| *text == "Load more").count();
+                (100..120).contains(&p.shown)
+                    && p.shown > 20 * load_more
+                    && p.long > 0
+                    && p.cut_off == 0
+                    && p.load_more_comments > 0
+                    && p.clicked.iter().any(|text| text == "Show more")
+                    && p.clicked.iter().all(|text| expected.contains(&text.as_str()))
             },
         )
         .await?;
