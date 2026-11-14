@@ -519,22 +519,24 @@ if (loc.startsWith("https://www.goodreads.com/review/list/")) {
 // Expected: all the reviews hidden because of spoilers are shown
 //
 // Test page (logged in): https://www.imdb.com/title/tt6710474/reviews/
-// Expected: "25 more" is clicked until the page has 150 reviews, which are expanded and shown too
+// Expected: "25 more" is clicked until the page has 150 reviews, and not after that; of those reviews,
+//           the lengthy ones are expanded and the ones hidden because of spoilers are shown
 //
 // (We don't want to click "25 more" so many times that we slow down
 // the page and also risk getting banned.)
 if (loc.startsWith("https://www.imdb.com/title/")) {
-	// "25 more" below the reviews, which is disabled while reviews are loading
-	const more_reviews = '[data-testid="tturv-pagination"] .single-page-see-more-button > button:not(:disabled)';
-	observe(100, [
+	// "25 more" below the reviews
+	const more_reviews = '[data-testid="tturv-pagination"] .single-page-see-more-button > button';
+	observe(1000, [
 		// "Spoiler" in place of a review with spoilers
 		'button.review-spoiler-button',
 		// "See more" over the end of a lengthy review
 		'[data-testid="review-overflow"] > button.ipc-overflowText-overlay',
 		more_reviews,
 	], el => {
-		// The server renders all of these, so React may not have hydrated them yet.
-		if (!look_again_unless(react_hydrated(el))) {
+		// React may not have hydrated a button that the server rendered, and
+		// IMDb disables "25 more" while reviews are loading.
+		if (!look_again_unless(react_hydrated(el) && !el.disabled)) {
 			return;
 		}
 		if (!el.matches(more_reviews)) {
@@ -544,9 +546,10 @@ if (loc.startsWith("https://www.imdb.com/title/")) {
 		const reviews = document.querySelectorAll("article.user-review-item");
 		const last_review = reviews[reviews.length - 1];
 		// IMDb may disable "25 more" only some time after a click, so click
-		// it at most once while the same review is the last one.
+		// it at most once while the same element is the last review.
 		if (last_review && reviews.length < 150 && !already_clicked.get(last_review)) {
 			already_clicked.set(last_review, true);
+			console.log(`${log_prefix}clicking "25 more" below ${reviews.length} reviews`);
 			el.click();
 		}
 	});

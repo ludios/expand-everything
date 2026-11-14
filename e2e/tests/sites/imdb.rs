@@ -2,7 +2,7 @@
 //! a "Sign in to see all reviews" card, so every test here loads its page as
 //! a user who is logged in.
 
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result};
 use expand_everything_e2e::userscript::CLICKED_TEXTS;
 use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
 use serde::Deserialize;
@@ -72,8 +72,9 @@ fn page_expression() -> String {
 ///
 /// `what` describes what `done` waits for, for the error message.
 ///
-/// Returns an error if the cookies don't log in to IMDb, or if 30 seconds
-/// elapse first.
+/// Returns an error if the cookies haven't logged in to IMDb within 30
+/// seconds of the page opening, or if `done` hasn't been true for 3 seconds
+/// in a row within 30 seconds after that.
 async fn expect(url: &str, what: &str, done: impl Fn(&Page) -> bool) -> Result<()> {
     let cookies = std::env::var_os("E2E_IMDB_COOKIES").context(
         "E2E_IMDB_COOKIES must be the path of a cookies.txt file of a logged-in IMDb session",
@@ -81,15 +82,18 @@ async fn expect(url: &str, what: &str, done: impl Fn(&Page) -> bool) -> Result<(
     with_chrome(async |browser| {
         add_cookies(browser, Path::new(&cookies)).await?;
         let tab = open(browser, url).await?;
-        let logged_in: bool = tab
-            .evaluate_main(
-                r#"document.querySelector(".imdb-header__account-toggle--logged-in") !== null"#,
-            )
-            .await?;
-        ensure!(
-            logged_in,
-            "the cookies in E2E_IMDB_COOKIES don't log in to IMDb"
-        );
+        // IMDb may first serve a challenge page, which then loads the page
+        // itself, so the header may take a while to appear.
+        wait_for(
+            &tab,
+            "IMDb's header to show that the visitor is logged in (if it never does, the cookies \
+             in E2E_IMDB_COOKIES don't log in to IMDb)",
+            r#"document.querySelector(".imdb-header__account-toggle--logged-in") !== null"#,
+            Duration::from_secs(30),
+            Duration::ZERO,
+            |logged_in: &bool| *logged_in,
+        )
+        .await?;
         wait_for(
             &tab,
             what,
