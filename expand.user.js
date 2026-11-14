@@ -1196,12 +1196,15 @@ if (document.getElementById("mastodon")) {
 		// "Show more" (before 5.0)
 		'.content-warning:not(.content-warning--filter) > button',
 		// "Click to show" on media (before 5.0) that none of the user's filters hides
-		'.spoiler-button:not(.spoiler-button--hidden) > .spoiler-button__overlay:enabled:not(:has(.filter-name))',
+		':is(.status, .detailed-status) .spoiler-button:not(.spoiler-button--hidden) > .spoiler-button__overlay:enabled:not(:has(.filter-name))',
 	], el => {
-		if (already_clicked.get(el)) {
+		// Before 5.0, a media gallery gets a new "Click to show" each time its
+		// media is hidden
+		const once = el.closest(".media-gallery") ?? el;
+		if (already_clicked.get(once)) {
 			return;
 		}
-		already_clicked.set(el, true);
+		already_clicked.set(once, true);
 		// A click on the button of one copy of a post toggles every copy, which
 		// the page shows only after the task of the click, so click each button
 		// in a task of its own
