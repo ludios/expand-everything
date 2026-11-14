@@ -8,6 +8,13 @@ use std::time::Duration;
 /// quotes (of a post by "Rohirm") is taller than [`COLLAPSED_HEIGHT`].
 const V2_3_THREAD: &str = "https://www.hwinfo.com/forum/threads/prometheus-adapter-for-hwinfo-grafana-dashboard.6281/page-5";
 
+/// A page of a thread on a site that runs a XenForo before 2.2, in which the
+/// "Click to expand..." link of a quote lacks the `js-expandLink` class and
+/// the `role` attribute that XenForo 2.3 gives it. 5 of the page's 25 quotes
+/// are taller than [`COLLAPSED_HEIGHT`].
+const OLDER_THREAD: &str =
+    "https://forum.allaboutcircuits.com/threads/the-case-against-quantum-computing.154610/page-2";
+
 /// The height, in pixels, above which XenForo's default style cuts off the
 /// text of a quote that isn't expanded.
 const COLLAPSED_HEIGHT: u32 = 150;
@@ -68,4 +75,9 @@ async fn check_quotes_are_expanded(url: &str) -> Result<()> {
 #[tokio::test]
 async fn quotes_are_expanded() -> Result<()> {
     check_quotes_are_expanded(V2_3_THREAD).await
+}
+
+#[tokio::test]
+async fn quotes_are_expanded_on_xenforo_before_2_2() -> Result<()> {
+    check_quotes_are_expanded(OLDER_THREAD).await
 }

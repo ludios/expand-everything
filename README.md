@@ -62,7 +62,7 @@ Then, visit [expand.user.js](https://raw.githubusercontent.com/ludios/expand-eve
 - https://nextdoor.com/ (expand posts and comments)
 - https://store.steampowered.com/ (expand review text, game info)
 - https://www.patreon.com/ (expand posts, load more posts, load all comments on post pages)
-- https://www.hwinfo.com/forum/ (expand quote blocks)
+- https://www.hwinfo.com/forum/ and many other XenForo sites (expand quote blocks)
 - https://mastodon.social/ and many other Mastodon sites (expand posts with content warnings, show sensitive media)
 
 For test pages, see the "Test page:" comments in expand.user.js. The

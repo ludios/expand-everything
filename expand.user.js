@@ -274,7 +274,136 @@
 // @match       https://zirk.us/*
 //
 // XenForo sites
+// @match       https://68kmla.org/bb/*
+// @match       https://absolutewrite.com/forums/*
+// @match       https://arstechnica.com/civis/*
+// @match       https://audiokarma.org/forums/*
+// @match       https://bcgforums.com/*
+// @match       https://cafesaxophone.com/*
+// @match       https://cameraderie.org/*
+// @match       https://canonrumorsforum.com/*
+// @match       https://chandoo.org/forum/*
+// @match       https://clubsnap.com/*
+// @match       https://codeforum.org/*
+// @match       https://community.preproom.org/*
+// @match       https://creativespark.art/*
+// @match       https://designforums.net/*
+// @match       https://diysolarforum.com/*
+// @match       https://endless-sphere.com/sphere/*
+// @match       https://engraverscafe.com/*
+// @match       https://forum.allaboutcircuits.com/*
+// @match       https://forum.gamemaker.io/*
+// @match       https://forum.pedalpcb.com/*
+// @match       https://forum.pjrc.com/*
+// @match       https://forum.proxmox.com/*
+// @match       https://forum.vcfed.org/*
+// @match       https://forum.wordreference.com/*
+// @match       https://forums.anandtech.com/*
+// @match       https://forums.androidcentral.com/*
+// @match       https://forums.freebsd.org/*
+// @match       https://forums.macrumors.com/*
+// @match       https://forums.mikeholt.com/*
+// @match       https://forums.overclockers.co.uk/*
+// @match       https://forums.overclockers.com.au/*
+// @match       https://forums.rpgmakerweb.com/*
+// @match       https://forums.servethehome.com/*
+// @match       https://forums.spacebattles.com/*
+// @match       https://forums.studentdoctor.net/*
+// @match       https://forums.sufficientvelocity.com/*
+// @match       https://forums.tomsguide.com/*
+// @match       https://forums.tomshardware.com/*
+// @match       https://forums.whathifi.com/*
+// @match       https://forums.windowscentral.com/*
+// @match       https://hardforum.com/*
+// @match       https://homerecording.com/bbs/*
+// @match       https://*.largeformatphotography.info/forum/*
+// @match       https://latindiscussion.org/*
+// @match       https://malwaretips.com/*
+// @match       https://mathforums.com/*
+// @match       https://mathhelpforum.com/*
+// @match       https://*.mythicscribes.com/community/*
+// @match       https://nikonites.com/forum/*
+// @match       https://obsproject.com/forum/*
+// @match       https://oscraps.com/community/*
+// @match       https://pinkfishmedia.net/forum/*
+// @match       https://pixinsight.com/forum/*
+// @match       https://*.rangefinderforum.com/*
+// @match       https://reduser.net/*
+// @match       https://sawmillcreek.org/*
+// @match       https://secondlifestorage.com/*
+// @match       https://talkweather.com/*
+// @match       https://thegearforum.com/*
+// @match       https://thetolkien.forum/*
+// @match       https://tinkerdifferent.com/*
+// @match       https://tonmo.com/*
+// @match       https://vi-control.net/community/*
+// @match       https://writingforum.org/*
+// @match       https://www.access-programmers.co.uk/forums/*
+// @match       https://www.alternatehistory.com/forum/*
+// @match       https://www.amibay.com/*
+// @match       https://www.audiosciencereview.com/forum/*
+// @match       https://www.avforums.com/*
+// @match       https://www.avsforum.com/*
+// @match       https://www.birdforum.net/*
+// @match       https://www.candlepowerforums.com/*
+// @match       https://www.computerbase.de/forum/*
+// @match       https://www.controlbooth.com/*
+// @match       https://www.dance-forums.com/*
+// @match       https://www.dissensus.com/*
+// @match       https://www.diyaudio.com/community/*
+// @match       https://www.dpreview.com/forums/*
+// @match       https://www.dvxuser.com/*
+// @match       https://www.edaboard.com/*
+// @match       https://www.electro-tech-online.com/*
+// @match       https://www.elevenforum.com/*
+// @match       https://www.eng-tips.com/*
+// @match       https://www.filmschool.org/*
+// @match       https://www.fujix-forum.com/*
+// @match       https://www.futureproducers.com/forums/*
+// @match       https://www.hardwareluxx.de/community/*
+// @match       https://www.head-fi.org/*
+// @match       https://www.hobby-machinist.com/*
+// @match       https://www.homemodelenginemachinist.com/*
+// @match       https://www.hometheaterforum.com/community/*
 // @match       https://www.hwinfo.com/forum/*
+// @match       https://www.keyboardforums.com/*
+// @match       https://www.lightroomqueen.com/community/*
+// @match       https://www.linux.org/*
+// @match       https://www.metabunk.org/*
+// @match       https://www.mu-43.com/*
+// @match       https://www.nikoncafe.com/*
+// @match       https://www.orbiter-forum.com/*
+// @match       https://www.overclock.net/*
+// @match       https://www.overclockers.com/forums/*
+// @match       https://www.pcreview.co.uk/*
+// @match       https://www.penturners.org/*
+// @match       https://www.practicalmachinist.com/forum/*
+// @match       https://www.sciforums.com/*
+// @match       https://www.sevenstring.org/*
+// @match       https://www.sffchronicles.com/*
+// @match       https://www.sffworld.com/forum/*
+// @match       https://www.signs101.com/*
+// @match       https://www.snbforums.com/*
+// @match       https://www.studentfilms.com/*
+// @match       https://www.synoforum.com/*
+// @match       https://www.sysnative.com/forums/*
+// @match       https://www.talkbass.com/*
+// @match       https://www.talkclassical.com/*
+// @match       https://www.talkphotography.co.uk/*
+// @match       https://www.tascamforums.com/*
+// @match       https://www.techguy.org/*
+// @match       https://www.techpowerup.com/forums/*
+// @match       https://www.techspot.com/community/*
+// @match       https://www.tek-tips.com/*
+// @match       https://www.thecodingforums.com/*
+// @match       https://www.thegearpage.net/board/*
+// @match       https://www.thephotoforum.com/*
+// @match       https://www.truenas.com/community/*
+// @match       https://www.ukworkshop.co.uk/*
+// @match       https://www.worldliteratureforum.com/forum/*
+// @match       https://www.writingforums.com/*
+// @match       https://xdaforums.com/*
+// @match       https://xenforo.com/community/*
 //
 // Stack Exchange sites, their metas (e.g. meta.superuser.com), and their other subdomains (e.g. chat.stackexchange.com)
 // @match       https://*.askubuntu.com/*
@@ -985,14 +1114,17 @@ if (loc.startsWith("https://store.steampowered.com/")) {
 	});
 }
 
-// Test page: https://www.hwinfo.com/forum/threads/prometheus-adapter-for-hwinfo-grafana-dashboard.6281/page-5
+// Test page: https://www.hwinfo.com/forum/threads/prometheus-adapter-for-hwinfo-grafana-dashboard.6281/page-5 (XenForo 2.3)
 // Expected: "Rohirm said:" quote at the bottom is expanded; "Click to expand..." is not visible
-if (loc.startsWith("https://www.hwinfo.com/forum/")) {
+//
+// Test page: https://forum.allaboutcircuits.com/threads/the-case-against-quantum-computing.154610/page-2 (XenForo before 2.2)
+// Expected: all quotes are expanded; "Click to expand..." is not visible
+if (document.documentElement.id === "XF") {
 	// A quote that XenForo hasn't expanded
 	const collapsed_quote = '.bbCodeBlock--expandable:not(.is-expanded)';
 	observe(100, [
 		// "Click to expand..."
-		`${collapsed_quote} div.js-expandLink > a[role="button"]`,
+		`${collapsed_quote} .bbCodeBlock-expandLink > a`,
 	], el => {
 		el.click();
 		// XenForo ignores a click until its scripts have set up the page
