@@ -1,25 +1,28 @@
 //! Look at a page as the userscript leaves it, to write or fix a test.
 //!
-//!     cargo run --example probe -- URL [--cookies COOKIES_TXT] [--wait SECONDS] [--html FILE] [EXPRESSION...]
+//!     cargo run --example probe -- URL [--login SITE | --cookies COOKIES_TXT] [--wait SECONDS] [--html FILE] [EXPRESSION...]
 //!
 //! Opens URL in Chrome with the userscript injected, waits SECONDS (default
 //! 10), and then prints each click that the userscript made and the JSON value
-//! of each JavaScript EXPRESSION (evaluated in the page's main world). With
-//! `--cookies`, first gives Chrome the cookies in COOKIES_TXT (a file in the
-//! Netscape cookies.txt format), for example to load URL as a user who is
-//! logged in. With `--html`, saves the page's DOM to FILE before printing
-//! anything, to study it without loading the page again.
+//! of each JavaScript EXPRESSION (evaluated in the page's main world). To
+//! load URL as a user who is logged in, `--login` first gives Chrome the
+//! cookies that a test's `with_login(SITE, ...)` uses (see
+//! `expand_everything_e2e::cookies_txt`), and `--cookies` those in
+//! COOKIES_TXT (a file in the Netscape cookies.txt format). With `--html`,
+//! saves the page's DOM to FILE before printing anything, to study it without
+//! loading the page again.
 
 use anyhow::{Context, Result, bail};
 use expand_everything_e2e::userscript::HARNESS_GLOBAL;
-use expand_everything_e2e::{add_cookies, open, with_chrome};
-use std::path::Path;
+use expand_everything_e2e::{add_cookies, cookies_txt, open, with_chrome};
+use std::path::PathBuf;
 use std::time::Duration;
 
 /// What the command line asks for.
 struct Args {
     url: String,
-    cookies: Option<String>,
+    /// The cookies.txt file that `--login` or `--cookies` asks for.
+    cookies: Option<PathBuf>,
     wait: Duration,
     html: Option<String>,
     expressions: Vec<String>,
@@ -40,7 +43,14 @@ fn parse_args() -> Result<Args> {
                 wait = Duration::try_from_secs_f64(seconds.parse().context("parsing --wait")?)
                     .context("--wait needs a number of seconds")?;
             }
-            "--cookies" => cookies = Some(args.next().context("--cookies needs a value")?),
+            "--login" => {
+                cookies = Some(cookies_txt(&args.next().context("--login needs a value")?)?)
+            }
+            "--cookies" => {
+                cookies = Some(PathBuf::from(
+                    args.next().context("--cookies needs a value")?,
+                ));
+            }
             "--html" => html = Some(args.next().context("--html needs a value")?),
             _ if arg.starts_with("--") => bail!("unknown option {arg}"),
             _ if url.is_none() => url = Some(arg),
@@ -49,7 +59,7 @@ fn parse_args() -> Result<Args> {
     }
     let Some(url) = url else {
         bail!(
-            "usage: probe URL [--cookies COOKIES_TXT] [--wait SECONDS] [--html FILE] [EXPRESSION...]"
+            "usage: probe URL [--login SITE | --cookies COOKIES_TXT] [--wait SECONDS] [--html FILE] [EXPRESSION...]"
         );
     };
     Ok(Args {
@@ -66,7 +76,7 @@ async fn main() -> Result<()> {
     let args = parse_args()?;
     with_chrome(async |browser| {
         if let Some(path) = &args.cookies {
-            add_cookies(browser, Path::new(path)).await?;
+            add_cookies(browser, path).await?;
         }
         let tab = open(browser, &args.url).await?;
         tokio::time::sleep(args.wait).await;
