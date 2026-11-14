@@ -11,6 +11,7 @@ mod cnn;
 mod gist;
 mod github;
 mod goodreads;
+mod imdb;
 mod lesswrong;
 mod mastodon;
 mod nytimes;

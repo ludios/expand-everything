@@ -299,7 +299,6 @@ function without_fragment(url) {
 }
 
 const log_prefix = "Expand Everything: ";
-let page_counter = 0;
 let mutations = 0;
 let observer = null;
 // The function that passes every element that the selectors given to
@@ -358,7 +357,6 @@ function observe(max_mutations, selectors, callback) {
 		clearTimeout(look_again_timer);
 		look_again_timer = null;
 		look_agains = 0;
-		page_counter = 0;
 		reobserve();
 	}
 
@@ -516,34 +514,40 @@ if (loc.startsWith("https://www.goodreads.com/review/list/")) {
 	});
 }
 
-// Test page: https://www.imdb.com/title/tt0809535/reviews?ref_=tt_urv
-// Expected: all the user film reviews are expanded and not cut off
-// Expected: all the "Warning: Spoilers" reviews are showing
+// Test page (logged in): https://www.imdb.com/title/tt0809535/reviews/
+// Expected: all the lengthy user film reviews are expanded
+// Expected: all the reviews hidden because of spoilers are shown
 //
-// Test page: https://www.imdb.com/title/tt6710474/reviews?ref_=tt_urv
-// Expected: all the user film reviews are expanded and not cut off
-// Expected: all the "Warning: Spoilers" reviews are showing
-// Expected: "Load more" is clicked 5 times but not more
+// Test page (logged in): https://www.imdb.com/title/tt6710474/reviews/
+// Expected: "25 more" is clicked until the page has 150 reviews, which are expanded and shown too
 //
-// (We don't want to click "Load more" so many times that we slow down
+// (We don't want to click "25 more" so many times that we slow down
 // the page and also risk getting banned.)
 if (loc.startsWith("https://www.imdb.com/title/")) {
+	// "25 more" below the reviews, which is disabled while reviews are loading
+	const more_reviews = '[data-testid="tturv-pagination"] .single-page-see-more-button > button:not(:disabled)';
 	observe(100, [
-		// Longer film reviews by users and reviews with spoilers
-		'.ipl-expander:not(.ipl-expander--expanded) > div > div',
-		// "Load more" button at the end of a set of reviews
-		'button.ipl-load-more__button',
+		// "Spoiler" in place of a review with spoilers
+		'button.review-spoiler-button',
+		// "See more" over the end of a lengthy review
+		'[data-testid="review-overflow"] > button.ipc-overflowText-overlay',
+		more_reviews,
 	], el => {
-		if (el.tagName == "BUTTON") {
-			if (page_counter < 5) {
-				page_counter++;
-				console.log(`${log_prefix}page counter: ${page_counter}`);
-				el.click();
-			}
-		} else {
-			// Avoid MutationObserver loop: imdb adds .ipl-expander--expanded
-			// to the element some time _after_ you click.
+		// The server renders all of these, so React may not have hydrated them yet.
+		if (!look_again_unless(react_hydrated(el))) {
+			return;
+		}
+		if (!el.matches(more_reviews)) {
 			click_if_unclicked(el);
+			return;
+		}
+		const reviews = document.querySelectorAll("article.user-review-item");
+		const last_review = reviews[reviews.length - 1];
+		// IMDb may disable "25 more" only some time after a click, so click
+		// it at most once while the same review is the last one.
+		if (last_review && reviews.length < 150 && !already_clicked.get(last_review)) {
+			already_clicked.set(last_review, true);
+			el.click();
 		}
 	});
 }
