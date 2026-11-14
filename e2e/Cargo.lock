@@ -2187,7 +2187,7 @@ dependencies = [
 [[package]]
 name = "zendriver"
 version = "0.5.28"
-source = "git+https://github.com/ludios/zendriver-rs?branch=prime#e5d0be1f4a84c50c3e386f5e1f059123a4cd0d96"
+source = "git+https://github.com/ludios/zendriver-rs?branch=prime#398e38513eb46d0dda74809082cada6c81b3a460"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -2218,7 +2218,7 @@ dependencies = [
 [[package]]
 name = "zendriver-stealth"
 version = "0.12.7"
-source = "git+https://github.com/ludios/zendriver-rs?branch=prime#e5d0be1f4a84c50c3e386f5e1f059123a4cd0d96"
+source = "git+https://github.com/ludios/zendriver-rs?branch=prime#398e38513eb46d0dda74809082cada6c81b3a460"
 dependencies = [
  "async-trait",
  "chromiumoxide_cdp",
@@ -2237,7 +2237,7 @@ dependencies = [
 [[package]]
 name = "zendriver-transport"
 version = "0.3.1"
-source = "git+https://github.com/ludios/zendriver-rs?branch=prime#e5d0be1f4a84c50c3e386f5e1f059123a4cd0d96"
+source = "git+https://github.com/ludios/zendriver-rs?branch=prime#398e38513eb46d0dda74809082cada6c81b3a460"
 dependencies = [
  "async-trait",
  "chromiumoxide_cdp",
