@@ -1,14 +1,14 @@
 //! Look at a page as the userscript leaves it, to write or fix a test.
 //!
-//!     cargo run --example probe -- URL [--cookies FILE] [--wait SECONDS] [--html FILE] [EXPRESSION...]
+//!     cargo run --example probe -- URL [--cookies COOKIES_TXT] [--wait SECONDS] [--html FILE] [EXPRESSION...]
 //!
 //! Opens URL in Chrome with the userscript injected, waits SECONDS (default
 //! 10), and then prints each click that the userscript made and the JSON value
 //! of each JavaScript EXPRESSION (evaluated in the page's main world). With
-//! `--cookies`, first gives Chrome the cookies in the cookies.txt FILE, such
-//! as to load URL as a user who is logged in. With `--html`, saves the page's
-//! DOM to FILE before printing anything, to study it without loading the
-//! page again.
+//! `--cookies`, first gives Chrome the cookies in COOKIES_TXT (a file in the
+//! Netscape cookies.txt format), for example to load URL as a user who is
+//! logged in. With `--html`, saves the page's DOM to FILE before printing
+//! anything, to study it without loading the page again.
 
 use anyhow::{Context, Result, bail};
 use expand_everything_e2e::userscript::HARNESS_GLOBAL;
@@ -48,7 +48,9 @@ fn parse_args() -> Result<Args> {
         }
     }
     let Some(url) = url else {
-        bail!("usage: probe URL [--cookies FILE] [--wait SECONDS] [--html FILE] [EXPRESSION...]");
+        bail!(
+            "usage: probe URL [--cookies COOKIES_TXT] [--wait SECONDS] [--html FILE] [EXPRESSION...]"
+        );
     };
     Ok(Args {
         url,
