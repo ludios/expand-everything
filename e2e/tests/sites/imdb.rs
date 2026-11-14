@@ -15,6 +15,11 @@ use zendriver::Tab;
 /// review off under a "See more" button.
 const FEATURED_REVIEW: &str = "https://www.imdb.com/title/tt0809535/reviews/?featured=rw2027839";
 
+/// [`FEATURED_REVIEW`] on the German pages, which IMDb serves under `/de/`.
+/// The "See more" button is "Mehr anzeigen" there.
+const GERMAN_FEATURED_REVIEW: &str =
+    "https://www.imdb.com/de/title/tt0809535/reviews/?featured=rw2027839";
+
 /// The reviews of a film that has only 8 of them. The page hides some
 /// because of spoilers, each behind a "Spoiler" button, and cuts off the
 /// lengthy ones, each under a "See more" button.
@@ -149,6 +154,20 @@ async fn featured_review_is_expanded() -> Result<()> {
             tab,
             "the userscript to click \"See more\" on the review",
             |p| p.reviews == 1 && p.cut_off == 0 && p.clicks_on("See more") > 0,
+        )
+        .await?;
+        Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn featured_review_is_expanded_on_the_german_pages() -> Result<()> {
+    with_page(GERMAN_FEATURED_REVIEW, Visitor::LoggedOut, async |tab| {
+        expect(
+            tab,
+            "the userscript to click \"Mehr anzeigen\" on the review",
+            |p| p.reviews == 1 && p.cut_off == 0 && p.clicks_on("Mehr anzeigen") > 0,
         )
         .await?;
         Ok(())

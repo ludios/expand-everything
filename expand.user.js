@@ -10,6 +10,7 @@
 // @match       https://www.goodreads.com/book/show/*
 // @match       https://www.goodreads.com/review/list/*
 // @match       https://www.imdb.com/title/*/reviews*
+// @match       https://www.imdb.com/*/title/*/reviews*
 // @match       https://www.youtube.com/*
 // @match       https://*.linkedin.com/*
 // @match       https://tvtropes.org/*
@@ -518,6 +519,9 @@ if (loc.startsWith("https://www.goodreads.com/review/list/")) {
 // Expected: the review is expanded
 // Expected: after making the window much narrower, the review is still not cut off
 //
+// Test page: https://www.imdb.com/de/title/tt0809535/reviews/?featured=rw2027839
+// Expected: the review is expanded
+//
 // Test page (logged in): https://www.imdb.com/title/tt0809535/reviews/
 // Expected: all the lengthy user film reviews are expanded
 // Expected: all the reviews hidden because of spoilers are shown
@@ -528,7 +532,9 @@ if (loc.startsWith("https://www.goodreads.com/review/list/")) {
 //
 // (We don't want to click "25 more" so many times that we slow down
 // the page and also risk getting banned.)
-if (loc.startsWith("https://www.imdb.com/title/")) {
+//
+// The path may start with a language, as in /de/title/.
+if (/^https:\/\/www\.imdb\.com\/([^\/]+\/)?title\//.test(loc)) {
 	// "25 more" below the reviews
 	const more_reviews = '[data-testid="tturv-pagination"] .single-page-see-more-button > button';
 	// A review's text that IMDb has measured or expanded, and has limited to the height that

@@ -390,6 +390,9 @@ mod tests {
         assert!(script.matches("https://github.com/rust-lang/rust/issues/57640"));
         assert!(script.matches("https://gist.github.com/x/5095670735ba941a6090a69fce4183df"));
         assert!(script.matches("https://www.goodreads.com/book/show/1-x"));
+        assert!(script.matches("https://www.imdb.com/title/tt1/reviews/?featured=rw1"));
+        assert!(script.matches("https://www.imdb.com/de/title/tt1/reviews/"));
+        assert!(!script.matches("https://www.imdb.com/title/tt1/"));
         assert!(script.matches("https://www.criticker.com/film/X/"));
         assert!(script.matches("https://www.cnn.com/2026/11/12/business/live-news/x"));
         assert!(script.matches("https://edition.cnn.com/2026/11/12/business/live-news/x"));
