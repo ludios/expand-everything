@@ -969,14 +969,30 @@ if (loc.startsWith("https://www.hwinfo.com/forum/")) {
 	});
 }
 
-// Test page: https://www.patreon.com/comprehensiblejapanese/posts
-// Expected: all posts expanded; "Continue reading" is not visible
+// Test page: https://www.patreon.com/gwern
+// Expected: the post "New reward tier: Evernotes firehose" is shown whole, without a fade over its last lines
+//
+// Test page: https://www.patreon.com/posts/beautiful-to-2746322
+// Expected: all long comments are expanded; "Show more" is not visible
 if (loc.startsWith("https://www.patreon.com/")) {
-	observe(10, [
-		// "Continue reading"
-		'div[class][data-tag="post-content-collapse"] > div[class] > button[class]',
+	// A text that is cut off, after its "Show more" button or "View post" link in the DOM
+	const cut_off = 'div[data-is-measured]';
+	// A public post on a creator's page, above "View post"
+	const cut_off_above_link = `div:has(> div > div > a[aria-expanded="false"]) > ${cut_off}`;
+	observe(1000, [
+		// "Show more"
+		`div:has(> ${cut_off}) > div > button[aria-expanded="false"]`,
+		cut_off_above_link,
 	], el => {
-		el.click();
+		if (el.matches(cut_off_above_link)) {
+			// "View post" leads to another page, but this page has the whole text
+			el.style.height = "auto";
+			for (const fade of el.querySelectorAll(':scope > [class*="_fade"]')) {
+				fade.style.display = "none";
+			}
+		} else if (look_again_unless(react_hydrated(el))) {
+			click_if_unclicked(el);
+		}
 	});
 }
 

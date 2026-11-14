@@ -16,6 +16,7 @@ mod imdb;
 mod lesswrong;
 mod mastodon;
 mod nytimes;
+mod patreon;
 mod steam;
 mod substack;
 mod tvtropes;
