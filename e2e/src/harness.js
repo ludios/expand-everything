@@ -42,13 +42,9 @@ function install_harness(harness_global, match_regexes, userscript_source_url, s
 				}
 			};
 			if (start_after_load) {
-				// The timeout ends after the listeners of `load` have run.
-				const run_after_load = () => setTimeout(run_and_record, 0);
-				if (document.readyState === "complete") {
-					run_after_load();
-				} else {
-					window.addEventListener("load", run_after_load, { once: true });
-				}
+				// The timeout's callback runs after every listener of this
+				// `load` event has run.
+				window.addEventListener("load", () => setTimeout(run_and_record, 0), { once: true });
 			} else if (document.readyState === "loading") {
 				window.addEventListener("DOMContentLoaded", async () => {
 					await 0; // as Violentmonkey does
