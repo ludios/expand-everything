@@ -1,8 +1,7 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use expand_everything_e2e::userscript::CLICKED_TEXTS;
-use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
+use expand_everything_e2e::{open, wait_for, with_chrome, with_login};
 use serde::Deserialize;
-use std::path::Path;
 use std::time::Duration;
 
 /// A book whose page cuts off the text about its author and many of its
@@ -196,7 +195,7 @@ async fn spoiler_passages_are_shown() -> Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_GOODREADS_COOKIES, the path of a cookies.txt file of a logged-in Goodreads session"]
+#[ignore = "needs a login (see `with_login`)"]
 async fn review_list_reviews_are_expanded_when_logged_in() -> Result<()> {
     #[derive(Debug, Deserialize)]
     struct List {
@@ -207,18 +206,9 @@ async fn review_list_reviews_are_expanded_when_logged_in() -> Result<()> {
         cut_off: usize,
         clicked: Vec<String>,
     }
-    let cookies = std::env::var_os("E2E_GOODREADS_COOKIES").context(
-        "E2E_GOODREADS_COOKIES must be the path of a cookies.txt file of a logged-in Goodreads session",
-    )?;
-    with_chrome(async |browser| {
-        add_cookies(browser, Path::new(&cookies)).await?;
-        let tab = open(browser, REVIEW_LIST)
-            .await
-            .context(
-                "opening the review list (if no @match line allows the page, Goodreads has \
-                 redirected to its sign-in page, because the cookies in E2E_GOODREADS_COOKIES \
-                 don't log in)",
-            )?;
+    // Goodreads redirects a visitor who isn't logged in to its sign-in page.
+    let logged_in = r#"location.pathname.startsWith("/review/list/")"#;
+    with_login("goodreads", REVIEW_LIST, logged_in, async |tab| {
         // Each review has its text twice: cut off in `freeTextContainer{id}`,
         // and in full in `freeText{id}`, which "...more" shows instead.
         let expression = format!(
@@ -232,7 +222,7 @@ async fn review_list_reviews_are_expanded_when_logged_in() -> Result<()> {
             }})()"#
         );
         wait_for(
-            &tab,
+            tab,
             "the userscript to click \"...more\" on every long review",
             &expression,
             Duration::from_secs(30),

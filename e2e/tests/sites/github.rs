@@ -1,8 +1,7 @@
-use anyhow::{Context, Result, ensure};
+use anyhow::Result;
 use expand_everything_e2e::userscript::{CLICKED_TEXTS, OBSERVING};
-use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
+use expand_everything_e2e::{open, wait_for, with_chrome, with_login};
 use serde::Deserialize;
-use std::path::Path;
 use std::time::Duration;
 use zendriver::{Browser, Tab};
 
@@ -307,23 +306,13 @@ async fn details_closed_by_the_user_stay_closed_after_going_to_a_fragment() -> R
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_GITHUB_COOKIES, the path of a cookies.txt file of a logged-in GitHub session"]
+#[ignore = "needs a login (see `with_login`)"]
 async fn minimized_pull_request_comments_are_expanded_when_logged_in() -> Result<()> {
-    let cookies = std::env::var_os("E2E_GITHUB_COOKIES").context(
-        "E2E_GITHUB_COOKIES must be the path of a cookies.txt file of a logged-in GitHub session",
-    )?;
-    with_chrome(async |browser| {
-        add_cookies(browser, Path::new(&cookies)).await?;
-        let tab = open(browser, PULL_REQUEST).await?;
-        let login: String = tab
-            .evaluate_main(r#"document.querySelector('meta[name="user-login"]')?.content ?? """#)
-            .await?;
-        ensure!(
-            !login.is_empty(),
-            "the cookies in E2E_GITHUB_COOKIES don't log in to GitHub"
-        );
+    // The name of the user who is logged in, if any
+    let logged_in = r#"document.querySelector('meta[name="user-login"]')?.content"#;
+    with_login("github", PULL_REQUEST, logged_in, async |tab| {
         expect_expanded(
-            &tab,
+            tab,
             "the userscript to load every hidden item, and to click \"Show comment\" on every minimized comment",
             &format!(
                 r#"{NO_HIDDEN_ITEMS}

@@ -3,11 +3,10 @@
 //! plus the one review that the page's address names (if it names one). So
 //! the tests of a film's reviews load their page as a user who is logged in.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use expand_everything_e2e::userscript::CLICKED_TEXTS;
-use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
+use expand_everything_e2e::{open, wait_for, with_chrome, with_login};
 use serde::Deserialize;
-use std::path::Path;
 use std::time::Duration;
 use zendriver::Tab;
 
@@ -33,8 +32,7 @@ const MANY_REVIEWS: &str = "https://www.imdb.com/title/tt6710474/reviews/";
 enum Visitor {
     /// Someone who isn't logged in to IMDb.
     LoggedOut,
-    /// The user whose cookies.txt file the environment variable
-    /// `E2E_IMDB_COOKIES` names.
+    /// The user of the IMDb session that [`with_login`] finds the cookies of.
     LoggedIn,
 }
 
@@ -99,31 +97,13 @@ async fn with_page(
     visitor: Visitor,
     work: impl AsyncFnOnce(&Tab) -> Result<()>,
 ) -> Result<()> {
-    let mut cookies = None;
     if let Visitor::LoggedIn = visitor {
-        cookies = Some(std::env::var_os("E2E_IMDB_COOKIES").context(
-            "E2E_IMDB_COOKIES must be the path of a cookies.txt file of a logged-in IMDb session",
-        )?);
+        // The header's account menu, as it is for a user who is logged in
+        let logged_in = r#"document.querySelector(".imdb-header__account-toggle--logged-in")"#;
+        return with_login("imdb", url, logged_in, work).await;
     }
     with_chrome(async |browser| {
-        if let Some(cookies) = &cookies {
-            add_cookies(browser, Path::new(cookies)).await?;
-        }
         let tab = open(browser, url).await?;
-        if cookies.is_some() {
-            // IMDb may first serve a challenge page, which then loads the
-            // page itself, so the header may take a while to appear.
-            wait_for(
-                &tab,
-                "IMDb's header to show that the visitor is logged in (if it never does, the \
-                 cookies in E2E_IMDB_COOKIES don't log in to IMDb)",
-                r#"document.querySelector(".imdb-header__account-toggle--logged-in") !== null"#,
-                Duration::from_secs(30),
-                Duration::ZERO,
-                |logged_in: &bool| *logged_in,
-            )
-            .await?;
-        }
         work(&tab).await
     })
     .await
@@ -204,7 +184,7 @@ async fn expanded_review_is_not_cut_off_once_narrower() -> Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_IMDB_COOKIES, the path of a cookies.txt file of a logged-in IMDb session"]
+#[ignore = "needs a login (see `with_login`)"]
 async fn lengthy_reviews_are_expanded() -> Result<()> {
     with_page(FEW_REVIEWS, Visitor::LoggedIn, async |tab| {
         expect(
@@ -219,7 +199,7 @@ async fn lengthy_reviews_are_expanded() -> Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_IMDB_COOKIES, the path of a cookies.txt file of a logged-in IMDb session"]
+#[ignore = "needs a login (see `with_login`)"]
 async fn spoiler_reviews_are_shown() -> Result<()> {
     with_page(FEW_REVIEWS, Visitor::LoggedIn, async |tab| {
         expect(
@@ -234,7 +214,7 @@ async fn spoiler_reviews_are_shown() -> Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_IMDB_COOKIES, the path of a cookies.txt file of a logged-in IMDb session"]
+#[ignore = "needs a login (see `with_login`)"]
 async fn more_reviews_are_loaded_until_150() -> Result<()> {
     // The userscript must click "25 more" just once for each 25 reviews that
     // it loads, although IMDb may disable the button only some time after a

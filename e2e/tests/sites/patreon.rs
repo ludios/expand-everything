@@ -1,8 +1,7 @@
-use anyhow::{Context, Result, ensure};
+use anyhow::Result;
 use expand_everything_e2e::userscript::CLICKED_TEXTS;
-use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
+use expand_everything_e2e::{open, wait_for, with_chrome, with_login};
 use serde::Deserialize;
-use std::path::Path;
 use std::time::Duration;
 
 /// The page of a creator who last posted in 2019. One of its public posts
@@ -310,7 +309,7 @@ async fn replies_that_the_user_collapses_stay_collapsed() -> Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_PATREON_COOKIES, the path of a cookies.txt file of a Patreon session of a member of the creator of MEMBER_POSTS_PAGE"]
+#[ignore = "needs a login (see `with_login`), as a member of the creator of MEMBER_POSTS_PAGE"]
 async fn member_posts_are_expanded_and_loaded_when_logged_in() -> Result<()> {
     #[derive(Debug, Deserialize)]
     struct Posts {
@@ -327,19 +326,10 @@ async fn member_posts_are_expanded_and_loaded_when_logged_in() -> Result<()> {
         load_more_comments: usize,
         clicked: Vec<String>,
     }
-    let cookies = std::env::var_os("E2E_PATREON_COOKIES").context(
-        "E2E_PATREON_COOKIES must be the path of a cookies.txt file of a Patreon session of a \
-         member of the creator of MEMBER_POSTS_PAGE",
-    )?;
-    with_chrome(async |browser| {
-        add_cookies(browser, Path::new(&cookies)).await?;
-        let tab = open(browser, MEMBER_POSTS_PAGE).await?;
-        let path: String = tab.evaluate_main("location.pathname").await?;
-        ensure!(
-            path.ends_with("/posts"),
-            "Patreon redirected to {path}: are the cookies in E2E_PATREON_COOKIES those of a \
-             member of the creator?"
-        );
+    // Patreon redirects anyone who isn't a member of the creator to the
+    // creator's page.
+    let logged_in = r#"location.pathname.endsWith("/posts")"#;
+    with_login("patreon", MEMBER_POSTS_PAGE, logged_in, async |tab| {
         let expression = format!(
             r#"(() => {{
                 const posts = [...document.querySelectorAll('div[data-tag="post-content"]')];
@@ -361,7 +351,7 @@ async fn member_posts_are_expanded_and_loaded_when_logged_in() -> Result<()> {
         // comments" buttons that are left show that the page had some for
         // the userscript to leave alone.
         wait_for(
-            &tab,
+            tab,
             "the userscript to load 100 posts and expand the long ones, without loading comments",
             &expression,
             Duration::from_secs(90),

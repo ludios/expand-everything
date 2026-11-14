@@ -1,8 +1,7 @@
-use anyhow::{Context, Result, ensure};
+use anyhow::{Result, ensure};
 use expand_everything_e2e::userscript::CLICKED_TEXTS;
-use expand_everything_e2e::{add_cookies, open, wait_for, with_chrome};
+use expand_everything_e2e::{wait_for, with_login};
 use serde::Deserialize;
-use std::path::Path;
 use std::time::Duration;
 use zendriver::Tab;
 
@@ -127,52 +126,31 @@ async fn change_page(tab: &Tab, times: usize) -> Result<()> {
     Ok(())
 }
 
-/// Open [`FILM`] as the user whom the cookies in the file named by the
-/// environment variable `E2E_CRITICKER_COOKIES` log in, and run `work` with
-/// the tab.
+/// Open [`FILM`] as the user of the Criticker session that [`with_login`]
+/// finds the cookies of, and run `work` with the tab.
 ///
-/// Returns what `work` returns, or an error if the variable isn't set, the
-/// page doesn't open, the cookies don't log in, or the account doesn't have
-/// "Compact view" switched on.
+/// Returns what `work` returns, or an error if the page doesn't open, the
+/// cookies don't log in, or the account doesn't have "Compact view" switched
+/// on.
 async fn with_film(work: impl AsyncFnOnce(&Tab) -> Result<()>) -> Result<()> {
-    #[derive(Debug, Deserialize)]
-    struct Session {
-        logged_in: bool,
-        compact_view: bool,
-        title: String,
-    }
-    let cookies = std::env::var_os("E2E_CRITICKER_COOKIES").context(
-        "E2E_CRITICKER_COOKIES must be the path of a cookies.txt file of a logged-in Criticker session",
-    )?;
-    with_chrome(async |browser| {
-        add_cookies(browser, Path::new(&cookies)).await?;
-        let tab = open(browser, FILM).await?;
-        let session: Session = tab
-            .evaluate_main(
-                r#"({
-                    logged_in: document.querySelector('a[href$="/signout/"]') !== null,
-                    compact_view: document.querySelector(".tip_ratings_toggle.on") !== null,
-                    title: document.title,
-                })"#,
-            )
+    // The link that signs the user out
+    let logged_in = r#"document.querySelector('a[href$="/signout/"]')"#;
+    with_login("criticker", FILM, logged_in, async |tab| {
+        let compact_view: bool = tab
+            .evaluate_main(r#"document.querySelector(".tip_ratings_toggle.on") !== null"#)
             .await?;
         ensure!(
-            session.logged_in,
-            "the cookies in E2E_CRITICKER_COOKIES don't log in to Criticker (the page's title is {:?})",
-            session.title
+            compact_view,
+            "the account that the cookies log in doesn't have \"Compact view\" (above a film's \
+             ratings) switched on"
         );
-        ensure!(
-            session.compact_view,
-            "the account that the cookies in E2E_CRITICKER_COOKIES log in doesn't have \"Compact \
-             view\" (above a film's ratings) switched on"
-        );
-        work(&tab).await
+        work(tab).await
     })
     .await
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_CRITICKER_COOKIES, the path of a cookies.txt file of a logged-in Criticker session"]
+#[ignore = "needs a login (see `with_login`)"]
 async fn minireviews_are_expanded_when_logged_in() -> Result<()> {
     with_film(async |tab| {
         expect_expanded(tab).await?;
@@ -182,7 +160,7 @@ async fn minireviews_are_expanded_when_logged_in() -> Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_CRITICKER_COOKIES, the path of a cookies.txt file of a logged-in Criticker session"]
+#[ignore = "needs a login (see `with_login`)"]
 async fn address_does_not_gain_a_fragment_when_logged_in() -> Result<()> {
     // Each "More" is a link to "#", which a click navigates to unless
     // something prevents that, as Criticker's script does once it has
@@ -201,7 +179,7 @@ async fn address_does_not_gain_a_fragment_when_logged_in() -> Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_CRITICKER_COOKIES, the path of a cookies.txt file of a logged-in Criticker session"]
+#[ignore = "needs a login (see `with_login`)"]
 async fn minireviews_are_expanded_after_searching_when_logged_in() -> Result<()> {
     with_film(async |tab| {
         let before = expect_expanded(tab).await?;
@@ -235,7 +213,7 @@ async fn minireviews_are_expanded_after_searching_when_logged_in() -> Result<()>
 }
 
 #[tokio::test]
-#[ignore = "needs E2E_CRITICKER_COOKIES, the path of a cookies.txt file of a logged-in Criticker session"]
+#[ignore = "needs a login (see `with_login`)"]
 async fn minireview_cut_off_by_the_user_stays_cut_off_when_logged_in() -> Result<()> {
     with_film(async |tab| {
         expect_expanded(tab).await?;

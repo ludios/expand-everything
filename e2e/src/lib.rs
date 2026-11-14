@@ -5,7 +5,8 @@
 //! [`userscript`]), as if a userscript manager had it installed. A test opens
 //! a page with [`open`], and waits with [`wait_for`] until the page shows what
 //! the userscript should have expanded, and [`userscript::CLICKED_TEXTS`]
-//! shows that it was the userscript that clicked.
+//! shows that it was the userscript that clicked. A test of a page that a
+//! site shows only to a visitor who is logged in uses [`with_login`].
 
 pub mod userscript;
 
@@ -13,7 +14,7 @@ use anyhow::{Context, Result, bail};
 use serde::de::DeserializeOwned;
 use serde_json::json;
 use std::fmt::Debug;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::Instant;
@@ -25,6 +26,11 @@ const POLL_INTERVAL: Duration = Duration::from_millis(250);
 
 /// How long [`open`] waits for the userscript to start running.
 const START_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// How long [`with_login`] waits for the page to show that the visitor is
+/// logged in. A site may first serve a challenge page, which then loads the
+/// page itself.
+const LOGIN_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Registers the scripts made by [`Userscript`] on each page and iframe
 /// target once zendriver attaches to it, so that they run in every document
@@ -307,9 +313,167 @@ pub async fn open(browser: &Browser, url: &str) -> Result<Tab> {
     Ok(tab)
 }
 
+/// The cookies.txt file (see [`parse_cookies_txt`]) of a session on `site`,
+/// in the cookies directory `dir`: either `dir/site/cookies.txt`, or
+/// `dir/site/ACCOUNT/cookies.txt` for the one ACCOUNT that `dir/site` has.
+///
+/// Returns an error unless exactly one of these files exists.
+fn find_cookies_txt(dir: &Path, site: &str) -> Result<PathBuf> {
+    let site_dir = dir.join(site);
+    let entries = std::fs::read_dir(&site_dir).with_context(|| {
+        format!(
+            "listing {}, which must have the cookies of a session on {site}, as cookies.txt or \
+             ACCOUNT/cookies.txt",
+            site_dir.display()
+        )
+    })?;
+    let mut found = Vec::new();
+    if site_dir.join("cookies.txt").is_file() {
+        found.push(site_dir.join("cookies.txt"));
+    }
+    for entry in entries {
+        let file = entry?.path().join("cookies.txt");
+        if file.is_file() {
+            found.push(file);
+        }
+    }
+    if found.len() > 1 {
+        found.sort();
+        bail!(
+            "{} has more than one cookies.txt file, so which session to use is unknown: {found:?}",
+            site_dir.display()
+        );
+    }
+    let Some(file) = found.pop() else {
+        bail!(
+            "{0} has neither cookies.txt nor ACCOUNT/cookies.txt",
+            site_dir.display()
+        );
+    };
+    Ok(file)
+}
+
+/// The cookies.txt file of a session on `site` (see [`find_cookies_txt`]),
+/// such as `"github"`, in the cookies directory: the directory that the
+/// environment variable `E2E_COOKIES_DIR` names, or `~/.cache/cookies` if the
+/// variable isn't set.
+///
+/// Returns an error if the cookies directory doesn't have exactly one
+/// cookies.txt file for `site`.
+pub fn cookies_txt(site: &str) -> Result<PathBuf> {
+    let mut dir = None;
+    if let Some(named) = std::env::var_os("E2E_COOKIES_DIR") {
+        dir = Some(PathBuf::from(named));
+    } else if let Some(home) = std::env::var_os("HOME") {
+        dir = Some(Path::new(&home).join(".cache/cookies"));
+    }
+    let dir = dir.context("neither E2E_COOKIES_DIR nor HOME is set")?;
+    find_cookies_txt(&dir, site).context(
+        "finding the cookies to log in with (to use a cookies directory other than \
+         ~/.cache/cookies, name it in the environment variable E2E_COOKIES_DIR)",
+    )
+}
+
+/// Launch Chrome as [`with_chrome`] does, give it the cookies of a session
+/// on `site` (see [`cookies_txt`]), load `url` in it with [`open`], wait
+/// until the page shows that the visitor is logged in, and run `work` with
+/// the tab.
+///
+/// `logged_in` is a JavaScript expression, evaluated in the page's main
+/// world, that is truthy once the page shows that the cookies log in (and
+/// give whatever else `work` needs of the session, such as a membership).
+///
+/// Returns what `work` returns, or an error if the cookies aren't found,
+/// `url` doesn't open, or `logged_in` isn't truthy within `LOGIN_TIMEOUT`.
+pub async fn with_login<T>(
+    site: &str,
+    url: &str,
+    logged_in: &str,
+    work: impl AsyncFnOnce(&Tab) -> Result<T>,
+) -> Result<T> {
+    #[derive(Debug, serde::Deserialize)]
+    struct Page {
+        logged_in: bool,
+        #[allow(dead_code, reason = "shown in the error message")]
+        url: String,
+        #[allow(dead_code, reason = "shown in the error message")]
+        title: String,
+    }
+    let cookies = cookies_txt(site)?;
+    with_chrome(async |browser| {
+        add_cookies(browser, &cookies).await?;
+        let tab = open(browser, url).await.with_context(|| {
+            format!(
+                "opening {url} with the cookies in {} (if no @match line allows the page, the \
+                 site may have redirected to a sign-in page, because the cookies don't log in)",
+                cookies.display()
+            )
+        })?;
+        wait_for(
+            &tab,
+            &format!(
+                "the page to show that the cookies in {} log in",
+                cookies.display()
+            ),
+            &format!(
+                "({{ logged_in: Boolean({logged_in}), url: location.href, title: document.title }})"
+            ),
+            LOGIN_TIMEOUT,
+            Duration::ZERO,
+            |page: &Page| page.logged_in,
+        )
+        .await?;
+        work(&tab).await
+    })
+    .await
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Make a new directory for one test, with the files at `files` (paths in
+    /// the directory) in it, and return its path.
+    fn cookies_dir_with(test: &str, files: &[&str]) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("e2e-{test}-{}", std::process::id()));
+        // A run that panicked may have left the directory behind.
+        let _ = std::fs::remove_dir_all(&dir);
+        for file in files {
+            let path = dir.join(file);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, "").unwrap();
+        }
+        dir
+    }
+
+    #[test]
+    fn cookies_txt_of_a_site_is_found() {
+        let files = [
+            "a/someone/cookies.txt",
+            "b/cookies.txt",
+            "b/notes.txt",
+            "c/x/other.txt",
+        ];
+        let dir = cookies_dir_with("found", &files);
+        assert_eq!(find_cookies_txt(&dir, "a").unwrap(), dir.join(files[0]));
+        assert_eq!(find_cookies_txt(&dir, "b").unwrap(), dir.join(files[1]));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn missing_or_ambiguous_cookies_txt_is_an_error() {
+        let files = ["two/x/cookies.txt", "two/y/cookies.txt", "none/x/other.txt"];
+        let dir = cookies_dir_with("errors", &files);
+        for (site, expected) in [
+            ("two", "has more than one cookies.txt file"),
+            ("none", "has neither cookies.txt nor ACCOUNT/cookies.txt"),
+            ("absent", "listing "),
+        ] {
+            let error = format!("{:#}", find_cookies_txt(&dir, site).unwrap_err());
+            assert!(error.contains(expected), "{site}: {error}");
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 
     #[test]
     fn cookies_txt_parses() {
