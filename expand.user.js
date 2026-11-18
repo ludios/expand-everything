@@ -833,6 +833,9 @@ if (loc.startsWith("https://news.ycombinator.com/")) {
 // Test page: https://github.com/rust-lang/rust/issues/165052
 // Expected: every <details> ("Program output", "bisected with cargo-bisect-rustc") is open
 // Expected: after the user closes a <details> and then follows a link to a #fragment, the <details> stays closed
+//
+// Test page: https://github.com/khuedoan/nixie/blob/68b69f1247c09ae1a7aecff0a2132b39953044e3/README.md
+// Expected: the Mermaid diagram is not opened in a modal dialog
 if (loc.startsWith("https://github.com/")) {
 	// The icon buttons in the headers of comments on an issue page, of which
 	// only the one whose tooltip says "show comment" (on a minimized comment)
@@ -851,8 +854,9 @@ if (loc.startsWith("https://github.com/")) {
 	// only if the thread is collapsed (as an outdated or resolved one is)
 	const thread_chevrons = 'review-thread-collapsible button.review-thread-chevron';
 	// The <summary> of a <details> in a comment, a README, or other Markdown,
-	// which is clicked only if the <details> is closed
-	const markdown_summaries = '.markdown-body details > summary';
+	// which is clicked only if the <details> is closed, but not one that opens
+	// an overlay (such as the modal dialog that shows a Mermaid diagram)
+	const markdown_summaries = '.markdown-body details:not(.details-overlay) > summary';
 	observe(1000, [
 		...react_selectors,
 		// "N hidden items; Load more..." on a pull request page or a discussion page

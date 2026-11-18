@@ -43,6 +43,11 @@ const DISCUSSION: &str = "https://github.com/orgs/community/discussions/12032";
 /// An issue whose description and two comments each have a `<details>`.
 const ISSUE_WITH_DETAILS: &str = "https://github.com/rust-lang/rust/issues/165052";
 
+/// A README with a Mermaid diagram, above which GitHub puts a button that
+/// opens the diagram in a modal dialog.
+const README_WITH_DIAGRAM: &str =
+    "https://github.com/khuedoan/nixie/blob/68b69f1247c09ae1a7aecff0a2132b39953044e3/README.md";
+
 /// A JavaScript expression for whether no part of the timeline of a pull
 /// request or a discussion is still cut off above "N hidden items".
 const NO_HIDDEN_ITEMS: &str = r##"document.querySelector("#js-progressive-timeline-item-container form.ajax-pagination-form") === null"##;
@@ -301,6 +306,28 @@ async fn details_closed_by_the_user_stay_closed_after_going_to_a_fragment() -> R
         )
         .await?;
         Ok(())
+    })
+    .await
+}
+
+#[tokio::test]
+async fn diagram_is_not_opened_in_a_dialog() -> Result<()> {
+    with_chrome(async |browser| {
+        // The button is the <summary> of a <details> that holds the dialog.
+        let tab = open(browser, README_WITH_DIAGRAM).await?;
+        expect_expanded(
+            &tab,
+            "the userscript to observe the page, but to leave the diagram's \"Open dialog\" unclicked",
+            &format!(
+                r#"{OBSERVING} && (() => {{
+                    const details = document.querySelector(".markdown-body details:has(> details-dialog)");
+                    return details !== null && !details.open;
+                }})()"#
+            ),
+            Duration::from_secs(5),
+            |clicked| !clicked_on(clicked, "Open dialog"),
+        )
+        .await
     })
     .await
 }
