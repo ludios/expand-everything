@@ -854,8 +854,9 @@ if (loc.startsWith("https://github.com/")) {
 	// only if the thread is collapsed (as an outdated or resolved one is)
 	const thread_chevrons = 'review-thread-collapsible button.review-thread-chevron';
 	// The <summary> of a <details> in a comment, a README, or other Markdown,
-	// which is clicked only if the <details> is closed, but not one that opens
-	// an overlay (such as the modal dialog that shows a Mermaid diagram)
+	// which is clicked only if the <details> is closed, but not the <summary>
+	// of a <details> with the class "details-overlay", which GitHub gives to its
+	// own overlays (such as the modal dialog that shows a Mermaid diagram)
 	const markdown_summaries = '.markdown-body details:not(.details-overlay) > summary';
 	observe(1000, [
 		...react_selectors,

@@ -43,8 +43,8 @@ const DISCUSSION: &str = "https://github.com/orgs/community/discussions/12032";
 /// An issue whose description and two comments each have a `<details>`.
 const ISSUE_WITH_DETAILS: &str = "https://github.com/rust-lang/rust/issues/165052";
 
-/// A README with a Mermaid diagram, above which GitHub puts a button that
-/// opens the diagram in a modal dialog.
+/// A README with a Mermaid diagram. In the top-right corner of the diagram,
+/// GitHub puts a button that opens the diagram in a modal dialog.
 const README_WITH_DIAGRAM: &str =
     "https://github.com/khuedoan/nixie/blob/68b69f1247c09ae1a7aecff0a2132b39953044e3/README.md";
 
