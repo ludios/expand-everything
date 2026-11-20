@@ -22,6 +22,12 @@ const PROBABLE_SPAM_POST: &str = "https://x.com/Aella_Girl/status/18114786499648
 /// below the top of the page.
 const LONG_REPLIES_POST: &str = "https://x.com/ledwards/status/1916218168626012356";
 
+/// A post (which replies to no other post) whose picture its author flagged
+/// as sensitive. For an account whose setting "Display media that may
+/// contain sensitive content" is off, X blurs the picture, under "Content
+/// warning: Sensitive content" and a "Show" button.
+const FLAGGED_PICTURE_POST: &str = "https://x.com/KalebPrime/status/1486262773743038464";
+
 /// How far [`long_replies_are_expanded`] scrolls down at least, in CSS
 /// pixels: far enough to pass several long replies of [`LONG_REPLIES_POST`].
 const LONG_REPLIES_DEPTH: u32 = 4000;
@@ -40,6 +46,7 @@ const BUTTONS_WITH_TEXT: &str = r#"((text) => [...document.querySelectorAll("but
 /// [`wait_for`]) until `done` has held for 3 seconds for the value of the
 /// JavaScript `expression`.
 ///
+/// `logged_in` is the `logged_in` of [`with_login`], such as [`LOGGED_IN`].
 /// `what` describes what is awaited, for the error message. `timeout` is
 /// how long to wait once the page shows that the cookies log in.
 ///
@@ -47,12 +54,13 @@ const BUTTONS_WITH_TEXT: &str = r#"((text) => [...document.querySelectorAll("but
 /// log in, or doesn't satisfy `done` in time.
 async fn check<T: DeserializeOwned + Debug>(
     url: &str,
+    logged_in: &str,
     what: &str,
     expression: &str,
     timeout: Duration,
     done: impl Fn(&T) -> bool,
 ) -> Result<()> {
-    with_login("twitter", url, LOGGED_IN, async |tab| {
+    with_login("twitter", url, logged_in, async |tab| {
         wait_for(tab, what, expression, timeout, Duration::from_secs(3), done).await?;
         Ok(())
     })
@@ -77,6 +85,7 @@ async fn hidden_replies_are_shown() -> Result<()> {
     );
     check(
         HIDDEN_REPLIES_POST,
+        LOGGED_IN,
         "the userscript to click \"Show replies\" until none is left",
         &expression,
         Duration::from_secs(30),
@@ -132,6 +141,7 @@ async fn probable_spam_is_shown() -> Result<()> {
     );
     check(
         PROBABLE_SPAM_POST,
+        LOGGED_IN,
         "the userscript to click \"Show probable spam\", and the page to show at least one reply below \"Probable spam\" (and no \"Show probable spam\" button)",
         &expression,
         Duration::from_secs(60),
@@ -175,6 +185,7 @@ async fn long_replies_are_expanded() -> Result<()> {
     );
     check(
         LONG_REPLIES_POST,
+        LOGGED_IN,
         &format!(
             "the userscript to click \"Show more\" on every long reply in the top \
              {LONG_REPLIES_DEPTH} CSS pixels of the page"
@@ -185,6 +196,66 @@ async fn long_replies_are_expanded() -> Result<()> {
             p.scroll_y >= f64::from(LONG_REPLIES_DEPTH)
                 && p.show_more == 0
                 && p.clicked.iter().any(|text| text == "Show more")
+        },
+    )
+    .await
+}
+
+#[tokio::test]
+#[ignore = "needs a login (see `with_login`), to an account whose setting \"Display media that may contain sensitive content\" is off"]
+async fn flagged_picture_is_shown() -> Result<()> {
+    #[derive(Debug, Deserialize)]
+    struct Page {
+        /// How many pictures the post has.
+        pictures: usize,
+        /// How many of those pictures are blurred.
+        blurred: usize,
+        /// How many content warnings the post shows.
+        warnings: usize,
+        /// The texts of the userscript's clicks (see [`CLICKED_TEXTS`]).
+        clicked: Vec<String>,
+    }
+    // The page's first article is the post, because the post replies to no
+    // other post. X blurs a picture with a `filter` on an element between
+    // the picture and the article.
+    let expression = format!(
+        r#"(() => {{
+            const post = document.querySelector("article");
+            const pictures = [...(post?.querySelectorAll('[data-testid="tweetPhoto"]') ?? [])];
+            const blurred = (picture) => {{
+                for (let e = picture; e !== post; e = e.parentElement) {{
+                    if (getComputedStyle(e).filter.includes("blur(")) {{
+                        return true;
+                    }}
+                }}
+                return false;
+            }};
+            return {{
+                pictures: pictures.length,
+                blurred: pictures.filter(blurred).length,
+                warnings: [...(post?.querySelectorAll("span") ?? [])].filter((s) => s.innerText.startsWith("Content warning:")).length,
+                clicked: {CLICKED_TEXTS},
+            }};
+        }})()"#
+    );
+    // An account whose setting "Display media that may contain sensitive
+    // content" is on gets the picture without a content warning. The page
+    // has the account's settings in the inline script that sets
+    // `window.__INITIAL_STATE__` (a global that X deletes once it starts).
+    let logged_in = format!(
+        r#"({LOGGED_IN}) && [...document.scripts].some((s) => s.textContent.includes('"display_sensitive_media":false'))"#
+    );
+    check(
+        FLAGGED_PICTURE_POST,
+        &logged_in,
+        "the userscript to click \"Show\" on the content warning, and the page to show the picture unblurred",
+        &expression,
+        Duration::from_secs(30),
+        |p: &Page| {
+            p.pictures > 0
+                && p.blurred == 0
+                && p.warnings == 0
+                && p.clicked.iter().any(|text| text == "Show")
         },
     )
     .await

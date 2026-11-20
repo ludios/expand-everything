@@ -1345,6 +1345,9 @@ if (document.querySelector("#mastodon[data-props], #mastodon-status[data-props]"
 //
 // Test page: https://x.com/ledwards/status/1916218168626012356
 // Expected: after scrolling down about 4000 pixels, no long reply above that point shows "Show more"
+//
+// Test page: https://x.com/KalebPrime/status/1486262773743038464
+// Expected: if "Display media that may contain sensitive content" is off in X's settings, the picture is not blurred, and "Content warning: Sensitive content" is not visible
 if (loc.startsWith("https://twitter.com/") || loc.startsWith("https://x.com/")) {
 	observe(1000, [
 		// "Show replies"
