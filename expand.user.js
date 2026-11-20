@@ -1347,7 +1347,7 @@ if (document.querySelector("#mastodon[data-props], #mastodon-status[data-props]"
 // Expected: after scrolling down, "Show additional replies, including those that may contain offensive content" is not visible
 //
 // Test page: https://x.com/terronk/status/1916218168626012356
-// Expected: "Show more" not visible on ActionGrad's reply
+// Expected: after scrolling down, "Show more" is not visible on any long reply
 if (loc.startsWith("https://twitter.com/") || loc.startsWith("https://x.com/")) {
 	observe(1000, [
 		// "Show replies"
