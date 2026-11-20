@@ -1337,9 +1337,6 @@ if (document.querySelector("#mastodon[data-props], #mastodon-status[data-props]"
 // Test page: https://x.com/AChillGhost/status/1761774191920005343
 // Expected: all replies expanded; "Show replies" is not visible
 //
-// Test page: https://x.com/phokarlsson/status/1808145965380935794
-// Expected: after scrolling down, "Show probable spam" button is not visible
-//
 // Test page: https://x.com/Aella_Girl/status/1811478649964843329
 // Expected: after scrolling down, "Show probable spam" button is not visible; "Probable spam" tweets are visible
 //
