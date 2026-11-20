@@ -384,6 +384,8 @@ mod tests {
         assert!(script.matches("https://www.youtube.com/watch?v=x"));
         assert!(script.matches("https://store.steampowered.com/app/1/X/"));
         assert!(script.matches("https://www.lesswrong.com/users/x"));
+        assert!(script.matches("https://x.com/x/status/1"));
+        assert!(script.matches("https://twitter.com/x/status/1"));
         assert!(script.matches("https://mastodon.social/@x/1"));
         assert!(script.matches("https://mathstodon.xyz/@x/1"));
         assert!(script.matches("https://infosec.exchange/@x/1"));

@@ -1343,8 +1343,8 @@ if (document.querySelector("#mastodon[data-props], #mastodon-status[data-props]"
 // Test page: https://x.com/liz_love_lace/status/1812457271126835489
 // Expected: after scrolling down, "Show additional replies, including those that may contain offensive content" is not visible
 //
-// Test page: https://x.com/terronk/status/1916218168626012356
-// Expected: after scrolling down, "Show more" is not visible on any long reply
+// Test page: https://x.com/ledwards/status/1916218168626012356
+// Expected: after scrolling down about 4000 pixels, no long reply above that point shows "Show more"
 if (loc.startsWith("https://twitter.com/") || loc.startsWith("https://x.com/")) {
 	observe(1000, [
 		// "Show replies"
